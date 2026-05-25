@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; display: flex; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+
+    /* ── App sidebar ── */
+    .app-sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; overflow: hidden; }
+
+    /* ── Topbar ── */
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 14px; flex-shrink: 0; }
+
+    /* ── Settings layout ── */
+    .settings-layout { flex: 1; display: flex; overflow: hidden; }
+
+    /* ── Settings nav (left) ── */
+    .settings-nav { width: 220px; border-right: 1px solid #E8E5DF; padding: 24px 12px; flex-shrink: 0; overflow-y: auto; background: #FAFAF8; }
+    .settings-nav-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: #C0BBB4; padding: 14px 12px 6px; }
+    .settings-nav-label:first-child { padding-top: 0; }
+    .settings-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; color: #6B635B; transition: background .12s; margin-bottom: 1px; text-decoration: none; }
+    .settings-nav-item:hover { background: #F3F2EE; }
+    .settings-nav-item.active { background: #FBE9E3; color: #E07040; font-weight: 500; }
+    .settings-nav-item .nav-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Settings content ── */
+    .settings-content { flex: 1; overflow-y: auto; padding: 32px 40px; }
+    .settings-content::-webkit-scrollbar { width: 5px; }
+    .settings-content::-webkit-scrollbar-thumb { background: #D3D2CD; border-radius: 99px; }
+
+    /* ── Section ── */
+    .settings-section { margin-bottom: 40px; }
+    .section-title { font-family: 'Fraunces', serif; font-weight: 400; font-size: 20px; color: #3A3530; text-transform: lowercase; margin-bottom: 4px; }
+    .section-subtitle { font-size: 13px; color: #9A9189; margin-bottom: 24px; line-height: 1.5; }
+    .section-divider { height: 1px; background: #E8E5DF; margin: 32px 0; }
+
+    /* ── Setting row ── */
+    .setting-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 18px 0; border-bottom: 1px solid #F0EEE9; }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-size: 14px; font-weight: 500; color: #3A3530; margin-bottom: 3px; }
+    .setting-desc { font-size: 12px; color: #9A9189; line-height: 1.55; max-width: 420px; }
+    .setting-control { flex-shrink: 0; display: flex; align-items: center; }
+
+    /* ── Toggle ── */
+    .toggle { width: 44px; height: 24px; border-radius: 99px; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+    .toggle.on  { background: #F08353; }
+    .toggle.off { background: #D3D2CD; }
+    .toggle::after { content:''; position:absolute; width:18px; height:18px; border-radius:50%; background:#FFF; top:3px; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.15); }
+    .toggle.on::after  { left:23px; }
+    .toggle.off::after { left:3px; }
+
+    /* ── Input ── */
+    .field-input { background:#FFF; border:1.5px solid #E8E5DF; border-radius:8px; padding:9px 13px; font-family:'Ubuntu',sans-serif; font-size:14px; color:#3A3530; outline:none; transition:border-color .15s, box-shadow .15s; }
+    .field-input:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,.16); }
+    .field-input.has-value { border-color:#D3D2CD; }
+    .field-select { background:#FFF; border:1.5px solid #E8E5DF; border-radius:8px; padding:9px 36px 9px 13px; font-family:'Ubuntu',sans-serif; font-size:14px; color:#3A3530; outline:none; appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; transition:border-color .15s; }
+    .field-select:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,.16); }
+
+    /* ── Avatar upload ── */
+    .avatar-upload { display:flex; align-items:center; gap:16px; }
+    .avatar-circle { width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#F08353,#D2B06E); display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:28px; color:#FFF; flex-shrink:0; position:relative; cursor:pointer; }
+    .avatar-overlay { position:absolute; inset:0; border-radius:50%; background:rgba(58,53,48,.4); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .15s; }
+    .avatar-circle:hover .avatar-overlay { opacity:1; }
+
+    /* ── Plan badge ── */
+    .plan-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; padding:4px 10px; border-radius:99px; }
+    .plan-pro { background:#F7F0DD; color:#B8914E; border:1px solid #D2B06E; }
+
+    /* ── Buttons ── */
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:10px 20px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background .15s; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-secondary { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:14px; padding:10px 18px; border-radius:8px; border:1.5px solid #E8E5DF; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:all .15s; }
+    .btn-secondary:hover { border-color:#D3D2CD; background:#F7F5F2; }
+    .btn-danger { background:transparent; color:#C85A3E; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:13px; padding:9px 16px; border-radius:8px; border:1px solid #E8A898; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:all .15s; }
+    .btn-danger:hover { background:#FBE9E3; }
+    .btn-ghost { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:13px; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s; }
+    .btn-ghost:hover { background:#F3F2EE; }
+
+    /* ── Notification rows ── */
+    .notif-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #F0EEE9; }
+    .notif-row:last-child { border-bottom:none; }
+    .notif-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .notif-info { flex:1; min-width:0; }
+    .notif-title { font-size:13px; font-weight:500; color:#3A3530; margin-bottom:2px; }
+    .notif-desc { font-size:11px; color:#9A9189; line-height:1.4; }
+    .notif-toggles { display:flex; gap:16px; align-items:center; flex-shrink:0; }
+    .notif-ch { display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .notif-ch-label { font-size:9px; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:#C0BBB4; }
+
+    /* ── Integration card ── */
+    .integration-card { display:flex; align-items:center; gap:14px; padding:16px 18px; background:#FFF; border:1px solid #E8E5DF; border-radius:10px; margin-bottom:10px; transition:box-shadow .15s; }
+    .integration-card:hover { box-shadow:0 3px 12px rgba(58,53,48,.07); }
+    .integration-logo { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:20px; }
+    .integration-status { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:500; padding:3px 8px; border-radius:99px; }
+    .status-connected { background:#EEF2E8; color:#7A9264; }
+    .status-available { background:#F3F2EE; color:#9A9189; }
+
+    /* ── Color theme picker ── */
+    .theme-grid { display:flex; gap:10px; flex-wrap:wrap; }
+    .theme-swatch { width:40px; height:40px; border-radius:10px; cursor:pointer; border:2.5px solid transparent; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+    .theme-swatch.selected { border-color:#3A3530; transform:scale(1.1); }
+    .theme-swatch:hover:not(.selected) { transform:scale(1.07); }
+
+    /* ── Danger zone ── */
+    .danger-zone { background:#FBE9E3; border:1px solid #E8A898; border-radius:12px; padding:20px 24px; }
+
+    /* ── Avatar notif ── */
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+    .notif-btn2 { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; transition:background .15s; position:relative; }
+    .notif-btn2:hover { background:#F3F2EE; }
+    .ndot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* ── Tag chip ── */
+    .tag { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; padding:3px 8px; border-radius:4px; }
+    .tag-new { background:#EEF2E8; color:#7A9264; }
+    .tag-soon { background:#F7F0DD; color:#B8914E; }
+  </style>
+</head>
+<body>
+
+  <!-- ══ APP SIDEBAR ══ -->
+  <aside class="app-sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/><circle cx="17" cy="11" r="3.5" fill="#F08353"/><path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/></svg>
+      <div><div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div><div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div></div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#"><i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA<span style="margin-left:auto;font-size:9px;font-weight:500;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#F7F0DD;color:#B8914E;">beta</span></a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item active" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#3A3530;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Larissa Ferraz</div><div style="font-size:11px;color:#9A9189;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Corporis — Xanxerê/SC</div></div>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <div class="main">
+    <header class="topbar">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">configurações</div>
+      <button class="btn-ghost" style="border:1px solid #E8E5DF;" id="save-indicator" style="display:none;">
+        <i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i>
+        Salvo automaticamente
+      </button>
+      <button class="notif-btn2"><i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i><span class="ndot"></span></button>
+      <div class="avatar">L</div>
+    </header>
+
+    <div class="settings-layout">
+
+      <!-- ── Settings nav ── -->
+      <nav class="settings-nav">
+        <div class="settings-nav-label">Conta</div>
+        <a class="settings-nav-item active" href="#perfil" onclick="scrollTo('perfil',this)">
+          <div class="nav-dot" style="background:#F08353;"></div>Perfil e clínica
+        </a>
+        <a class="settings-nav-item" href="#plano" onclick="scrollTo('plano',this)">
+          <div class="nav-dot" style="background:#D2B06E;"></div>Plano e cobrança
+        </a>
+        <a class="settings-nav-item" href="#seguranca" onclick="scrollTo('seguranca',this)">
+          <div class="nav-dot" style="background:#9A9189;"></div>Segurança e acesso
+        </a>
+
+        <div class="settings-nav-label">Preferências</div>
+        <a class="settings-nav-item" href="#aparencia" onclick="scrollTo('aparencia',this)">
+          <div class="nav-dot" style="background:#ACC095;"></div>Aparência
+        </a>
+        <a class="settings-nav-item" href="#notificacoes" onclick="scrollTo('notificacoes',this)">
+          <div class="nav-dot" style="background:#F6A958;"></div>Notificações
+        </a>
+        <a class="settings-nav-item" href="#financeiro" onclick="scrollTo('financeiro',this)">
+          <div class="nav-dot" style="background:#6B635B;"></div>Preferências financeiras
+        </a>
+
+        <div class="settings-nav-label">Dados</div>
+        <a class="settings-nav-item" href="#integracoes" onclick="scrollTo('integracoes',this)">
+          <div class="nav-dot" style="background:#C85A3E;"></div>Integrações
+        </a>
+        <a class="settings-nav-item" href="#exportar" onclick="scrollTo('exportar',this)">
+          <div class="nav-dot" style="background:#9A9189;"></div>Exportar dados
+        </a>
+
+        <div class="settings-nav-label">Avançado</div>
+        <a class="settings-nav-item" href="#perigo" onclick="scrollTo('perigo',this)">
+          <div class="nav-dot" style="background:#C85A3E;"></div>Zona de perigo
+        </a>
+      </nav>
+
+      <!-- ── Settings content ── -->
+      <div class="settings-content" id="settings-content">
+
+        <!-- ══ PERFIL ══ -->
+        <div class="settings-section" id="perfil">
+          <div class="section-title">perfil e clínica</div>
+          <div class="section-subtitle">Informações pessoais e da sua clínica. Aparecem nos relatórios e exportações.</div>
+
+          <!-- Avatar -->
+          <div class="setting-row" style="align-items:center;">
+            <div>
+              <div class="setting-label">Foto de perfil</div>
+              <div class="setting-desc">Aparece na sidebar e nos relatórios exportados.</div>
+            </div>
+            <div class="avatar-upload">
+              <div class="avatar-circle">
+                L
+                <div class="avatar-overlay">
+                  <i data-lucide="camera" style="width:18px;height:18px;stroke-width:1.5;color:#FFF;"></i>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <button class="btn-secondary" style="font-size:12px;padding:7px 14px;">
+                  <i data-lucide="upload" style="width:13px;height:13px;stroke-width:1.5;"></i>Fazer upload
+                </button>
+                <span style="font-size:11px;color:#C0BBB4;">JPG, PNG · até 5 MB</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nome -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Nome completo</div>
+              <div class="setting-desc">Seu nome como proprietária da clínica.</div>
+            </div>
+            <input class="field-input has-value" type="text" value="Larissa Ferraz" style="width:240px;">
+          </div>
+
+          <!-- E-mail -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">E-mail</div>
+              <div class="setting-desc">Usado para login e notificações.</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input class="field-input has-value" type="email" value="larissa@corporis.com.br" style="width:240px;">
+              <span style="font-size:11px;font-weight:500;color:#7A9264;display:flex;align-items:center;gap:3px;"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Verificado</span>
+            </div>
+          </div>
+
+          <!-- Nome da clínica -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Nome da clínica</div>
+              <div class="setting-desc">Aparece no cabeçalho dos relatórios exportados.</div>
+            </div>
+            <input class="field-input has-value" type="text" value="Corporis Pilates & Fisioterapia" style="width:280px;">
+          </div>
+
+          <!-- CNPJ -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">CNPJ</div>
+              <div class="setting-desc">Usado em notas fiscais e DAS do Simples Nacional.</div>
+            </div>
+            <input class="field-input has-value" type="text" value="12.345.678/0001-90" style="width:200px;">
+          </div>
+
+          <!-- Cidade -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Cidade e estado</div>
+              <div class="setting-desc">Usada para fuso horário e DAS regional.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 80px;gap:8px;width:280px;">
+              <input class="field-input has-value" type="text" value="Xanxerê">
+              <select class="field-select" style="width:80px;padding-right:28px;">
+                <option selected>SC</option><option>SP</option><option>RS</option><option>PR</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Regime tributário -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Regime tributário</div>
+              <div class="setting-desc">Usado para calcular estimativas de impostos no DFC.</div>
+            </div>
+            <select class="field-select" style="width:220px;">
+              <option selected>Simples Nacional</option>
+              <option>Lucro Presumido</option>
+              <option>Lucro Real</option>
+              <option>MEI</option>
+            </select>
+          </div>
+
+          <!-- Alíquota -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Alíquota Simples Nacional</div>
+              <div class="setting-desc">Percentual aplicado para estimar o DAS mensal. Revise anualmente.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="field-input has-value" type="text" value="7,50" style="width:80px;text-align:right;">
+              <span style="font-size:14px;color:#6B635B;">%</span>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+            <button class="btn-secondary">Descartar</button>
+            <button class="btn-primary" onclick="showSaved()"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;"></i>Salvar perfil</button>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ══ PLANO ══ -->
+        <div class="settings-section" id="plano">
+          <div class="section-title">plano e cobrança</div>
+          <div class="section-subtitle">Gerencie sua assinatura Corporis Finance.</div>
+
+          <!-- Plan info -->
+          <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:22px 24px;margin-bottom:20px;display:flex;align-items:center;gap:20px;">
+            <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#F08353,#D2B06E);display:flex;align-items:center;justify-content:center;">
+              <i data-lucide="star" style="width:24px;height:24px;stroke-width:1.5;color:#FFF;"></i>
+            </div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                <div style="font-size:16px;font-weight:600;color:#3A3530;">Corporis Pro</div>
+                <span class="plan-badge plan-pro">Ativo</span>
+              </div>
+              <div style="font-size:13px;color:#9A9189;">Cobrança mensal · R$ 97/mês · Próximo vencimento: 01/01/2026</div>
+              <div style="font-size:13px;color:#9A9189;margin-top:2px;">Cartão •••• 6411 · Visa</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn-secondary" style="font-size:13px;padding:8px 14px;">
+                <i data-lucide="credit-card" style="width:13px;height:13px;stroke-width:1.5;"></i>Alterar cartão
+              </button>
+              <button class="btn-ghost" style="font-size:12px;color:#9A9189;">
+                <i data-lucide="file-text" style="width:13px;height:13px;stroke-width:1.5;"></i>Ver faturas
+              </button>
+            </div>
+          </div>
+
+          <!-- Feature list -->
+          <div style="background:#F7F5F2;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+            <div style="font-size:12px;font-weight:500;color:#9A9189;text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;">Incluído no seu plano</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;"><i data-lucide="check-circle" style="width:14px;height:14px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>DFC, Orçado × Realizado, Projeção</div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;"><i data-lucide="check-circle" style="width:14px;height:14px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>Importação OFX, CSV e PDF</div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;"><i data-lucide="check-circle" style="width:14px;height:14px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>Categorização automática por IA</div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;"><i data-lucide="check-circle" style="width:14px;height:14px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>Consultor IA (beta)</div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;"><i data-lucide="check-circle" style="width:14px;height:14px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>Exportação PDF e XLSX</div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;"><i data-lucide="check-circle" style="width:14px;height:14px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>Suporte por e-mail prioritário</div>
+            </div>
+          </div>
+
+          <button class="btn-ghost" style="font-size:13px;color:#C85A3E;border:1px solid #E8A898;">
+            <i data-lucide="x-circle" style="width:14px;height:14px;stroke-width:1.5;"></i>Cancelar assinatura
+          </button>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ══ SEGURANÇA ══ -->
+        <div class="settings-section" id="seguranca">
+          <div class="section-title">segurança e acesso</div>
+          <div class="section-subtitle">Senha, autenticação de dois fatores e sessões ativas.</div>
+
+          <!-- Senha -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Senha</div>
+              <div class="setting-desc">Última alteração há 47 dias. Recomendamos trocar a cada 90 dias.</div>
+            </div>
+            <button class="btn-secondary" style="font-size:13px;padding:8px 14px;">
+              <i data-lucide="key" style="width:13px;height:13px;stroke-width:1.5;"></i>Alterar senha
+            </button>
+          </div>
+
+          <!-- 2FA -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Autenticação de dois fatores (2FA)</div>
+              <div class="setting-desc">Adiciona uma camada de segurança ao login. Recomendado.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:12px;color:#9A9189;">Desativado</span>
+              <div class="toggle off" id="toggle-2fa" onclick="toggleEl(this,'toggle-2fa')"></div>
+            </div>
+          </div>
+
+          <!-- Sessões ativas -->
+          <div class="setting-row" style="align-items:flex-start;">
+            <div>
+              <div class="setting-label">Sessões ativas</div>
+              <div class="setting-desc">Dispositivos com acesso à sua conta no momento.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;min-width:320px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#F7F5F2;border-radius:8px;">
+                <i data-lucide="monitor" style="width:16px;height:16px;stroke-width:1.5;color:#9A9189;flex-shrink:0;"></i>
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Chrome · macOS</div>
+                  <div style="font-size:11px;color:#9A9189;">Xanxerê, SC · agora</div>
+                </div>
+                <span style="font-size:11px;font-weight:500;color:#7A9264;background:#EEF2E8;padding:2px 7px;border-radius:4px;">Este dispositivo</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#F7F5F2;border-radius:8px;">
+                <i data-lucide="smartphone" style="width:16px;height:16px;stroke-width:1.5;color:#9A9189;flex-shrink:0;"></i>
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Safari · iPhone 15</div>
+                  <div style="font-size:11px;color:#9A9189;">Xanxerê, SC · há 2 horas</div>
+                </div>
+                <button class="btn-ghost" style="font-size:12px;color:#C85A3E;padding:4px 8px;">Encerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ══ APARÊNCIA ══ -->
+        <div class="settings-section" id="aparencia">
+          <div class="section-title">aparência</div>
+          <div class="section-subtitle">Personalize a interface da Corporis para seu gosto.</div>
+
+          <!-- Tema -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Tema de cor</div>
+              <div class="setting-desc">Cor de destaque usada em botões, links e KPIs.</div>
+            </div>
+            <div class="theme-grid">
+              <div class="theme-swatch selected" style="background:#F08353;" onclick="selectTheme(this)" title="Laranja Corporis"></div>
+              <div class="theme-swatch" style="background:#ACC095;" onclick="selectTheme(this)" title="Verde Salva"></div>
+              <div class="theme-swatch" style="background:#D2B06E;" onclick="selectTheme(this)" title="Bege Dourado"></div>
+              <div class="theme-swatch" style="background:#6B635B;" onclick="selectTheme(this)" title="Terra"></div>
+              <div class="theme-swatch" style="background:#5B7FA6;" onclick="selectTheme(this)" title="Azul Sereno"></div>
+              <div class="theme-swatch" style="background:#7B61C4;" onclick="selectTheme(this)" title="Lilás"></div>
+            </div>
+          </div>
+
+          <!-- Modo escuro -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Modo escuro</div>
+              <div class="setting-desc">Disponível em breve.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:12px;color:#C0BBB4;">Em breve</span>
+              <div class="toggle off" style="opacity:.4;pointer-events:none;"></div>
+            </div>
+          </div>
+
+          <!-- Density -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Densidade da tabela</div>
+              <div class="setting-desc">Controla o espaçamento das linhas nas tabelas de lançamentos.</div>
+            </div>
+            <select class="field-select" style="width:180px;">
+              <option selected>Confortável</option>
+              <option>Compacta</option>
+              <option>Espaçada</option>
+            </select>
+          </div>
+
+          <!-- Moeda / formato -->
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Formato de moeda</div>
+              <div class="setting-desc">Como os valores são exibidos nos relatórios.</div>
+            </div>
+            <select class="field-select" style="width:220px;">
+              <option selected>R$ 1.234,56 (padrão BR)</option>
+              <option>R$ 1234.56</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ══ NOTIFICAÇÕES ══ -->
+        <div class="settings-section" id="notificacoes">
+          <div class="section-title">notificações</div>
+          <div class="section-subtitle">Escolha quando e como a Corporis deve te alertar.</div>
+
+          <!-- Channel header -->
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 0;margin-bottom:4px;border-bottom:1px solid #E8E5DF;">
+            <div style="flex:1;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;">Evento</div>
+            <div style="display:flex;gap:28px;padding-right:4px;">
+              <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;width:32px;text-align:center;">App</span>
+              <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;width:32px;text-align:center;">E-mail</span>
+              <span style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;width:32px;text-align:center;">Push</span>
+            </div>
+          </div>
+
+          <!-- Notif rows -->
+          <div class="notif-row">
+            <div class="notif-icon" style="background:#FBE9E3;"><i data-lucide="calendar-clock" style="width:17px;height:17px;stroke-width:1.5;color:#F08353;"></i></div>
+            <div class="notif-info">
+              <div class="notif-title">Vencimento de fatura de cartão</div>
+              <div class="notif-desc">3 dias antes do vencimento de cada fatura</div>
+            </div>
+            <div class="notif-toggles">
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle off" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            </div>
+          </div>
+
+          <div class="notif-row">
+            <div class="notif-icon" style="background:#FBE9E3;"><i data-lucide="trending-down" style="width:17px;height:17px;stroke-width:1.5;color:#C85A3E;"></i></div>
+            <div class="notif-info">
+              <div class="notif-title">Desvio do orçado</div>
+              <div class="notif-desc">Quando uma categoria ultrapassa o orçado em +20%</div>
+            </div>
+            <div class="notif-toggles">
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle off" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle off" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            </div>
+          </div>
+
+          <div class="notif-row">
+            <div class="notif-icon" style="background:#EEF2E8;"><i data-lucide="upload-cloud" style="width:17px;height:17px;stroke-width:1.5;color:#7A9264;"></i></div>
+            <div class="notif-info">
+              <div class="notif-title">Importação concluída</div>
+              <div class="notif-desc">Quando um extrato ou fatura termina de ser processado</div>
+            </div>
+            <div class="notif-toggles">
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            </div>
+          </div>
+
+          <div class="notif-row">
+            <div class="notif-icon" style="background:#F7F0DD;"><i data-lucide="alert-triangle" style="width:17px;height:17px;stroke-width:1.5;color:#B8914E;"></i></div>
+            <div class="notif-info">
+              <div class="notif-title">Saldo baixo</div>
+              <div class="notif-desc">Quando o saldo de alguma conta cair abaixo de R$ 5.000</div>
+            </div>
+            <div class="notif-toggles">
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            </div>
+          </div>
+
+          <div class="notif-row">
+            <div class="notif-icon" style="background:#F3F2EE;"><i data-lucide="calendar" style="width:17px;height:17px;stroke-width:1.5;color:#9A9189;"></i></div>
+            <div class="notif-info">
+              <div class="notif-title">Resumo semanal</div>
+              <div class="notif-desc">Relatório de entradas, saídas e resultado toda segunda às 8h</div>
+            </div>
+            <div class="notif-toggles">
+              <div class="notif-ch"><div class="toggle off" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle off" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            </div>
+          </div>
+
+          <div class="notif-row">
+            <div class="notif-icon" style="background:#F3F2EE;"><i data-lucide="sparkles" style="width:17px;height:17px;stroke-width:1.5;color:#9A9189;"></i></div>
+            <div class="notif-info">
+              <div class="notif-title">Insights da IA</div>
+              <div class="notif-desc">Quando o Consultor IA detectar anomalias ou oportunidades</div>
+            </div>
+            <div class="notif-toggles">
+              <div class="notif-ch"><div class="toggle on" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle off" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="notif-ch"><div class="toggle off" style="width:36px;height:20px;" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ══ FINANCEIRO ══ -->
+        <div class="settings-section" id="financeiro">
+          <div class="section-title">preferências financeiras</div>
+          <div class="section-subtitle">Parâmetros que afetam cálculos de DFC, projeções e alertas.</div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Saldo mínimo de caixa</div>
+              <div class="setting-desc">Abaixo deste valor a Corporis emite um alerta de saldo baixo.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14px;color:#9A9189;font-family:'Fraunces',serif;">R$</span>
+              <input class="field-input has-value" type="text" value="5.000,00" style="width:120px;text-align:right;">
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Horizonte padrão de projeção</div>
+              <div class="setting-desc">Número de meses exibidos por padrão na Projeção de Caixa.</div>
+            </div>
+            <select class="field-select" style="width:160px;">
+              <option>3 meses</option>
+              <option selected>6 meses</option>
+              <option>12 meses</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Cenário padrão de projeção</div>
+              <div class="setting-desc">Cenário exibido ao abrir a Projeção de Caixa.</div>
+            </div>
+            <select class="field-select" style="width:180px;">
+              <option>Pessimista</option>
+              <option selected>Base</option>
+              <option>Otimista</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Competência padrão do DFC</div>
+              <div class="setting-desc">Base usada para agrupar lançamentos no DFC.</div>
+            </div>
+            <select class="field-select" style="width:200px;">
+              <option selected>Data da competência</option>
+              <option>Data do pagamento (caixa)</option>
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Mostrar lançamentos pendentes no DFC</div>
+              <div class="setting-desc">Inclui itens com status "Pendente" no fluxo de caixa.</div>
+            </div>
+            <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">Limiar de desvio do orçado</div>
+              <div class="setting-desc">Percentual de variação a partir do qual um alerta é gerado.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="field-input has-value" type="text" value="20" style="width:70px;text-align:right;">
+              <span style="font-size:14px;color:#6B635B;">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ══ INTEGRAÇÕES ══ -->
+        <div class="settings-section" id="integracoes">
+          <div class="section-title">integrações</div>
+          <div class="section-subtitle">Conecte a Corporis com outras ferramentas que você usa.</div>
+
+          <div class="integration-card">
+            <div class="integration-logo" style="background:#FFF7E0;font-size:24px;">🏦</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:500;color:#3A3530;margin-bottom:2px;">Open Finance (Banco Central)</div>
+              <div style="font-size:12px;color:#9A9189;">Importação automática de extratos via Open Finance BR</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="integration-status status-available">Disponível em breve</span>
+              <span class="tag tag-soon">Em breve</span>
+            </div>
+          </div>
+
+          <div class="integration-card">
+            <div class="integration-logo" style="background:#F0FFF4;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="6" fill="#34A853" opacity=".15"/><path d="M12 4.8L4.8 8.4V15.6L12 19.2L19.2 15.6V8.4L12 4.8Z" stroke="#34A853" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:500;color:#3A3530;margin-bottom:2px;">Google Sheets</div>
+              <div style="font-size:12px;color:#9A9189;">Exportar relatórios automaticamente para uma planilha</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="integration-status status-connected"><i data-lucide="check-circle" style="width:11px;height:11px;stroke-width:2;"></i>Conectado</span>
+              <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;">Configurar</button>
+            </div>
+          </div>
+
+          <div class="integration-card">
+            <div class="integration-logo" style="background:#FFF0F0;">
+              <svg width="24" height="24" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.2045C17.64 8.5664 17.5827 7.9527 17.4764 7.3636H9V10.845H13.8436C13.635 11.97 13.0009 12.9232 12.0477 13.5614V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.2045Z" fill="#4285F4"/><path d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5614C11.2418 14.1014 10.2109 14.4204 9 14.4204C6.65591 14.4204 4.67182 12.8373 3.96409 10.71H0.957275V13.0418C2.43818 15.9832 5.48182 18 9 18Z" fill="#34A853"/><path d="M3.96409 10.71C3.78409 10.17 3.68182 9.5932 3.68182 9C3.68182 8.4068 3.78409 7.83 3.96409 7.29V4.9582H0.957275C0.347727 6.1732 0 7.5477 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/><path d="M9 3.5795C10.3214 3.5795 11.5077 4.0336 12.4405 4.9255L15.0218 2.3441C13.4632 0.8918 11.4259 0 9 0C5.48182 0 2.43818 2.0168 0.957275 4.9582L3.96409 7.29C4.67182 5.1627 6.65591 3.5795 9 3.5795Z" fill="#EA4335"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:500;color:#3A3530;margin-bottom:2px;">Google Calendar</div>
+              <div style="font-size:12px;color:#9A9189;">Adicionar vencimentos automaticamente ao calendário</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="integration-status status-available">Disponível</span>
+              <button class="btn-primary" style="font-size:12px;padding:7px 14px;">Conectar</button>
+            </div>
+          </div>
+
+          <div class="integration-card">
+            <div class="integration-logo" style="background:#F0F4FF;">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect width="22" height="22" rx="5" fill="#5865F2" opacity=".15"/><path d="M9.1 7C8 7.5 7 8.5 6.5 9.5C5.8 11 5.8 13 6.5 14.5C7 15.5 8 16.5 9.1 17L9.4 16.6C8.6 16.1 7.8 15.4 7.3 14.5C6.8 13.5 6.6 12.3 6.8 11.2" stroke="#5865F2" stroke-width="1.4" stroke-linecap="round"/><path d="M12.9 7C14 7.5 15 8.5 15.5 9.5C16.2 11 16.2 13 15.5 14.5C15 15.5 14 16.5 12.9 17L12.6 16.6C13.4 16.1 14.2 15.4 14.7 14.5" stroke="#5865F2" stroke-width="1.4" stroke-linecap="round"/><circle cx="11" cy="11" r="2" fill="#5865F2"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:500;color:#3A3530;margin-bottom:2px;">Discord</div>
+              <div style="font-size:12px;color:#9A9189;">Receber alertas financeiros diretamente no Discord</div>
+            </div>
+            <div>
+              <span class="integration-status status-available">Disponível</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ══ EXPORTAR ══ -->
+        <div class="settings-section" id="exportar">
+          <div class="section-title">exportar dados</div>
+          <div class="section-subtitle">Baixe seus dados financeiros em diferentes formatos.</div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+            <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;">
+              <div style="width:36px;height:36px;border-radius:9px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="file-spreadsheet" style="width:18px;height:18px;stroke-width:1.5;color:#7A9264;"></i>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:#3A3530;margin-bottom:3px;">DFC completo (.xlsx)</div>
+                <div style="font-size:11px;color:#9A9189;">Todos os meses do ano em planilha</div>
+              </div>
+              <button class="btn-secondary" style="font-size:12px;padding:7px 12px;justify-content:center;">
+                <i data-lucide="download" style="width:13px;height:13px;stroke-width:1.5;"></i>Baixar
+              </button>
+            </div>
+            <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;">
+              <div style="width:36px;height:36px;border-radius:9px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="file-text" style="width:18px;height:18px;stroke-width:1.5;color:#F08353;"></i>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:#3A3530;margin-bottom:3px;">Lançamentos (.csv)</div>
+                <div style="font-size:11px;color:#9A9189;">Todos os lançamentos do período</div>
+              </div>
+              <button class="btn-secondary" style="font-size:12px;padding:7px 12px;justify-content:center;">
+                <i data-lucide="download" style="width:13px;height:13px;stroke-width:1.5;"></i>Baixar
+              </button>
+            </div>
+            <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px;">
+              <div style="width:36px;height:36px;border-radius:9px;background:#F7F0DD;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="file" style="width:18px;height:18px;stroke-width:1.5;color:#B8914E;"></i>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:#3A3530;margin-bottom:3px;">Backup completo (.json)</div>
+                <div style="font-size:11px;color:#9A9189;">Todos os dados da sua conta</div>
+              </div>
+              <button class="btn-secondary" style="font-size:12px;padding:7px 12px;justify-content:center;">
+                <i data-lucide="download" style="width:13px;height:13px;stroke-width:1.5;"></i>Baixar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- ══ ZONA DE PERIGO ══ -->
+        <div class="settings-section" id="perigo">
+          <div class="section-title">zona de perigo</div>
+          <div class="section-subtitle">Ações irreversíveis. Proceda com atenção.</div>
+
+          <div class="danger-zone">
+            <div style="display:flex;flex-direction:column;gap:18px;">
+
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:18px;border-bottom:1px solid #F0C8B8;">
+                <div>
+                  <div style="font-size:14px;font-weight:500;color:#3A3530;margin-bottom:4px;">Apagar todos os lançamentos</div>
+                  <div style="font-size:12px;color:#9A9189;line-height:1.55;max-width:400px;">Remove todos os lançamentos da sua conta. Plano de contas e contas bancárias são mantidos. Esta ação não pode ser desfeita.</div>
+                </div>
+                <button class="btn-danger" style="flex-shrink:0;">
+                  <i data-lucide="trash-2" style="width:13px;height:13px;stroke-width:1.5;"></i>Apagar lançamentos
+                </button>
+              </div>
+
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;">
+                <div>
+                  <div style="font-size:14px;font-weight:500;color:#C85A3E;margin-bottom:4px;">Excluir conta permanentemente</div>
+                  <div style="font-size:12px;color:#9A9189;line-height:1.55;max-width:400px;">Todos os seus dados serão apagados imediatamente e a assinatura cancelada. Exporte seus dados antes de continuar.</div>
+                </div>
+                <button class="btn-danger" style="flex-shrink:0;background:#FBE9E3;">
+                  <i data-lucide="x-circle" style="width:13px;height:13px;stroke-width:1.5;"></i>Excluir conta
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /settings-content -->
+    </div><!-- /settings-layout -->
+  </div><!-- /main -->
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:#3A3530;color:#FFF;border-radius:10px;padding:13px 22px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(58,53,48,.25);font-size:14px;font-weight:500;transition:transform .3s cubic-bezier(.22,.61,.36,1);z-index:200;white-space:nowrap;">
+  <i data-lucide="check-circle" style="width:18px;height:18px;stroke-width:1.5;color:#ACC095;"></i>
+  <span id="toast-msg">Configurações salvas!</span>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  function toggleEl(el) {
+    el.classList.toggle('on');
+    el.classList.toggle('off');
+  }
+
+  function selectTheme(el) {
+    document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    showToast('Tema atualizado!');
+  }
+
+  function scrollTo(id, navItem) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+    navItem.classList.add('active');
+  }
+
+  function showSaved() { showToast('Perfil salvo com sucesso!'); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    lucide.createIcons();
+    clearTimeout(window._toast);
+    window._toast = setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(100px)'; }, 2500);
+  }
+
+  // Highlight nav item on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        document.querySelectorAll('.settings-nav-item').forEach(i => {
+          if (i.getAttribute('href') === '#' + id) i.classList.add('active');
+          else i.classList.remove('active');
+        });
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-60px 0px -60% 0px' });
+
+  ['perfil','plano','seguranca','aparencia','notificacoes','financeiro','integracoes','exportar','perigo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+</script>
+</body>
+</html>

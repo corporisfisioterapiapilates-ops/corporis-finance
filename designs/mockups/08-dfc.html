@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DFC — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 14px; flex-shrink: 0; }
+    .page-body { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+    /* Buttons */
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:13px; padding:9px 16px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; white-space:nowrap; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-ghost { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:13px; padding:8px 11px; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s; }
+    .btn-ghost:hover { background:#F3F2EE; }
+
+    /* Avatar */
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+    .notif-btn { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; transition:background .15s; position:relative; }
+    .notif-btn:hover { background:#F3F2EE; }
+    .notif-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* Period tabs */
+    .period-tabs { display:flex; background:#F3F2EE; border-radius:8px; padding:3px; gap:2px; }
+    .period-tab { padding:7px 16px; border-radius:6px; border:none; cursor:pointer; font-family:'Ubuntu',sans-serif; font-size:13px; color:#9A9189; background:transparent; transition:all .15s; font-weight:400; }
+    .period-tab.active { background:#FFF; color:#3A3530; font-weight:500; box-shadow:0 1px 3px rgba(58,53,48,.07); }
+
+    /* View toggle */
+    .view-toggle { display:flex; border:1px solid #E8E5DF; border-radius:7px; overflow:hidden; }
+    .view-btn { width:34px; height:32px; border:none; background:#FFF; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#9A9189; transition:all .12s; }
+    .view-btn:hover { background:#F3F2EE; color:#6B635B; }
+    .view-btn.active { background:#F08353; color:#FFF; }
+
+    /* Cards */
+    .kpi-card { background:#FFF; border:1px solid #E8E5DF; border-radius:12px; padding:20px 22px; box-shadow:0 1px 2px rgba(58,53,48,.04); }
+
+    /* DFC Table */
+    .dfc-table { width:100%; border-collapse:separate; border-spacing:0; }
+    .dfc-table thead th {
+      font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.08em;
+      color:#9A9189; padding:10px 14px; background:#F3F2EE; border-bottom:1px solid #E8E5DF;
+      text-align:right; white-space:nowrap;
+    }
+    .dfc-table thead th:first-child { text-align:left; border-radius:8px 0 0 0; padding-left:18px; }
+    .dfc-table thead th:last-child { border-radius:0 8px 0 0; }
+
+    /* Group rows */
+    .row-group { background:#F7F5F2; cursor:pointer; }
+    .row-group td { padding:11px 14px; font-size:12px; font-weight:600; color:#3A3530; text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid #E8E5DF; }
+    .row-group td:first-child { padding-left:18px; }
+    .row-group td:not(:first-child) { text-align:right; }
+    .row-group:hover td { background:#ECEAE5; }
+
+    /* Sub-group rows */
+    .row-subgroup { background:#FAFAF8; cursor:pointer; }
+    .row-subgroup td { padding:9px 14px; font-size:12px; font-weight:500; color:#6B635B; border-bottom:1px solid #F0EEE9; }
+    .row-subgroup td:first-child { padding-left:34px; }
+    .row-subgroup td:not(:first-child) { text-align:right; }
+    .row-subgroup:hover td { background:#F3F2EE; }
+
+    /* Leaf rows */
+    .row-leaf td { padding:9px 14px; font-size:13px; color:#3A3530; border-bottom:1px solid #F5F4F0; transition:background .1s; }
+    .row-leaf td:first-child { padding-left:52px; }
+    .row-leaf td:not(:first-child) { text-align:right; font-variant-numeric:tabular-nums; }
+    .row-leaf:hover td { background:#FAFAF8; }
+    .row-leaf.hidden { display:none; }
+
+    /* Total / resultado rows */
+    .row-total { background:#3A3530; }
+    .row-total td { padding:13px 14px; font-size:13px; font-weight:600; color:#FFF; border-bottom:none; }
+    .row-total td:first-child { padding-left:18px; border-radius:0; }
+    .row-total td:not(:first-child) { text-align:right; font-variant-numeric:tabular-nums; }
+    .row-subtotal { background:#F3F2EE; }
+    .row-subtotal td { padding:11px 14px; font-size:13px; font-weight:600; color:#3A3530; border-bottom:1px solid #E8E5DF; }
+    .row-subtotal td:first-child { padding-left:18px; }
+    .row-subtotal td:not(:first-child) { text-align:right; font-variant-numeric:tabular-nums; }
+
+    /* Variance */
+    .var-pos { color:#7A9264; font-size:11px; }
+    .var-neg { color:#C85A3E; font-size:11px; }
+    .var-neu { color:#9A9189; font-size:11px; }
+
+    /* Badge */
+    .badge { display:inline-flex; align-items:center; font-size:10px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; padding:2px 7px; border-radius:4px; white-space:nowrap; }
+    .badge-success { background:#EEF2E8; color:#7A9264; }
+    .badge-danger  { background:#FBE9E3; color:#C85A3E; }
+    .badge-warning { background:#F7F0DD; color:#B8914E; }
+    .badge-info    { background:#F0EEE9; color:#6B635B; }
+
+    /* Expand chevron */
+    .expand-icon { width:14px; height:14px; stroke-width:2; color:#9A9189; flex-shrink:0; transition:transform .2s; }
+    .expanded .expand-icon { transform:rotate(90deg); }
+
+    /* Month highlight col */
+    .col-current { background:rgba(240,131,83,.05); }
+
+    /* Chart area */
+    .chart-card { background:#FFF; border:1px solid #E8E5DF; border-radius:12px; padding:24px; box-shadow:0 1px 2px rgba(58,53,48,.04); }
+
+    /* Sticky header */
+    .dfc-table thead { position:sticky; top:0; z-index:4; }
+
+    /* Select */
+    .filter-sel { background:#FFF; border:1px solid #E8E5DF; border-radius:7px; padding:7px 28px 7px 11px; font-family:'Ubuntu',sans-serif; font-size:13px; color:#3A3530; outline:none; appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 9px center; }
+    .filter-sel:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,.15); }
+
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-thumb { background:#D3D2CD; border-radius:99px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/><circle cx="17" cy="11" r="3.5" fill="#F08353"/><path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/></svg>
+      <div><div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div><div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div></div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item active" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#"><i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA<span style="margin-left:auto;font-size:9px;font-weight:500;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#F7F0DD;color:#B8914E;">beta</span></a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#3A3530;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Larissa Ferraz</div><div style="font-size:11px;color:#9A9189;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Corporis — Xanxerê/SC</div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">dfc</div>
+
+      <!-- Period tabs -->
+      <div class="period-tabs">
+        <button class="period-tab" onclick="setPeriod(this,'mensal')">Mensal</button>
+        <button class="period-tab active" onclick="setPeriod(this,'trimestral')">Trimestral</button>
+        <button class="period-tab" onclick="setPeriod(this,'anual')">Anual</button>
+        <button class="period-tab" onclick="setPeriod(this,'custom')">Personalizado</button>
+      </div>
+
+      <!-- Year selector -->
+      <select class="filter-sel">
+        <option>2025</option><option>2024</option>
+      </select>
+
+      <!-- View: table vs chart -->
+      <div class="view-toggle">
+        <button class="view-btn active" id="vt" onclick="setView('table',this)" title="Tabela">
+          <i data-lucide="table" style="width:15px;height:15px;stroke-width:1.5;"></i>
+        </button>
+        <button class="view-btn" id="vc" onclick="setView('chart',this)" title="Gráfico">
+          <i data-lucide="bar-chart-2" style="width:15px;height:15px;stroke-width:1.5;"></i>
+        </button>
+      </div>
+
+      <button class="btn-ghost" style="border:1px solid #E8E5DF;">
+        <i data-lucide="download" style="width:14px;height:14px;stroke-width:1.5;"></i>Exportar
+      </button>
+      <button class="notif-btn"><i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i><span class="notif-dot"></span></button>
+      <div class="avatar">L</div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- KPI strip -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;">
+        <div class="kpi-card" style="border-top:3px solid #ACC095;">
+          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:6px;">Receita Bruta (Ano)</div>
+          <div class="font-display tnum" style="font-size:22px;color:#7A9264;">R$ 374.280</div>
+          <div style="font-size:11px;color:#9A9189;margin-top:4px;display:flex;align-items:center;gap:4px;"><i data-lucide="trending-up" style="width:12px;height:12px;stroke-width:2;color:#7A9264;"></i>+14,2% vs 2024</div>
+        </div>
+        <div class="kpi-card" style="border-top:3px solid #C85A3E;">
+          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:6px;">Desp. Totais (Ano)</div>
+          <div class="font-display tnum" style="font-size:22px;color:#C85A3E;">R$ 306.420</div>
+          <div style="font-size:11px;color:#9A9189;margin-top:4px;display:flex;align-items:center;gap:4px;"><i data-lucide="trending-up" style="width:12px;height:12px;stroke-width:2;color:#C85A3E;"></i>+8,1% vs 2024</div>
+        </div>
+        <div class="kpi-card" style="border-top:3px solid #F08353;">
+          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:6px;">Resultado Líq. (Ano)</div>
+          <div class="font-display tnum" style="font-size:22px;color:#3A3530;">R$ 67.860</div>
+          <div style="font-size:11px;color:#9A9189;margin-top:4px;display:flex;align-items:center;gap:4px;"><i data-lucide="trending-up" style="width:12px;height:12px;stroke-width:2;color:#7A9264;"></i>+48% vs 2024</div>
+        </div>
+        <div class="kpi-card" style="border-top:3px solid #D2B06E;">
+          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:6px;">Margem Líquida</div>
+          <div class="font-display tnum" style="font-size:22px;color:#3A3530;">18,1%</div>
+          <div style="font-size:11px;color:#9A9189;margin-top:4px;display:flex;align-items:center;gap:4px;"><i data-lucide="trending-up" style="width:12px;height:12px;stroke-width:2;color:#7A9264;"></i>+4,3pp vs 2024</div>
+        </div>
+        <div class="kpi-card" style="border-top:3px solid #ACC095;">
+          <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:6px;">Saldo Atual</div>
+          <div class="font-display tnum" style="font-size:22px;color:#7A9264;">R$ 25.040</div>
+          <div style="font-size:11px;color:#9A9189;margin-top:4px;display:flex;align-items:center;gap:4px;"><i data-lucide="wallet" style="width:12px;height:12px;stroke-width:1.5;"></i>3 contas ativas</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-card" style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div>
+            <div class="font-display" style="font-size:17px;color:#3A3530;">evolução mensal — 2025</div>
+            <div style="font-size:12px;color:#9A9189;margin-top:2px;">Receita bruta × despesas totais × resultado acumulado</div>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#9A9189;"><div style="width:12px;height:12px;border-radius:2px;background:#ACC095;"></div>Receita</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#9A9189;"><div style="width:12px;height:12px;border-radius:2px;background:rgba(200,90,62,.55);"></div>Despesas</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#9A9189;"><div style="width:12px;height:3px;background:#F08353;border-radius:99px;"></div>Resultado</div>
+          </div>
+        </div>
+        <div style="height:220px;position:relative;">
+          <canvas id="dfc-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- TABLE VIEW -->
+      <div id="table-view">
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;box-shadow:0 1px 2px rgba(58,53,48,.04);overflow:hidden;">
+
+          <!-- Filters row -->
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #E8E5DF;background:#FAFAF8;">
+            <div style="font-size:13px;font-weight:500;color:#3A3530;">Competência 2025</div>
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+              <span style="font-size:12px;color:#9A9189;">Destacar mês:</span>
+              <select class="filter-sel" onchange="highlightMonth(this.value)">
+                <option value="">Nenhum</option>
+                <option value="5" selected>Nov 2025</option>
+                <option value="4">Out 2025</option>
+                <option value="3">Set 2025</option>
+              </select>
+              <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;" onclick="expandAll()">
+                <i data-lucide="unfold-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i>Expandir tudo
+              </button>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="dfc-table">
+              <thead>
+                <tr>
+                  <th style="min-width:260px;text-align:left;padding-left:18px;">Categoria</th>
+                  <th style="min-width:100px;">Jun 25</th>
+                  <th style="min-width:100px;">Jul 25</th>
+                  <th style="min-width:100px;">Ago 25</th>
+                  <th style="min-width:100px;">Set 25</th>
+                  <th style="min-width:100px;">Out 25</th>
+                  <th style="min-width:110px;background:rgba(240,131,83,.08);color:#E07040;">Nov 25 ●</th>
+                  <th style="min-width:110px;">Total Ano</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                <!-- ═══ RECEITA BRUTA ═══ -->
+                <tr class="row-group" onclick="toggleSection('rec')">
+                  <td><div style="display:flex;align-items:center;gap:8px;"><svg id="ic-rec" class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span style="color:#ACC095;">▌</span>1. RECEITA BRUTA</div></td>
+                  <td>28.400</td><td>31.200</td><td>29.800</td><td>32.100</td><td>30.900</td>
+                  <td style="background:rgba(240,131,83,.06);font-weight:700;color:#3A3530;">34.650</td>
+                  <td style="color:#7A9264;">187.050</td>
+                </tr>
+                <tr class="row-leaf hidden" data-sec="rec"><td>1.01 Pilates</td><td>9.800</td><td>11.200</td><td>10.400</td><td>11.400</td><td>10.800</td><td style="background:rgba(240,131,83,.04);">12.960</td><td>66.560</td></tr>
+                <tr class="row-leaf hidden" data-sec="rec"><td>1.02 Fisioterapia</td><td>7.200</td><td>8.100</td><td>7.600</td><td>8.300</td><td>8.000</td><td style="background:rgba(240,131,83,.04);">9.440</td><td>48.640</td></tr>
+                <tr class="row-leaf hidden" data-sec="rec"><td>1.03 Fisio Pélvica</td><td>4.800</td><td>5.200</td><td>4.900</td><td>5.400</td><td>5.100</td><td style="background:rgba(240,131,83,.04);">5.760</td><td>31.160</td></tr>
+                <tr class="row-leaf hidden" data-sec="rec"><td>1.04 Taping</td><td>2.400</td><td>2.700</td><td>2.500</td><td>2.800</td><td>2.600</td><td style="background:rgba(240,131,83,.04);">2.950</td><td>15.950</td></tr>
+                <tr class="row-leaf hidden" data-sec="rec"><td>1.05 Primeira Consulta</td><td>2.200</td><td>2.400</td><td>2.300</td><td>2.600</td><td>2.400</td><td style="background:rgba(240,131,83,.04);">2.520</td><td>14.420</td></tr>
+                <tr class="row-leaf hidden" data-sec="rec"><td>1.06 Combo</td><td>2.000</td><td>1.600</td><td>2.100</td><td>1.600</td><td>2.000</td><td style="background:rgba(240,131,83,.04);">1.020</td><td>10.320</td></tr>
+
+                <!-- ═══ IMPOSTOS ═══ -->
+                <tr class="row-group" onclick="toggleSection('imp')">
+                  <td><div style="display:flex;align-items:center;gap:8px;"><svg id="ic-imp" class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span style="color:#D2B06E;">▌</span>2. IMPOSTOS SOBRE RECEITA</div></td>
+                  <td class="var-neg">−2.130</td><td class="var-neg">−2.340</td><td class="var-neg">−2.235</td><td class="var-neg">−2.408</td><td class="var-neg">−2.318</td>
+                  <td style="background:rgba(240,131,83,.06);" class="var-neg">−2.599</td>
+                  <td class="var-neg">−14.030</td>
+                </tr>
+                <tr class="row-leaf hidden" data-sec="imp"><td>2.01 Simples Nacional</td><td class="var-neg">−2.130</td><td class="var-neg">−2.340</td><td class="var-neg">−2.235</td><td class="var-neg">−2.408</td><td class="var-neg">−2.318</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−2.599</td><td class="var-neg">−14.030</td></tr>
+
+                <!-- RECEITA LÍQUIDA subtotal -->
+                <tr class="row-subtotal">
+                  <td style="padding-left:18px;"><div style="display:flex;align-items:center;gap:8px;"><i data-lucide="equal" style="width:13px;height:13px;stroke-width:2;color:#9A9189;"></i>RECEITA LÍQUIDA</div></td>
+                  <td>26.270</td><td>28.860</td><td>27.565</td><td>29.693</td><td>28.583</td>
+                  <td style="background:rgba(240,131,83,.07);color:#3A3530;">32.052</td>
+                  <td style="color:#7A9264;">173.023</td>
+                </tr>
+
+                <!-- ═══ CUSTOS ═══ -->
+                <tr class="row-group" onclick="toggleSection('cus')">
+                  <td><div style="display:flex;align-items:center;gap:8px;"><svg id="ic-cus" class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span style="color:#C85A3E;opacity:.7;">▌</span>3. CUSTOS</div></td>
+                  <td class="var-neg">−3.200</td><td class="var-neg">−3.400</td><td class="var-neg">−3.100</td><td class="var-neg">−3.500</td><td class="var-neg">−3.300</td>
+                  <td style="background:rgba(240,131,83,.06);" class="var-neg">−3.680</td>
+                  <td class="var-neg">−20.180</td>
+                </tr>
+                <tr class="row-leaf hidden" data-sec="cus"><td>3.02 Lavanderia</td><td class="var-neg">−1.800</td><td class="var-neg">−1.900</td><td class="var-neg">−1.750</td><td class="var-neg">−1.950</td><td class="var-neg">−1.850</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−2.050</td><td class="var-neg">−11.300</td></tr>
+                <tr class="row-leaf hidden" data-sec="cus"><td>3.03 Materiais Fisio</td><td class="var-neg">−1.400</td><td class="var-neg">−1.500</td><td class="var-neg">−1.350</td><td class="var-neg">−1.550</td><td class="var-neg">−1.450</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−1.630</td><td class="var-neg">−8.880</td></tr>
+
+                <!-- LUCRO BRUTO -->
+                <tr class="row-subtotal">
+                  <td style="padding-left:18px;"><div style="display:flex;align-items:center;gap:8px;"><i data-lucide="equal" style="width:13px;height:13px;stroke-width:2;color:#9A9189;"></i>LUCRO BRUTO</div></td>
+                  <td>23.070</td><td>25.460</td><td>24.465</td><td>26.193</td><td>25.283</td>
+                  <td style="background:rgba(240,131,83,.07);">28.372</td>
+                  <td style="color:#7A9264;">152.843</td>
+                </tr>
+
+                <!-- ═══ DESPESAS OPERACIONAIS ═══ -->
+                <tr class="row-group" onclick="toggleSection('dop')">
+                  <td><div style="display:flex;align-items:center;gap:8px;"><svg id="ic-dop" class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span style="color:#C85A3E;">▌</span>4. DESPESAS OPERACIONAIS</div></td>
+                  <td class="var-neg">−18.900</td><td class="var-neg">−20.100</td><td class="var-neg">−19.500</td><td class="var-neg">−20.800</td><td class="var-neg">−19.450</td>
+                  <td style="background:rgba(240,131,83,.06);" class="var-neg">−20.553</td>
+                  <td class="var-neg">−119.303</td>
+                </tr>
+                <tr class="row-subgroup" onclick="toggleSection('dop-rh')" data-sec="dop">
+                  <td style="padding-left:34px;"><div style="display:flex;align-items:center;gap:7px;"><svg id="ic-dop-rh" class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>4.1 RH</div></td>
+                  <td class="var-neg">−12.400</td><td class="var-neg">−12.800</td><td class="var-neg">−12.600</td><td class="var-neg">−13.200</td><td class="var-neg">−12.800</td>
+                  <td style="background:rgba(240,131,83,.04);" class="var-neg">−13.340</td>
+                  <td class="var-neg">−77.140</td>
+                </tr>
+                <tr class="row-leaf hidden" data-sec="dop-rh"><td>4.01.01 Salário</td><td class="var-neg">−7.200</td><td class="var-neg">−7.200</td><td class="var-neg">−7.200</td><td class="var-neg">−7.600</td><td class="var-neg">−7.200</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−7.200</td><td class="var-neg">−43.600</td></tr>
+                <tr class="row-leaf hidden" data-sec="dop-rh"><td>4.01.06 FGTS</td><td class="var-neg">−576</td><td class="var-neg">−576</td><td class="var-neg">−576</td><td class="var-neg">−608</td><td class="var-neg">−576</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−576</td><td class="var-neg">−3.488</td></tr>
+                <tr class="row-leaf hidden" data-sec="dop-rh"><td>4.01.13 Pró-labore</td><td class="var-neg">−4.000</td><td class="var-neg">−4.000</td><td class="var-neg">−4.000</td><td class="var-neg">−4.200</td><td class="var-neg">−4.000</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−4.000</td><td class="var-neg">−24.200</td></tr>
+                <tr class="row-subgroup" onclick="toggleSection('dop-adm')" data-sec="dop">
+                  <td style="padding-left:34px;"><div style="display:flex;align-items:center;gap:7px;"><svg id="ic-dop-adm" class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>4.2 Administrativo</div></td>
+                  <td class="var-neg">−6.500</td><td class="var-neg">−7.300</td><td class="var-neg">−6.900</td><td class="var-neg">−7.600</td><td class="var-neg">−6.650</td>
+                  <td style="background:rgba(240,131,83,.04);" class="var-neg">−7.213</td>
+                  <td class="var-neg">−42.163</td>
+                </tr>
+                <tr class="row-leaf hidden" data-sec="dop-adm"><td>4.02.01 Aluguel</td><td class="var-neg">−3.200</td><td class="var-neg">−3.200</td><td class="var-neg">−3.200</td><td class="var-neg">−3.200</td><td class="var-neg">−3.200</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−3.200</td><td class="var-neg">−19.200</td></tr>
+                <tr class="row-leaf hidden" data-sec="dop-adm"><td>4.02.02 Luz/Água/Gás</td><td class="var-neg">−410</td><td class="var-neg">−480</td><td class="var-neg">−430</td><td class="var-neg">−510</td><td class="var-neg">−420</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−487</td><td class="var-neg">−2.737</td></tr>
+                <tr class="row-leaf hidden" data-sec="dop-adm"><td>4.02.07 Sistemas</td><td class="var-neg">−290</td><td class="var-neg">−320</td><td class="var-neg">−300</td><td class="var-neg">−390</td><td class="var-neg">−280</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−326</td><td class="var-neg">−1.906</td></tr>
+
+                <!-- EBITDA -->
+                <tr class="row-subtotal" style="background:#EEF2E8;">
+                  <td style="padding-left:18px;"><div style="display:flex;align-items:center;gap:8px;"><i data-lucide="equal" style="width:13px;height:13px;stroke-width:2;color:#7A9264;"></i><span style="font-weight:700;color:#7A9264;">EBITDA / RES. OPERACIONAL</span></div></td>
+                  <td style="color:#7A9264;font-weight:600;">4.170</td>
+                  <td style="color:#7A9264;font-weight:600;">5.360</td>
+                  <td style="color:#7A9264;font-weight:600;">4.965</td>
+                  <td style="color:#7A9264;font-weight:600;">5.393</td>
+                  <td style="color:#7A9264;font-weight:600;">5.833</td>
+                  <td style="background:rgba(240,131,83,.07);color:#7A9264;font-weight:700;">7.819</td>
+                  <td style="color:#7A9264;font-weight:700;">33.540</td>
+                </tr>
+
+                <!-- ═══ REC/DESP FINANCEIRA ═══ -->
+                <tr class="row-group" onclick="toggleSection('fin')">
+                  <td><div style="display:flex;align-items:center;gap:8px;"><svg id="ic-fin" class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span style="color:#6B635B;">▌</span>5. REC./DESP. FINANCEIRA</div></td>
+                  <td class="var-neg">−120</td><td class="var-neg">−140</td><td class="var-neg">−130</td><td class="var-neg">−145</td><td class="var-neg">−125</td>
+                  <td style="background:rgba(240,131,83,.06);" class="var-neg">−128</td>
+                  <td class="var-neg">−788</td>
+                </tr>
+                <tr class="row-leaf hidden" data-sec="fin"><td>5.01 IOF / Tarifas</td><td class="var-neg">−120</td><td class="var-neg">−140</td><td class="var-neg">−130</td><td class="var-neg">−145</td><td class="var-neg">−125</td><td style="background:rgba(240,131,83,.04);" class="var-neg">−128</td><td class="var-neg">−788</td></tr>
+
+                <!-- RESULTADO LÍQUIDO TOTAL -->
+                <tr class="row-total">
+                  <td><div style="display:flex;align-items:center;gap:10px;"><i data-lucide="trending-up" style="width:15px;height:15px;stroke-width:2;color:#ACC095;"></i>RESULTADO LÍQUIDO</div></td>
+                  <td>4.050</td><td>5.220</td><td>4.835</td><td>5.248</td><td>5.708</td>
+                  <td style="color:#F6A958;font-weight:700;">7.691</td>
+                  <td style="color:#ACC095;font-weight:700;">32.752</td>
+                </tr>
+
+                <!-- SALDO ACUMULADO -->
+                <tr style="background:#2E2822;border-top:1px solid rgba(255,255,255,.08);">
+                  <td style="padding:11px 18px;font-size:12px;font-weight:500;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em;"><div style="display:flex;align-items:center;gap:8px;"><i data-lucide="landmark" style="width:13px;height:13px;stroke-width:1.5;color:#D2B06E;"></i>SALDO ACUMULADO</div></td>
+                  <td style="padding:11px 14px;font-size:12px;font-weight:600;color:#EAD7AC;text-align:right;font-variant-numeric:tabular-nums;">12.890</td>
+                  <td style="padding:11px 14px;font-size:12px;font-weight:600;color:#EAD7AC;text-align:right;font-variant-numeric:tabular-nums;">18.110</td>
+                  <td style="padding:11px 14px;font-size:12px;font-weight:600;color:#EAD7AC;text-align:right;font-variant-numeric:tabular-nums;">22.945</td>
+                  <td style="padding:11px 14px;font-size:12px;font-weight:600;color:#EAD7AC;text-align:right;font-variant-numeric:tabular-nums;">28.193</td>
+                  <td style="padding:11px 14px;font-size:12px;font-weight:600;color:#EAD7AC;text-align:right;font-variant-numeric:tabular-nums;">33.901</td>
+                  <td style="padding:11px 14px;font-size:13px;font-weight:700;color:#F6A958;text-align:right;font-variant-numeric:tabular-nums;background:rgba(240,131,83,.12);">41.592</td>
+                  <td style="padding:11px 14px;font-size:13px;font-weight:700;color:#ACC095;text-align:right;font-variant-numeric:tabular-nums;">41.592</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  // ── Chart ───────────────────────────────────────────────────────────────────
+  const ctx = document.getElementById('dfc-chart').getContext('2d');
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const receita = [26800,27400,28100,27600,28900,28400,31200,29800,32100,30900,34650,null];
+  const despesas = [22400,23000,23800,23200,24300,24100,26100,24900,27100,25700,26830,null];
+  const resultado = [4400,4400,4300,4400,4600,4050,5220,4835,5248,5708,7691,null];
+
+  const gradRec = ctx.createLinearGradient(0,0,0,220);
+  gradRec.addColorStop(0,'rgba(172,192,149,.18)');
+  gradRec.addColorStop(1,'rgba(172,192,149,0)');
+  const gradDes = ctx.createLinearGradient(0,0,0,220);
+  gradDes.addColorStop(0,'rgba(200,90,62,.12)');
+  gradDes.addColorStop(1,'rgba(200,90,62,0)');
+
+  new Chart(ctx, {
+    data: {
+      labels: months,
+      datasets: [
+        { type:'bar', label:'Receita', data:receita, backgroundColor:months.map((_,i)=>i===10?'rgba(172,192,149,.85)':'rgba(172,192,149,.55)'), borderRadius:4, borderSkipped:false, yAxisID:'y', order:2 },
+        { type:'bar', label:'Despesas', data:despesas, backgroundColor:months.map((_,i)=>i===10?'rgba(200,90,62,.65)':'rgba(200,90,62,.38)'), borderRadius:4, borderSkipped:false, yAxisID:'y', order:3 },
+        { type:'line', label:'Resultado', data:resultado, borderColor:'#F08353', borderWidth:2.5, pointBackgroundColor:months.map((_,i)=>i===10?'#F08353':'#FFF'), pointBorderColor:'#F08353', pointRadius:months.map((_,i)=>i===10?6:4), pointBorderWidth:2, fill:false, tension:.4, yAxisID:'y2', order:1 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#3A3530', titleColor:'#E8E5DF', bodyColor:'#FFF', padding:10,
+          callbacks:{ label: ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y?.toLocaleString('pt-BR')}` }
+        }
+      },
+      scales:{
+        x:{ grid:{display:false}, border:{display:false}, ticks:{color:'#9A9189',font:{family:'Ubuntu',size:11}} },
+        y:{ grid:{color:'#E8E5DF'}, border:{display:false}, ticks:{color:'#9A9189',font:{family:'Ubuntu',size:11},callback:v=>`R$ ${(v/1000).toFixed(0)}k`}, position:'left' },
+        y2:{ grid:{display:false}, border:{display:false}, ticks:{color:'#F08353',font:{family:'Ubuntu',size:11},callback:v=>`${(v/1000).toFixed(0)}k`}, position:'right' }
+      },
+      barPercentage:.65, categoryPercentage:.75
+    }
+  });
+
+  // ── Section toggling ────────────────────────────────────────────────────────
+  const openSections = new Set();
+
+  function toggleSection(id) {
+    const rows = document.querySelectorAll(`[data-sec="${id}"]`);
+    const icon = document.getElementById('ic-' + id);
+    if (openSections.has(id)) {
+      openSections.delete(id);
+      rows.forEach(r => r.classList.add('hidden'));
+      if (icon) { icon.style.transform='rotate(0deg)'; }
+    } else {
+      openSections.add(id);
+      rows.forEach(r => r.classList.remove('hidden'));
+      if (icon) { icon.style.transform='rotate(90deg)'; }
+    }
+    lucide.createIcons();
+  }
+
+  function expandAll() {
+    ['rec','imp','cus','dop','dop-rh','dop-adm','fin'].forEach(id => {
+      openSections.add(id);
+      document.querySelectorAll(`[data-sec="${id}"]`).forEach(r=>r.classList.remove('hidden'));
+      const icon = document.getElementById('ic-'+id);
+      if (icon) icon.style.transform='rotate(90deg)';
+    });
+  }
+
+  function setPeriod(btn, p) {
+    document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function setView(type, btn) {
+    document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function highlightMonth(val) {}
+</script>
+</body>
+</html>

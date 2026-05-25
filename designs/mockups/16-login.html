@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,300;9..144,0,400;9..144,1,300;9..144,1,400&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background: #FAFAF8;
+      color: #3A3530;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .font-display {
+      font-family: 'Fraunces', serif;
+      font-weight: 400;
+      text-transform: lowercase;
+    }
+    .tnum { font-variant-numeric: tabular-nums; }
+
+    /* ── LEFT PANEL ── */
+    .left-panel {
+      width: 50%;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    /* Foto de fundo simulada com gradiente rico */
+    .left-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        /* overlay laranja translúcido */
+        linear-gradient(
+          160deg,
+          rgba(240, 131, 83, 0.82) 0%,
+          rgba(210, 176, 110, 0.70) 40%,
+          rgba(58, 53, 48, 0.78) 100%
+        ),
+        /* textura de fundo — simula foto */
+        radial-gradient(ellipse at 30% 60%, #7A6050 0%, #4A3828 40%, #2E2218 100%);
+    }
+
+    /* Grain overlay */
+    .left-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* Decorative circles */
+    .left-circle-1 {
+      position: absolute;
+      width: 420px; height: 420px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.08);
+      top: -80px; right: -100px;
+      pointer-events: none;
+    }
+    .left-circle-2 {
+      position: absolute;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.06);
+      bottom: 60px; left: -60px;
+      pointer-events: none;
+    }
+    .left-circle-3 {
+      position: absolute;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(240,131,83,0.15);
+      bottom: 180px; right: 60px;
+      pointer-events: none;
+    }
+
+    /* Pilates silhouette — SVG decorativo */
+    .pilates-figure {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 55%;
+      opacity: 0.07;
+      pointer-events: none;
+    }
+
+    /* Left content */
+    .left-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 48px 52px;
+    }
+
+    /* Logo on left */
+    .left-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Headline area */
+    .left-headline {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding-bottom: 52px;
+    }
+
+    .headline-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .headline-eyebrow::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 1px;
+      background: rgba(255,255,255,0.35);
+    }
+
+    .headline-main {
+      font-family: 'Fraunces', serif;
+      font-weight: 300;
+      font-style: italic;
+      font-size: 52px;
+      line-height: 1.08;
+      color: #FFFFFF;
+      text-transform: lowercase;
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+    .headline-main em {
+      font-style: normal;
+      color: #EAD7AC;
+    }
+
+    .headline-sub {
+      font-size: 15px;
+      color: rgba(255,255,255,0.60);
+      line-height: 1.65;
+      max-width: 340px;
+      font-weight: 300;
+    }
+
+    /* Stats strip */
+    .stats-strip {
+      display: flex;
+      gap: 32px;
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255,255,255,0.12);
+    }
+    .stat-item { }
+    .stat-num {
+      font-family: 'Fraunces', serif;
+      font-weight: 400;
+      font-size: 26px;
+      color: #FFF;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 64px;
+      position: relative;
+      background: #FAFAF8;
+    }
+
+    /* Subtle warm texture on right */
+    .right-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle at top right, rgba(240,131,83,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .right-inner {
+      width: 100%;
+      max-width: 380px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Form header */
+    .form-greeting {
+      margin-bottom: 36px;
+    }
+    .form-welcome {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #9A9189;
+      margin-bottom: 10px;
+    }
+    .form-title {
+      font-family: 'Fraunces', serif;
+      font-size: 30px;
+      font-weight: 400;
+      text-transform: lowercase;
+      color: #3A3530;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+    .form-subtitle {
+      font-size: 14px;
+      color: #9A9189;
+      line-height: 1.55;
+    }
+
+    /* Form fields */
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+
+    .field-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #6B635B;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .field-input-wrap {
+      position: relative;
+    }
+
+    .field-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #C0BBB4;
+      pointer-events: none;
+      transition: color .15s;
+    }
+
+    .field-input {
+      width: 100%;
+      background: #FFFFFF;
+      border: 1.5px solid #E8E5DF;
+      border-radius: 10px;
+      padding: 13px 14px 13px 44px;
+      font-family: 'Ubuntu', sans-serif;
+      font-size: 14px;
+      color: #3A3530;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .field-input::placeholder { color: #C0BBB4; }
+    .field-input:focus {
+      border-color: #F08353;
+      box-shadow: 0 0 0 3px rgba(240,131,83,0.16);
+    }
+    .field-input:focus + .field-icon,
+    .field-input-wrap:focus-within .field-icon { color: #F08353; }
+
+    /* Password toggle */
+    .pwd-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #C0BBB4;
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color .15s;
+    }
+    .pwd-toggle:hover { color: #6B635B; }
+
+    /* Forgot password */
+    .forgot-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+      margin-bottom: 24px;
+    }
+    .forgot-link {
+      font-size: 13px;
+      color: #9A9189;
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .forgot-link:hover { color: #F08353; }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      background: #F08353;
+      color: #FFFFFF;
+      font-family: 'Ubuntu', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      padding: 14px 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      transition: background .18s, box-shadow .18s, transform .1s;
+      letter-spacing: 0.01em;
+    }
+    .btn-submit:hover {
+      background: #F6A958;
+      box-shadow: 0 4px 16px rgba(240,131,83,0.30);
+      transform: translateY(-1px);
+    }
+    .btn-submit:active { transform: translateY(0); }
+
+    /* Divider */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 22px 0;
+    }
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #E8E5DF;
+    }
+    .or-text { font-size: 12px; color: #C0BBB4; white-space: nowrap; }
+
+    /* Google SSO */
+    .btn-sso {
+      width: 100%;
+      background: #FFFFFF;
+      border: 1.5px solid #E8E5DF;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-family: 'Ubuntu', sans-serif;
+      font-size: 14px;
+      color: #6B635B;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: border-color .18s, background .18s;
+    }
+    .btn-sso:hover { border-color: #D3D2CD; background: #F9F8F5; }
+
+    /* Error state */
+    .field-error {
+      font-size: 12px;
+      color: #C85A3E;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    /* Right footer */
+    .right-footer {
+      position: absolute;
+      bottom: 32px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+    }
+    .right-footer-text {
+      font-size: 12px;
+      color: #C0BBB4;
+    }
+    .right-footer-text a {
+      color: #9A9189;
+      text-decoration: none;
+    }
+    .right-footer-text a:hover { color: #F08353; }
+
+    /* Animated underline on focus */
+    .field-input-wrap { position: relative; }
+
+    /* Loading state */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { animation: spin .7s linear infinite; }
+
+    /* Subtle entrance animation */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .right-inner { animation: fadeUp .45s cubic-bezier(.22,.61,.36,1) both; }
+    .left-headline { animation: fadeUp .55s .1s cubic-bezier(.22,.61,.36,1) both; }
+
+    /* Left logo pulse */
+    @keyframes floatLogo {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-4px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════════ LEFT PANEL -->
+  <div class="left-panel">
+    <div class="left-bg"></div>
+    <div class="left-circle-1"></div>
+    <div class="left-circle-2"></div>
+    <div class="left-circle-3"></div>
+
+    <!-- SVG pilates/fisio figure decorativo -->
+    <svg class="pilates-figure" viewBox="0 0 300 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Corpo simplificado — figura em movimento de pilates -->
+      <ellipse cx="180" cy="60" rx="28" ry="28" fill="white"/>
+      <path d="M180 88 C180 88 160 140 140 180 C120 220 100 240 80 260" stroke="white" stroke-width="14" stroke-linecap="round"/>
+      <path d="M180 88 C180 88 200 150 220 190 C240 230 260 250 270 280" stroke="white" stroke-width="14" stroke-linecap="round"/>
+      <path d="M140 180 C130 200 120 230 110 260 C100 290 98 320 100 360" stroke="white" stroke-width="12" stroke-linecap="round"/>
+      <path d="M220 190 C230 210 235 240 238 270 C241 300 238 340 230 380" stroke="white" stroke-width="12" stroke-linecap="round"/>
+      <!-- Braços abertos -->
+      <path d="M160 120 C140 110 110 108 80 118" stroke="white" stroke-width="12" stroke-linecap="round"/>
+      <path d="M200 120 C220 110 250 106 280 112" stroke="white" stroke-width="12" stroke-linecap="round"/>
+    </svg>
+
+    <div class="left-content">
+      <!-- Logo -->
+      <div class="left-logo">
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+          <circle cx="19" cy="19" r="17" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+          <circle cx="19" cy="12" r="4" fill="#EAD7AC"/>
+          <path d="M 9 26 A 13 13 0 0 1 29 26" stroke="#F08353" stroke-width="1.8" stroke-dasharray="3.5 3" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div style="font-family:'Fraunces',serif;font-size:22px;color:#FFF;line-height:1;text-transform:lowercase;font-weight:400;">corporis</div>
+          <div style="font-size:9px;font-weight:500;letter-spacing:0.18em;color:rgba(234,215,172,0.7);text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div>
+        </div>
+      </div>
+
+      <!-- Headline -->
+      <div class="left-headline">
+        <div class="headline-eyebrow">gestão financeira</div>
+
+        <div class="headline-main">
+          movimente seus<br>
+          <em>números</em> com<br>
+          propósito
+        </div>
+
+        <p class="headline-sub">
+          Clareza financeira feita para quem cuida de pessoas — DFC, fluxo de caixa e IA em um só lugar.
+        </p>
+
+        <!-- Stats -->
+        <div class="stats-strip">
+          <div class="stat-item">
+            <div class="stat-num">R$ 34k</div>
+            <div class="stat-label">faturamento mensal</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.10);"></div>
+          <div class="stat-item">
+            <div class="stat-num">80+</div>
+            <div class="stat-label">lançamentos / mês</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.10);"></div>
+          <div class="stat-item">
+            <div class="stat-num">100%</div>
+            <div class="stat-label">visibilidade do caixa</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="right-inner">
+
+      <!-- Greeting -->
+      <div class="form-greeting">
+        <div class="form-welcome">Bem-vinda de volta</div>
+        <div class="form-title">acesse sua conta</div>
+        <p class="form-subtitle">Insira seu e-mail e senha para continuar.</p>
+      </div>
+
+      <!-- Form -->
+      <form onsubmit="handleLogin(event)" novalidate>
+
+        <div class="field-group">
+
+          <!-- E-mail -->
+          <div class="field-wrap">
+            <label class="field-label" for="email">E-mail</label>
+            <div class="field-input-wrap">
+              <input
+                class="field-input"
+                id="email"
+                type="email"
+                placeholder="larissa@corporis.com.br"
+                value="larissa@corporis.com.br"
+                autocomplete="email"
+                oninput="clearError('email')"
+              >
+              <span class="field-icon">
+                <i data-lucide="mail" style="width:16px;height:16px;stroke-width:1.5;"></i>
+              </span>
+            </div>
+            <div class="field-error" id="email-error" style="display:none;">
+              <i data-lucide="alert-circle" style="width:12px;height:12px;stroke-width:2;"></i>
+              E-mail não encontrado em nossa base.
+            </div>
+          </div>
+
+          <!-- Senha -->
+          <div class="field-wrap">
+            <label class="field-label" for="senha">Senha</label>
+            <div class="field-input-wrap">
+              <input
+                class="field-input"
+                id="senha"
+                type="password"
+                placeholder="••••••••••"
+                value="minhasenha123"
+                autocomplete="current-password"
+                oninput="clearError('senha')"
+              >
+              <span class="field-icon">
+                <i data-lucide="lock" style="width:16px;height:16px;stroke-width:1.5;"></i>
+              </span>
+              <button class="pwd-toggle" type="button" onclick="togglePwd()" id="pwd-btn" title="Mostrar senha">
+                <i data-lucide="eye" style="width:16px;height:16px;stroke-width:1.5;" id="pwd-icon"></i>
+              </button>
+            </div>
+            <div class="field-error" id="senha-error" style="display:none;">
+              <i data-lucide="alert-circle" style="width:12px;height:12px;stroke-width:2;"></i>
+              Senha incorreta. Tente novamente.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Forgot + Remember -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;margin-bottom:28px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;">
+            <div id="remember-cb" onclick="toggleRemember()" style="width:16px;height:16px;border-radius:4px;border:1.5px solid #D3D2CD;display:flex;align-items:center;justify-content:center;transition:all .12s;cursor:pointer;flex-shrink:0;"></div>
+            <span style="font-size:13px;color:#9A9189;">Lembrar de mim</span>
+          </label>
+          <a href="#" class="forgot-link" onclick="showForgot(event)">Esqueci minha senha</a>
+        </div>
+
+        <!-- Submit -->
+        <button class="btn-submit" id="btn-submit" type="submit">
+          <i data-lucide="log-in" style="width:17px;height:17px;stroke-width:1.5;" id="submit-icon"></i>
+          <span id="submit-text">Entrar na Corporis</span>
+        </button>
+
+      </form>
+
+      <!-- OR divider -->
+      <div class="or-divider">
+        <span class="or-text">ou continue com</span>
+      </div>
+
+      <!-- Google SSO -->
+      <button class="btn-sso" type="button">
+        <!-- Google icon -->
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2045C17.64 8.5664 17.5827 7.9527 17.4764 7.3636H9V10.845H13.8436C13.635 11.97 13.0009 12.9232 12.0477 13.5614V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.2045Z" fill="#4285F4"/>
+          <path d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5614C11.2418 14.1014 10.2109 14.4204 9 14.4204C6.65591 14.4204 4.67182 12.8373 3.96409 10.71H0.957275V13.0418C2.43818 15.9832 5.48182 18 9 18Z" fill="#34A853"/>
+          <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.5932 3.68182 9C3.68182 8.4068 3.78409 7.83 3.96409 7.29V4.9582H0.957275C0.347727 6.1732 0 7.5477 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/>
+          <path d="M9 3.5795C10.3214 3.5795 11.5077 4.0336 12.4405 4.9255L15.0218 2.3441C13.4632 0.8918 11.4259 0 9 0C5.48182 0 2.43818 2.0168 0.957275 4.9582L3.96409 7.29C4.67182 5.1627 6.65591 3.5795 9 3.5795Z" fill="#EA4335"/>
+        </svg>
+        Entrar com Google
+      </button>
+
+      <!-- Forgot password panel (hidden) -->
+      <div id="forgot-panel" style="display:none;margin-top:24px;background:#F7F0DD;border:1px solid #D2B06E;border-radius:10px;padding:18px 20px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <i data-lucide="mail" style="width:16px;height:16px;stroke-width:1.5;color:#B8914E;flex-shrink:0;margin-top:1px;"></i>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:#3A3530;margin-bottom:4px;">Recuperar senha</div>
+            <div style="font-size:12px;color:#9A9189;margin-bottom:12px;">Enviaremos um link de redefinição para o e-mail cadastrado.</div>
+            <div style="display:flex;gap:8px;">
+              <input
+                style="flex:1;background:#FFF;border:1px solid #D2B06E;border-radius:7px;padding:9px 12px;font-family:'Ubuntu',sans-serif;font-size:13px;color:#3A3530;outline:none;"
+                type="email"
+                placeholder="seu@email.com.br"
+                id="forgot-email"
+              >
+              <button onclick="sendReset()" style="background:#F08353;color:#FFF;border:none;border-radius:7px;padding:9px 14px;font-family:'Ubuntu',sans-serif;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .15s;" onmouseover="this.style.background='#F6A958'" onmouseout="this.style.background='#F08353'">
+                Enviar link
+              </button>
+            </div>
+          </div>
+          <button onclick="hideForgot()" style="background:none;border:none;cursor:pointer;color:#9A9189;padding:2px;">
+            <i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sign up nudge -->
+      <div style="margin-top:28px;text-align:center;font-size:13px;color:#9A9189;">
+        Ainda não tem uma conta?
+        <a href="#" style="color:#F08353;text-decoration:none;font-weight:500;margin-left:4px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Fale com a equipe</a>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="right-footer">
+      <p class="right-footer-text">
+        © 2025 Corporis Finance · <a href="#">Privacidade</a> · <a href="#">Termos</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(120px);background:#3A3530;color:#FFF;border-radius:10px;padding:13px 22px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(58,53,48,.28);font-size:14px;font-weight:500;transition:transform .32s cubic-bezier(.22,.61,.36,1);z-index:200;white-space:nowrap;">
+    <i data-lucide="check-circle" style="width:18px;height:18px;stroke-width:1.5;color:#ACC095;" id="toast-icon"></i>
+    <span id="toast-msg">Bem-vinda de volta, Larissa!</span>
+  </div>
+
+<script>
+  lucide.createIcons();
+
+  let pwdVisible = false;
+  let rememberChecked = false;
+
+  // ── Password toggle ─────────────────────────────────────────────────────────
+  function togglePwd() {
+    pwdVisible = !pwdVisible;
+    const input = document.getElementById('senha');
+    const icon  = document.getElementById('pwd-icon');
+    input.type = pwdVisible ? 'text' : 'password';
+    icon.setAttribute('data-lucide', pwdVisible ? 'eye-off' : 'eye');
+    lucide.createIcons();
+  }
+
+  // ── Remember me ─────────────────────────────────────────────────────────────
+  function toggleRemember() {
+    rememberChecked = !rememberChecked;
+    const cb = document.getElementById('remember-cb');
+    if (rememberChecked) {
+      cb.style.background    = '#F08353';
+      cb.style.borderColor   = '#F08353';
+      cb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    } else {
+      cb.style.background  = '';
+      cb.style.borderColor = '#D3D2CD';
+      cb.innerHTML         = '';
+    }
+  }
+
+  // ── Clear errors ────────────────────────────────────────────────────────────
+  function clearError(field) {
+    const el = document.getElementById(field + '-error');
+    if (el) el.style.display = 'none';
+    const input = document.getElementById(field);
+    if (input) input.style.borderColor = '#E8E5DF';
+  }
+
+  // ── Login submit ────────────────────────────────────────────────────────────
+  function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value.trim();
+    let valid = true;
+
+    if (!email) {
+      showFieldError('email', 'Informe seu e-mail.'); valid = false;
+    }
+    if (!senha) {
+      showFieldError('senha', 'Informe sua senha.'); valid = false;
+    }
+
+    if (!valid) return;
+
+    // Simulate loading
+    const btn  = document.getElementById('btn-submit');
+    const icon = document.getElementById('submit-icon');
+    const text = document.getElementById('submit-text');
+    btn.disabled = true;
+    btn.style.opacity = '0.8';
+    icon.setAttribute('data-lucide','loader-2');
+    icon.classList.add('spinner');
+    text.textContent = 'Entrando…';
+    lucide.createIcons();
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      icon.classList.remove('spinner');
+      icon.setAttribute('data-lucide','check');
+      text.textContent = 'Entrando…';
+      lucide.createIcons();
+      showToast('check-circle', '#ACC095', 'Bem-vinda de volta, Larissa!');
+    }, 1600);
+  }
+
+  function showFieldError(field, msg) {
+    const el    = document.getElementById(field + '-error');
+    const input = document.getElementById(field);
+    el.style.display    = 'flex';
+    el.querySelector('span') && (el.querySelector('span').textContent = msg);
+    el.childNodes.forEach(n => { if (n.nodeType === 3) n.textContent = ' ' + msg; });
+    el.innerHTML = `<i data-lucide="alert-circle" style="width:12px;height:12px;stroke-width:2;"></i> ${msg}`;
+    input.style.borderColor = '#C85A3E';
+    input.style.boxShadow   = '0 0 0 3px rgba(200,90,62,.12)';
+    lucide.createIcons();
+  }
+
+  // ── Forgot password ─────────────────────────────────────────────────────────
+  function showForgot(e) {
+    e.preventDefault();
+    const panel = document.getElementById('forgot-panel');
+    panel.style.display = 'block';
+    const em = document.getElementById('email').value;
+    if (em) document.getElementById('forgot-email').value = em;
+    panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  function hideForgot() {
+    document.getElementById('forgot-panel').style.display = 'none';
+  }
+  function sendReset() {
+    const em = document.getElementById('forgot-email').value.trim();
+    if (!em) return;
+    hideForgot();
+    showToast('mail', '#F6A958', 'Link de redefinição enviado para ' + em);
+  }
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
+  function showToast(iconName, iconColor, msg) {
+    const t    = document.getElementById('toast');
+    const ic   = document.getElementById('toast-icon');
+    const tx   = document.getElementById('toast-msg');
+    ic.setAttribute('data-lucide', iconName || 'check-circle');
+    ic.style.color = iconColor || '#ACC095';
+    tx.textContent = msg;
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    lucide.createIcons();
+    clearTimeout(window._toast);
+    window._toast = setTimeout(() => {
+      t.style.transform = 'translateX(-50%) translateY(120px)';
+    }, 3000);
+  }
+</script>
+</body>
+</html>

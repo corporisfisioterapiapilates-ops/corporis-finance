@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano de Contas — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; margin: 0; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; }
+
+    .sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 16px; flex-shrink: 0; }
+
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:9px 16px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; white-space:nowrap; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-secondary { background:transparent; color:#F08353; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:9px 16px; border-radius:8px; border:1.2px solid #F08353; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; white-space:nowrap; }
+    .btn-secondary:hover { background:#FBE9E3; }
+    .btn-ghost { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:13px; padding:7px 11px; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s; }
+    .btn-ghost:hover { background:#F3F2EE; }
+
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+    .notif-btn { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; transition:background .15s; position:relative; }
+    .notif-btn:hover { background:#F3F2EE; }
+    .notif-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* Tree */
+    .tree { display:flex; flex-direction:column; }
+
+    /* Group header */
+    .group-row {
+      display:flex; align-items:center; gap:0;
+      background:#F3F2EE; border-bottom:1px solid #E8E5DF;
+      cursor:pointer; user-select:none;
+      transition:background .12s;
+      position:sticky; top:0; z-index:3;
+    }
+    .group-row:hover { background:#ECEAE5; }
+
+    /* Item row */
+    .item-row {
+      display:flex; align-items:center;
+      border-bottom:1px solid #F0EEE9;
+      background:#FFF;
+      transition:background .12s;
+    }
+    .item-row:hover { background:#FAFAF8; }
+    .item-row.inactive { opacity:.45; }
+    .item-row.editing { background:#FBF7F4; outline:2px solid #F08353; outline-offset:-2px; }
+    .item-row.dragging { background:#FBE9E3; opacity:.7; }
+
+    /* Drag handle */
+    .drag-handle { padding:0 10px; color:#D3D2CD; cursor:grab; display:flex; align-items:center; transition:color .12s; }
+    .drag-handle:hover { color:#9A9189; }
+
+    /* Cells */
+    .cell-indent { width:40px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .cell-code { width:64px; flex-shrink:0; font-size:11px; font-variant-numeric:tabular-nums; color:#9A9189; padding:0 8px; }
+    .cell-name { flex:1; font-size:13px; color:#3A3530; padding:12px 8px; min-width:0; }
+    .cell-name input { background:transparent; border:none; outline:none; font-family:'Ubuntu',sans-serif; font-size:13px; color:#3A3530; width:100%; }
+    .cell-name input:focus { background:#FFF; border-radius:4px; padding:2px 6px; margin:-2px -6px; }
+    .cell-tipo { width:90px; flex-shrink:0; }
+    .cell-classif { width:110px; flex-shrink:0; }
+    .cell-status { width:70px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+    .cell-actions { width:110px; flex-shrink:0; display:flex; align-items:center; justify-content:flex-end; gap:2px; padding-right:12px; }
+
+    /* Badges */
+    .badge { display:inline-flex; align-items:center; font-size:10px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; padding:3px 7px; border-radius:4px; white-space:nowrap; }
+    .badge-entrada { background:#EEF2E8; color:#7A9264; }
+    .badge-saida   { background:#FBE9E3; color:#C85A3E; }
+    .badge-calc    { background:#F0EEE9; color:#6B635B; }
+    .badge-fixo    { background:#F7F0DD; color:#B8914E; }
+    .badge-var     { background:#F0EEE9; color:#6B635B; }
+
+    /* Toggle */
+    .toggle-sm { width:32px; height:18px; border-radius:99px; position:relative; cursor:pointer; transition:background .15s; flex-shrink:0; }
+    .toggle-sm.on  { background:#ACC095; }
+    .toggle-sm.off { background:#D3D2CD; }
+    .toggle-sm::after { content:''; position:absolute; width:12px; height:12px; border-radius:50%; background:#FFF; top:3px; transition:left .15s; box-shadow:0 1px 2px rgba(0,0,0,.12); }
+    .toggle-sm.on::after  { left:17px; }
+    .toggle-sm.off::after { left:3px; }
+
+    /* Action btn */
+    .act-btn { width:28px; height:28px; border-radius:5px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#9A9189; transition:all .12s; }
+    .act-btn:hover { background:#F3F2EE; color:#6B635B; }
+    .act-btn.danger:hover { background:#FBE9E3; color:#C85A3E; }
+
+    /* Header row */
+    .header-row {
+      display:flex; align-items:center;
+      background:#F3F2EE; border-bottom:2px solid #E8E5DF;
+      border-radius:8px 8px 0 0;
+      position:sticky; top:0; z-index:5;
+    }
+    .header-cell { font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:#9A9189; padding:10px 8px; }
+
+    /* Inline edit select */
+    .inline-select { background:transparent; border:none; outline:none; font-family:'Ubuntu',sans-serif; font-size:11px; color:#6B635B; cursor:pointer; appearance:none; padding:0; }
+    .inline-select:focus { background:#FFF; border:1px solid #F08353; border-radius:4px; padding:2px 4px; }
+
+    /* Aviso desativar */
+    .deactivate-warn { background:#F7F0DD; border:1px solid #D2B06E; border-radius:8px; padding:10px 14px; font-size:12px; color:#6B635B; display:flex; align-items:flex-start; gap:8px; }
+
+    /* New child row */
+    .new-child-row { display:flex; align-items:center; gap:10px; padding:8px 12px 8px 104px; background:#FAFAF8; border-bottom:1px solid #F0EEE9; }
+    .new-child-input { background:#FFF; border:1.5px dashed #D3D2CD; border-radius:6px; padding:6px 12px; font-family:'Ubuntu',sans-serif; font-size:13px; color:#3A3530; outline:none; flex:1; }
+    .new-child-input:focus { border-color:#F08353; border-style:solid; }
+
+    /* Search input */
+    .search-input { background:#FFF; border:1px solid #E8E5DF; border-radius:8px; padding:8px 12px 8px 34px; font-family:'Ubuntu',sans-serif; font-size:13px; color:#3A3530; outline:none; transition:border-color .15s; }
+    .search-input:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,.15); }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-thumb { background:#D3D2CD; border-radius:99px; }
+  </style>
+</head>
+<body>
+<div style="display:flex;min-height:100vh;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/><circle cx="17" cy="11" r="3.5" fill="#F08353"/><path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/></svg>
+      <div>
+        <div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div>
+        <div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div>
+      </div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA
+        <span style="margin-left:auto;font-size:9px;font-weight:500;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#F7F0DD;color:#B8914E;">beta</span>
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item active" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#3A3530;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Larissa Ferraz</div>
+        <div style="font-size:11px;color:#9A9189;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Corporis — Xanxerê/SC</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden;">
+    <header class="topbar">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">plano de contas</div>
+      <!-- Search -->
+      <div style="position:relative;">
+        <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+        <input class="search-input" type="text" placeholder="Buscar conta…" style="width:200px;">
+      </div>
+      <!-- Expand/Collapse -->
+      <button class="btn-ghost" style="border:1px solid #E8E5DF;font-size:12px;" onclick="toggleAll()">
+        <i data-lucide="unfold-vertical" style="width:13px;height:13px;stroke-width:1.5;" id="expand-icon"></i>
+        <span id="expand-label">Expandir tudo</span>
+      </button>
+      <button class="btn-secondary" onclick="addGroup()">
+        <i data-lucide="folder-plus" style="width:14px;height:14px;stroke-width:1.5;"></i>
+        Novo grupo
+      </button>
+      <button class="btn-primary" onclick="addConta()">
+        <i data-lucide="plus" style="width:15px;height:15px;stroke-width:2;"></i>
+        Nova conta
+      </button>
+      <button class="notif-btn"><i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i><span class="notif-dot"></span></button>
+      <div class="avatar">L</div>
+    </header>
+
+    <!-- Stats strip -->
+    <div style="display:flex;align-items:center;gap:24px;padding:12px 32px;background:#FFF;border-bottom:1px solid #E8E5DF;flex-shrink:0;">
+      <div style="font-size:13px;color:#6B635B;">
+        <strong style="color:#3A3530;">41</strong> contas ativas ·
+        <strong style="color:#3A3530;">8</strong> grupos ·
+        <span style="color:#9A9189;">3 inativas</span>
+      </div>
+      <div style="display:flex;gap:12px;margin-left:auto;align-items:center;">
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#9A9189;"><div style="width:10px;height:10px;border-radius:2px;background:#EEF2E8;"></div>Entrada</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#9A9189;"><div style="width:10px;height:10px;border-radius:2px;background:#FBE9E3;"></div>Saída</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#9A9189;"><div style="width:10px;height:10px;border-radius:2px;background:#F0EEE9;"></div>Calculado</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;">
+          <i data-lucide="download" style="width:13px;height:13px;stroke-width:1.5;"></i>Exportar
+        </button>
+        <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;">
+          <i data-lucide="history" style="width:13px;height:13px;stroke-width:1.5;"></i>Histórico
+        </button>
+      </div>
+    </div>
+
+    <!-- TREE TABLE -->
+    <div style="flex:1;overflow-y:auto;">
+      <div style="margin:20px 32px;background:#FFF;border:1px solid #E8E5DF;border-radius:12px;box-shadow:0 1px 2px rgba(58,53,48,.04);overflow:hidden;">
+
+        <!-- Column headers -->
+        <div class="header-row">
+          <div style="width:38px;flex-shrink:0;"></div><!-- drag -->
+          <div style="width:40px;flex-shrink:0;"></div><!-- indent/arrow -->
+          <div class="header-cell" style="width:64px;">Código</div>
+          <div class="header-cell" style="flex:1;">Nome</div>
+          <div class="header-cell" style="width:90px;">Tipo</div>
+          <div class="header-cell" style="width:110px;">Classificação</div>
+          <div class="header-cell" style="width:70px;text-align:center;">Ativa</div>
+          <div class="header-cell" style="width:110px;text-align:right;padding-right:20px;">Ações</div>
+        </div>
+
+        <!-- ══ GRUPO 1 — RECEITA BRUTA ══ -->
+        <div class="group-row" onclick="toggleGroup('g1')">
+          <div style="width:38px;flex-shrink:0;"></div>
+          <div class="cell-indent">
+            <i data-lucide="chevron-down" style="width:15px;height:15px;stroke-width:2;color:#6B635B;" id="arrow-g1"></i>
+          </div>
+          <div class="cell-code" style="font-weight:600;color:#3A3530;font-size:12px;">1</div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:#3A3530;padding:13px 8px;display:flex;align-items:center;gap:10px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#ACC095;flex-shrink:0;display:inline-block;"></span>
+            RECEITA BRUTA
+            <span style="font-size:11px;font-weight:400;color:#9A9189;">(6 contas)</span>
+          </div>
+          <div style="width:90px;flex-shrink:0;"><span class="badge badge-entrada">Entrada</span></div>
+          <div style="width:110px;flex-shrink:0;font-size:11px;color:#9A9189;">—</div>
+          <div style="width:70px;flex-shrink:0;"></div>
+          <div class="cell-actions">
+            <button class="act-btn" title="Adicionar conta filha" onclick="event.stopPropagation();addChild('1')">
+              <i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i>
+            </button>
+          </div>
+        </div>
+        <div id="g1">
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">1.01</div>
+            <div class="cell-name"><input type="text" value="Pilates" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-entrada">Entrada</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions">
+              <button class="act-btn" title="Editar" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn" title="Adicionar subconta"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn danger" title="Desativar"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">1.02</div>
+            <div class="cell-name"><input type="text" value="Fisioterapia" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-entrada">Entrada</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions">
+              <button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">1.03</div>
+            <div class="cell-name"><input type="text" value="Fisio Pélvica" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-entrada">Entrada</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions">
+              <button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">1.04</div>
+            <div class="cell-name"><input type="text" value="Taping" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-entrada">Entrada</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions">
+              <button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">1.05</div>
+            <div class="cell-name"><input type="text" value="Primeira Consulta" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-entrada">Entrada</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions">
+              <button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">1.06</div>
+            <div class="cell-name"><input type="text" value="Combo" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-entrada">Entrada</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions">
+              <button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              <button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+            </div>
+          </div>
+          <!-- New child input area for group 1 -->
+          <div class="new-child-row" id="new-g1" style="display:none;">
+            <input class="new-child-input" type="text" placeholder="Nome da nova conta… (Enter para salvar, Esc para cancelar)" onkeydown="handleNewChildKey(event,'g1')">
+            <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;" onclick="document.getElementById('new-g1').style.display='none';">Cancelar</button>
+          </div>
+        </div>
+
+        <!-- ══ GRUPO 2 — IMPOSTOS ══ -->
+        <div class="group-row" onclick="toggleGroup('g2')">
+          <div style="width:38px;flex-shrink:0;"></div>
+          <div class="cell-indent"><i data-lucide="chevron-down" style="width:15px;height:15px;stroke-width:2;color:#6B635B;" id="arrow-g2"></i></div>
+          <div class="cell-code" style="font-weight:600;color:#3A3530;font-size:12px;">2</div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:#3A3530;padding:13px 8px;display:flex;align-items:center;gap:10px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#D2B06E;flex-shrink:0;display:inline-block;"></span>
+            IMPOSTOS SOBRE A RECEITA
+            <span style="font-size:11px;font-weight:400;color:#9A9189;">(2 contas)</span>
+          </div>
+          <div style="width:90px;flex-shrink:0;"><span class="badge badge-saida">Saída</span></div>
+          <div style="width:110px;flex-shrink:0;"></div>
+          <div style="width:70px;flex-shrink:0;"></div>
+          <div class="cell-actions"><button class="act-btn" onclick="event.stopPropagation();addChild('2')"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i></button></div>
+        </div>
+        <div id="g2">
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">2.01</div>
+            <div class="cell-name"><input type="text" value="Simples Nacional" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-saida">Saída</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions"><button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button></div>
+          </div>
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">2.02</div>
+            <div class="cell-name"><input type="text" value="DARF" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-saida">Saída</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions"><button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button></div>
+          </div>
+        </div>
+
+        <!-- ══ GRUPO 3 — CUSTOS ══ -->
+        <div class="group-row" onclick="toggleGroup('g3')">
+          <div style="width:38px;flex-shrink:0;"></div>
+          <div class="cell-indent"><i data-lucide="chevron-down" style="width:15px;height:15px;stroke-width:2;color:#6B635B;" id="arrow-g3"></i></div>
+          <div class="cell-code" style="font-weight:600;color:#3A3530;font-size:12px;">3</div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:#3A3530;padding:13px 8px;display:flex;align-items:center;gap:10px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#C85A3E;opacity:.6;flex-shrink:0;display:inline-block;"></span>
+            CUSTOS
+            <span style="font-size:11px;font-weight:400;color:#9A9189;">(3 contas)</span>
+          </div>
+          <div style="width:90px;flex-shrink:0;"><span class="badge badge-saida">Saída</span></div>
+          <div style="width:110px;flex-shrink:0;"></div>
+          <div style="width:70px;flex-shrink:0;"></div>
+          <div class="cell-actions"><button class="act-btn" onclick="event.stopPropagation();addChild('3')"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i></button></div>
+        </div>
+        <div id="g3">
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">3.02</div>
+            <div class="cell-name"><input type="text" value="Lavanderia" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-saida">Saída</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions"><button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button></div>
+          </div>
+          <div class="item-row">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">3.03</div>
+            <div class="cell-name"><input type="text" value="Materiais Fisio" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-saida">Saída</span></div>
+            <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+            <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+            <div class="cell-actions"><button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button></div>
+          </div>
+          <div class="item-row inactive">
+            <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+            <div class="cell-indent"></div>
+            <div class="cell-code">3.99</div>
+            <div class="cell-name" style="text-decoration:line-through;color:#9A9189;"><input type="text" value="Outros custos" style="color:#9A9189;text-decoration:line-through;" onclick="this.select()"></div>
+            <div class="cell-tipo"><span class="badge badge-saida" style="opacity:.5;">Saída</span></div>
+            <div class="cell-classif"><span style="font-size:11px;color:#C0BBB4;">Inativa</span></div>
+            <div class="cell-status"><div class="toggle-sm off" onclick="this.classList.toggle('on');this.classList.toggle('off');this.closest('.item-row').classList.toggle('inactive');"></div></div>
+            <div class="cell-actions"><button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn danger"><i data-lucide="trash-2" style="width:13px;height:13px;stroke-width:1.5;"></i></button></div>
+          </div>
+        </div>
+
+        <!-- ══ GRUPO 4 — DESPESAS OPERACIONAIS (com subgrupos) ══ -->
+        <div class="group-row" onclick="toggleGroup('g4')">
+          <div style="width:38px;flex-shrink:0;"></div>
+          <div class="cell-indent"><i data-lucide="chevron-down" style="width:15px;height:15px;stroke-width:2;color:#6B635B;" id="arrow-g4"></i></div>
+          <div class="cell-code" style="font-weight:600;color:#3A3530;font-size:12px;">4</div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:#3A3530;padding:13px 8px;display:flex;align-items:center;gap:10px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#C85A3E;flex-shrink:0;display:inline-block;"></span>
+            DESPESAS OPERACIONAIS
+            <span style="font-size:11px;font-weight:400;color:#9A9189;">(30 contas · 3 subgrupos)</span>
+          </div>
+          <div style="width:90px;flex-shrink:0;"><span class="badge badge-saida">Saída</span></div>
+          <div style="width:110px;flex-shrink:0;"></div>
+          <div style="width:70px;flex-shrink:0;"></div>
+          <div class="cell-actions"><button class="act-btn" onclick="event.stopPropagation();addChild('4')"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i></button></div>
+        </div>
+        <div id="g4">
+          <!-- Subgrupo RH -->
+          <div style="display:flex;align-items:center;background:#F7F5F2;border-bottom:1px solid #ECEAE5;cursor:pointer;padding:9px 0;" onclick="toggleGroup('g4-rh')">
+            <div style="width:38px;flex-shrink:0;"></div>
+            <div class="cell-indent"><i data-lucide="chevron-down" style="width:13px;height:13px;stroke-width:2;color:#9A9189;" id="arrow-g4-rh"></i></div>
+            <div style="width:64px;flex-shrink:0;font-size:11px;color:#9A9189;padding:0 8px;">4.1</div>
+            <div style="flex:1;font-size:12px;font-weight:500;color:#6B635B;letter-spacing:.04em;display:flex;align-items:center;gap:8px;">
+              <i data-lucide="users" style="width:13px;height:13px;stroke-width:1.5;color:#9A9189;"></i>
+              Despesas com RH
+              <span style="font-weight:400;color:#C0BBB4;">(14 contas)</span>
+            </div>
+          </div>
+          <div id="g4-rh">
+            <div class="item-row" style="padding-left:18px;">
+              <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+              <div class="cell-indent"></div>
+              <div class="cell-code">4.01.01</div>
+              <div class="cell-name"><input type="text" value="Salário" onclick="this.select()"></div>
+              <div class="cell-tipo"><span class="badge badge-saida">Saída</span></div>
+              <div class="cell-classif"><select class="inline-select"><option selected>Fixo</option><option>Variável</option><option>—</option></select></div>
+              <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="cell-actions"><button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button></div>
+            </div>
+            <div class="item-row editing" style="padding-left:18px;">
+              <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+              <div class="cell-indent"></div>
+              <div class="cell-code">4.01.02</div>
+              <div class="cell-name"><input type="text" value="Transporte" onclick="this.select()" style="background:#FFF;border:1.5px solid #F08353;border-radius:5px;padding:3px 8px;box-shadow:0 0 0 3px rgba(240,131,83,.12);"></div>
+              <div class="cell-tipo"><span class="badge badge-saida">Saída</span></div>
+              <div class="cell-classif"><select class="inline-select" style="border:1px solid #F08353;border-radius:4px;padding:2px 4px;background:#FFF;"><option selected>Fixo</option><option>Variável</option><option>—</option></select></div>
+              <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="cell-actions">
+                <button class="act-btn" style="color:#7A9264;" title="Salvar"><i data-lucide="check" style="width:13px;height:13px;stroke-width:2;"></i></button>
+                <button class="act-btn" title="Cancelar"><i data-lucide="x" style="width:13px;height:13px;stroke-width:2;"></i></button>
+              </div>
+            </div>
+            <div class="item-row" style="padding-left:18px;">
+              <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+              <div class="cell-indent"></div>
+              <div class="cell-code">4.01.06</div>
+              <div class="cell-name"><input type="text" value="FGTS" onclick="this.select()"></div>
+              <div class="cell-tipo"><span class="badge badge-saida">Saída</span></div>
+              <div class="cell-classif"><select class="inline-select"><option selected>Variável</option><option>Fixo</option><option>—</option></select></div>
+              <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="cell-actions"><button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button></div>
+            </div>
+            <div class="item-row" style="padding-left:18px;">
+              <div class="drag-handle"><i data-lucide="grip-vertical" style="width:13px;height:13px;stroke-width:1.5;"></i></div>
+              <div class="cell-indent"></div>
+              <div class="cell-code">4.01.13</div>
+              <div class="cell-name"><input type="text" value="Pró-labore" onclick="this.select()"></div>
+              <div class="cell-tipo"><span class="badge badge-saida">Saída</span></div>
+              <div class="cell-classif"><select class="inline-select"><option selected>Fixo</option><option>Variável</option><option>—</option></select></div>
+              <div class="cell-status"><div class="toggle-sm on" onclick="this.classList.toggle('on');this.classList.toggle('off');"></div></div>
+              <div class="cell-actions"><button class="act-btn" onclick="editRow(this)"><i data-lucide="pencil" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:1.5;"></i></button><button class="act-btn danger"><i data-lucide="eye-off" style="width:13px;height:13px;stroke-width:1.5;"></i></button></div>
+            </div>
+            <div style="font-size:11px;color:#C0BBB4;padding:8px 8px 8px 130px;background:#FAFAF8;border-bottom:1px solid #F0EEE9;">+ 10 contas não exibidas</div>
+          </div>
+
+          <!-- Subgrupo Administrativo -->
+          <div style="display:flex;align-items:center;background:#F7F5F2;border-bottom:1px solid #ECEAE5;cursor:pointer;padding:9px 0;" onclick="toggleGroup('g4-adm')">
+            <div style="width:38px;flex-shrink:0;"></div>
+            <div class="cell-indent"><i data-lucide="chevron-right" style="width:13px;height:13px;stroke-width:2;color:#9A9189;" id="arrow-g4-adm"></i></div>
+            <div style="width:64px;flex-shrink:0;font-size:11px;color:#9A9189;padding:0 8px;">4.2</div>
+            <div style="flex:1;font-size:12px;font-weight:500;color:#6B635B;letter-spacing:.04em;display:flex;align-items:center;gap:8px;">
+              <i data-lucide="building" style="width:13px;height:13px;stroke-width:1.5;color:#9A9189;"></i>
+              Despesas Administrativas
+              <span style="font-weight:400;color:#C0BBB4;">(17 contas · recolhido)</span>
+            </div>
+          </div>
+          <div id="g4-adm" style="display:none;"></div>
+
+          <!-- Subgrupo Vendas -->
+          <div style="display:flex;align-items:center;background:#F7F5F2;border-bottom:1px solid #ECEAE5;cursor:pointer;padding:9px 0;" onclick="toggleGroup('g4-vnd')">
+            <div style="width:38px;flex-shrink:0;"></div>
+            <div class="cell-indent"><i data-lucide="chevron-right" style="width:13px;height:13px;stroke-width:2;color:#9A9189;" id="arrow-g4-vnd"></i></div>
+            <div style="width:64px;flex-shrink:0;font-size:11px;color:#9A9189;padding:0 8px;">4.3</div>
+            <div style="flex:1;font-size:12px;font-weight:500;color:#6B635B;display:flex;align-items:center;gap:8px;">
+              <i data-lucide="megaphone" style="width:13px;height:13px;stroke-width:1.5;color:#9A9189;"></i>
+              Despesas com Vendas
+              <span style="font-weight:400;color:#C0BBB4;">(9 contas · recolhido)</span>
+            </div>
+          </div>
+          <div id="g4-vnd" style="display:none;"></div>
+        </div>
+
+        <!-- ══ GRUPOS 5–8 recolhidos ══ -->
+        <div class="group-row" onclick="toggleGroup('g5')">
+          <div style="width:38px;flex-shrink:0;"></div>
+          <div class="cell-indent"><i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2;color:#6B635B;" id="arrow-g5"></i></div>
+          <div class="cell-code" style="font-weight:600;color:#3A3530;font-size:12px;">5</div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:#3A3530;padding:13px 8px;display:flex;align-items:center;gap:10px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#6B635B;flex-shrink:0;display:inline-block;"></span>
+            REC. / DESP. FINANCEIRA
+            <span style="font-size:11px;font-weight:400;color:#9A9189;">(2 contas)</span>
+          </div>
+          <div style="width:90px;flex-shrink:0;"></div><div style="width:110px;flex-shrink:0;"></div><div style="width:70px;flex-shrink:0;"></div>
+          <div class="cell-actions"><button class="act-btn" onclick="event.stopPropagation();"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i></button></div>
+        </div>
+        <div id="g5" style="display:none;"></div>
+
+        <div class="group-row" onclick="toggleGroup('g6')">
+          <div style="width:38px;flex-shrink:0;"></div>
+          <div class="cell-indent"><i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2;color:#6B635B;" id="arrow-g6"></i></div>
+          <div class="cell-code" style="font-weight:600;color:#3A3530;font-size:12px;">6</div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:#3A3530;padding:13px 8px;display:flex;align-items:center;gap:10px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#EAD7AC;flex-shrink:0;display:inline-block;"></span>
+            RESULTADO NÃO OPERACIONAL
+            <span style="font-size:11px;font-weight:400;color:#9A9189;">(2 contas)</span>
+          </div>
+          <div style="width:90px;flex-shrink:0;"></div><div style="width:110px;flex-shrink:0;"></div><div style="width:70px;flex-shrink:0;"></div>
+          <div class="cell-actions"><button class="act-btn" onclick="event.stopPropagation();"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i></button></div>
+        </div>
+        <div id="g6" style="display:none;"></div>
+
+        <div class="group-row" onclick="toggleGroup('g7')">
+          <div style="width:38px;flex-shrink:0;"></div>
+          <div class="cell-indent"><i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2;color:#6B635B;" id="arrow-g7"></i></div>
+          <div class="cell-code" style="font-weight:600;color:#3A3530;font-size:12px;">7</div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:#3A3530;padding:13px 8px;display:flex;align-items:center;gap:10px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#D2B06E;flex-shrink:0;display:inline-block;"></span>
+            INVESTIMENTO
+            <span style="font-size:11px;font-weight:400;color:#9A9189;">(7 contas)</span>
+          </div>
+          <div style="width:90px;flex-shrink:0;"></div><div style="width:110px;flex-shrink:0;"></div><div style="width:70px;flex-shrink:0;"></div>
+          <div class="cell-actions"><button class="act-btn" onclick="event.stopPropagation();"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i></button></div>
+        </div>
+        <div id="g7" style="display:none;"></div>
+
+        <div class="group-row" style="border-bottom:none;" onclick="toggleGroup('g8')">
+          <div style="width:38px;flex-shrink:0;"></div>
+          <div class="cell-indent"><i data-lucide="chevron-right" style="width:15px;height:15px;stroke-width:2;color:#6B635B;" id="arrow-g8"></i></div>
+          <div class="cell-code" style="font-weight:600;color:#3A3530;font-size:12px;">8</div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:#3A3530;padding:13px 8px;display:flex;align-items:center;gap:10px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#F08353;opacity:.5;flex-shrink:0;display:inline-block;"></span>
+            FINANCEIRO
+            <span style="font-size:11px;font-weight:400;color:#9A9189;">(4 contas)</span>
+          </div>
+          <div style="width:90px;flex-shrink:0;"></div><div style="width:110px;flex-shrink:0;"></div><div style="width:70px;flex-shrink:0;"></div>
+          <div class="cell-actions"><button class="act-btn" onclick="event.stopPropagation();"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i></button></div>
+        </div>
+        <div id="g8" style="display:none;"></div>
+
+      </div>
+
+      <!-- Aviso desativação (simulado fixo) -->
+      <div style="margin:0 32px 32px;" id="deactivate-warn" style="display:none;">
+        <div class="deactivate-warn">
+          <i data-lucide="alert-triangle" style="width:15px;height:15px;stroke-width:1.5;color:#B8914E;flex-shrink:0;margin-top:1px;"></i>
+          <div>
+            <strong style="color:#3A3530;">Não é possível desativar "4.01.01 Salário"</strong> — esta conta possui 8 lançamentos vinculados em novembro 2025.
+            Para desativar, primeiro mova os lançamentos para outra categoria ou exclua-os.
+            <a href="#" style="color:#F08353;text-decoration:none;margin-left:6px;font-size:12px;">Ver lançamentos →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:#3A3530;color:#FFF;border-radius:10px;padding:13px 22px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(58,53,48,.25);font-size:14px;font-weight:500;transition:transform .32s cubic-bezier(.22,.61,.36,1);z-index:200;white-space:nowrap;">
+  <i data-lucide="check-circle" style="width:18px;height:18px;stroke-width:1.5;color:#ACC095;"></i>
+  <span id="toast-msg">Conta salva!</span>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  let allExpanded = true;
+
+  function toggleGroup(id) {
+    const el    = document.getElementById(id);
+    const arrow = document.getElementById('arrow-' + id);
+    if (!el) return;
+    const open = el.style.display !== 'none';
+    el.style.display = open ? 'none' : 'block';
+    if (arrow) {
+      arrow.setAttribute('data-lucide', open ? 'chevron-right' : 'chevron-down');
+      lucide.createIcons();
+    }
+  }
+
+  function toggleAll() {
+    allExpanded = !allExpanded;
+    ['g1','g2','g3','g4','g4-rh','g5','g6','g7','g8'].forEach(id => {
+      const el = document.getElementById(id);
+      const arrow = document.getElementById('arrow-' + id);
+      if (el) el.style.display = allExpanded ? 'block' : 'none';
+      if (arrow) arrow.setAttribute('data-lucide', allExpanded ? 'chevron-down' : 'chevron-right');
+    });
+    document.getElementById('expand-label').textContent = allExpanded ? 'Recolher tudo' : 'Expandir tudo';
+    document.getElementById('expand-icon').setAttribute('data-lucide', allExpanded ? 'fold-vertical' : 'unfold-vertical');
+    lucide.createIcons();
+  }
+
+  function editRow(btn) {
+    const row = btn.closest('.item-row');
+    row.classList.add('editing');
+    const input = row.querySelector('input[type="text"]');
+    if (input) { input.style.cssText = 'background:#FFF;border:1.5px solid #F08353;border-radius:5px;padding:3px 8px;box-shadow:0 0 0 3px rgba(240,131,83,.12);'; input.focus(); input.select(); }
+    const actCell = row.querySelector('.cell-actions');
+    actCell.innerHTML = '<button class="act-btn" style="color:#7A9264;" title="Salvar" onclick="saveRow(this)"><i data-lucide="check" style="width:13px;height:13px;stroke-width:2;"></i></button><button class="act-btn" title="Cancelar" onclick="cancelEdit(this)"><i data-lucide="x" style="width:13px;height:13px;stroke-width:2;"></i></button>';
+    lucide.createIcons();
+  }
+
+  function saveRow(btn) {
+    const row = btn.closest('.item-row');
+    row.classList.remove('editing');
+    const input = row.querySelector('input[type="text"]');
+    if (input) input.style.cssText = '';
+    showToast('Conta salva com sucesso!');
+    lucide.createIcons();
+  }
+
+  function cancelEdit(btn) {
+    const row = btn.closest('.item-row');
+    row.classList.remove('editing');
+    const input = row.querySelector('input[type="text"]');
+    if (input) input.style.cssText = '';
+    lucide.createIcons();
+  }
+
+  function addChild(group) {
+    const newRow = document.getElementById('new-g' + group);
+    if (newRow) {
+      newRow.style.display = 'flex';
+      newRow.querySelector('input').focus();
+    }
+    const el = document.getElementById('g' + group);
+    if (el) el.style.display = 'block';
+    const arrow = document.getElementById('arrow-g' + group);
+    if (arrow) { arrow.setAttribute('data-lucide','chevron-down'); lucide.createIcons(); }
+  }
+
+  function handleNewChildKey(e, group) {
+    if (e.key === 'Enter') {
+      const val = e.target.value.trim();
+      if (val) { showToast('Conta "' + val + '" adicionada!'); e.target.value = ''; }
+      document.getElementById('new-g' + group).style.display = 'none';
+    }
+    if (e.key === 'Escape') {
+      e.target.value = '';
+      document.getElementById('new-g' + group).style.display = 'none';
+    }
+  }
+
+  function addGroup()  { showToast('Novo grupo adicionado ao plano!'); }
+  function addConta()  { showToast('Nova conta adicionada!'); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    lucide.createIcons();
+    clearTimeout(window._toast);
+    window._toast = setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(100px)'; }, 2500);
+  }
+</script>
+</body>
+</html>

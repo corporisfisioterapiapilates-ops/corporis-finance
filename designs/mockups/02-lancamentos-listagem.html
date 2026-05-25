@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lançamentos — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            orange: { DEFAULT: '#F08353', soft: '#FBE9E3', hover: '#F6A958' },
+            tangerine: '#F6A958',
+            beige: { DEFAULT: '#D2B06E', light: '#EAD7AC', soft: '#F7F0DD' },
+            green: { DEFAULT: '#ACC095', soft: '#EEF2E8', strong: '#7A9264' },
+            danger: { DEFAULT: '#C85A3E', soft: '#FBE9E3' },
+            base: '#FAFAF8',
+            surface: '#FFFFFF',
+            sunken: '#F3F2EE',
+            ink: { DEFAULT: '#3A3530', secondary: '#6B635B', tertiary: '#9A9189' },
+            line: { DEFAULT: '#E8E5DF', strong: '#D3D2CD' },
+          },
+          fontFamily: {
+            display: ['Fraunces', 'Georgia', 'serif'],
+            sans: ['Ubuntu', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; margin: 0; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    /* Sidebar */
+    .sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background 0.15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: 0.1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* Topbar */
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 16px; }
+
+    /* Buttons */
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:9px 16px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background 0.15s; white-space:nowrap; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-secondary { background:transparent; color:#F08353; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:9px 16px; border-radius:8px; border:1.2px solid #F08353; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background 0.15s; white-space:nowrap; }
+    .btn-secondary:hover { background:#FBE9E3; }
+    .btn-ghost { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:13px; padding:7px 11px; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background 0.15s; }
+    .btn-ghost:hover { background:#F3F2EE; }
+
+    /* Filters */
+    .filter-select { background:#FFF; border:1px solid #E8E5DF; border-radius:8px; padding:8px 32px 8px 12px; font-family:'Ubuntu',sans-serif; font-size:13px; color:#3A3530; outline:none; appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; transition:border-color 0.15s; }
+    .filter-select:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,0.18); }
+    .filter-select:hover { border-color:#D3D2CD; }
+
+    .search-input { background:#FFF; border:1px solid #E8E5DF; border-radius:8px; padding:8px 12px 8px 36px; font-family:'Ubuntu',sans-serif; font-size:13px; color:#3A3530; outline:none; width:220px; transition:border-color 0.15s; }
+    .search-input:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,0.18); }
+
+    /* Table */
+    .data-table { width:100%; border-collapse:separate; border-spacing:0; }
+    .data-table thead th { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:0.08em; color:#9A9189; padding:11px 16px; background:#F3F2EE; border-bottom:1px solid #E8E5DF; text-align:left; white-space:nowrap; }
+    .data-table thead th:first-child { border-radius:8px 0 0 0; padding-left:20px; }
+    .data-table thead th:last-child { border-radius:0 8px 0 0; }
+    .data-table tbody tr { border-bottom:1px solid #E8E5DF; transition:background 0.12s; cursor:pointer; }
+    .data-table tbody tr:hover { background:#FAFAF8; }
+    .data-table tbody tr.selected { background:#FBE9E3; }
+    .data-table tbody tr.expanded-row { background:#F7F5F2; }
+    .data-table tbody td { padding:13px 16px; font-size:13px; color:#3A3530; vertical-align:middle; }
+    .data-table tbody td:first-child { padding-left:20px; }
+    .data-table tbody tr:last-child td { border-bottom:none; }
+
+    /* Badge */
+    .badge { display:inline-flex; align-items:center; font-size:10px; font-weight:500; letter-spacing:0.07em; text-transform:uppercase; padding:3px 7px; border-radius:4px; white-space:nowrap; }
+    .badge-success { background:#EEF2E8; color:#7A9264; }
+    .badge-danger { background:#FBE9E3; color:#C85A3E; }
+    .badge-warning { background:#F7F0DD; color:#B8914E; }
+    .badge-info { background:#F0EEE9; color:#6B635B; }
+    .badge-beige { background:#F0E8D0; color:#9A7240; }
+    .badge-orange { background:#FBE9E3; color:#E07040; }
+
+    /* Status pill */
+    .status-pill { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; padding:4px 9px; border-radius:99px; white-space:nowrap; }
+    .status-realizado { background:#EEF2E8; color:#7A9264; }
+    .status-pendente { background:#F7F0DD; color:#B8914E; }
+
+    /* Checkbox */
+    .cb { width:16px; height:16px; border-radius:4px; border:1.5px solid #D3D2CD; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.12s; }
+    .cb.checked { background:#F08353; border-color:#F08353; }
+    .cb:hover { border-color:#F08353; }
+
+    /* Pagination */
+    .page-btn { width:32px; height:32px; border-radius:6px; border:1px solid #E8E5DF; background:#FFF; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:13px; color:#6B635B; transition:all 0.12s; }
+    .page-btn:hover { border-color:#D3D2CD; background:#F3F2EE; }
+    .page-btn.active { background:#F08353; border-color:#F08353; color:#FFF; font-weight:500; }
+
+    /* Avatar */
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+
+    /* Notif */
+    .notif-btn { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; transition:background 0.15s; position:relative; }
+    .notif-btn:hover { background:#F3F2EE; }
+    .notif-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* Expanded attachment row */
+    .attachment-area { background:#F7F5F2; border-top:1px dashed #E8E5DF; padding:14px 20px; display:none; }
+    .attachment-area.open { display:flex; align-items:center; gap:12px; }
+
+    /* Batch action bar */
+    .batch-bar { background:#3A3530; color:#FFF; border-radius:10px; padding:10px 20px; display:none; align-items:center; gap:16px; position:fixed; bottom:32px; left:50%; transform:translateX(-50%); box-shadow:0 8px 24px rgba(58,53,48,0.25); z-index:100; white-space:nowrap; }
+    .batch-bar.visible { display:flex; }
+    .batch-btn { background:rgba(255,255,255,0.12); color:#FFF; border:none; border-radius:6px; padding:6px 14px; font-family:'Ubuntu',sans-serif; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:background 0.12s; }
+    .batch-btn:hover { background:rgba(255,255,255,0.2); }
+    .batch-btn.danger { color:#F98B7A; }
+
+    /* Dropdown action */
+    .action-btn { width:30px; height:30px; border-radius:6px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#9A9189; transition:all 0.12s; }
+    .action-btn:hover { background:#F3F2EE; color:#6B635B; }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#D3D2CD; border-radius:99px; }
+  </style>
+</head>
+<body>
+<div style="display:flex;min-height:100vh;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity="0.9"/>
+        <circle cx="17" cy="11" r="3.5" fill="#F08353"/>
+        <path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div>
+        <div style="font-size:9px;font-weight:500;letter-spacing:0.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div>
+      </div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard
+      </a>
+      <a class="nav-item active" href="#">
+        <i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA
+        <span class="badge badge-warning" style="margin-left:auto;font-size:9px;padding:2px 6px;">beta</span>
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações
+      </a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Larissa Ferraz</div>
+        <div style="font-size:11px;color:#9A9189;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Corporis — Xanxerê/SC</div>
+      </div>
+      <button class="btn-ghost" style="padding:6px;border-radius:6px;">
+        <i data-lucide="settings" style="width:15px;height:15px;stroke-width:1.5;color:#9A9189;"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">lançamentos</div>
+      <div style="position:relative;">
+        <i data-lucide="search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+        <input class="search-input" type="text" placeholder="Buscar lançamentos, contas…" style="width:210px;">
+      </div>
+      <button class="btn-primary" onclick="toggleModal()">
+        <i data-lucide="plus" style="width:16px;height:16px;stroke-width:2;"></i>Novo Lançamento
+      </button>
+      <button class="notif-btn">
+        <i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i>
+        <span class="notif-dot"></span>
+      </button>
+      <div class="avatar">L</div>
+    </header>
+
+    <!-- PAGE BODY -->
+    <main style="flex:1;overflow-y:auto;padding:28px 32px;">
+
+      <!-- Filtros + ações -->
+      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:16px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(58,53,48,0.04);">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+
+          <!-- Busca inline -->
+          <div style="position:relative;flex:1;min-width:180px;max-width:260px;">
+            <i data-lucide="search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+            <input class="search-input" type="text" placeholder="Buscar por descrição…" style="width:100%;padding-left:34px;">
+          </div>
+
+          <!-- Período -->
+          <div style="position:relative;">
+            <i data-lucide="calendar" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke-width:1.5;color:#9A9189;pointer-events:none;z-index:1;"></i>
+            <select class="filter-select" style="padding-left:30px;min-width:160px;">
+              <option>Nov 2025</option>
+              <option>Out 2025</option>
+              <option>Set 2025</option>
+              <option>Personalizado…</option>
+            </select>
+          </div>
+
+          <!-- Tipo -->
+          <select class="filter-select" style="min-width:140px;">
+            <option>Todos os tipos</option>
+            <option>Entradas</option>
+            <option>Saídas</option>
+            <option>Transferências</option>
+          </select>
+
+          <!-- Conta -->
+          <select class="filter-select" style="min-width:140px;">
+            <option>Todas as contas</option>
+            <option>Itaú PJ</option>
+            <option>Nubank PJ</option>
+            <option>Caixinha</option>
+            <option>Cartão Itaú Black</option>
+            <option>Cartão Nubank</option>
+          </select>
+
+          <!-- Categoria -->
+          <select class="filter-select" style="min-width:150px;">
+            <option>Todas as categorias</option>
+            <option>1. Receita Bruta</option>
+            <option>2. Impostos</option>
+            <option>3. Custos</option>
+            <option>4. Desp. Operacionais</option>
+            <option>5. Rec/Desp Financeira</option>
+          </select>
+
+          <!-- Status -->
+          <select class="filter-select" style="min-width:130px;">
+            <option>Todos os status</option>
+            <option>Realizado</option>
+            <option>Pendente</option>
+          </select>
+
+          <div style="margin-left:auto;display:flex;gap:8px;">
+            <button class="btn-ghost" style="border:1px solid #E8E5DF;font-size:13px;" onclick="clearFilters()">
+              <i data-lucide="x" style="width:13px;height:13px;stroke-width:2;"></i>
+              Limpar
+            </button>
+            <button class="btn-secondary" onclick="alert('Importar extrato')">
+              <i data-lucide="upload" style="width:14px;height:14px;stroke-width:1.5;"></i>
+              Importar Extrato
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary strip -->
+      <div style="display:flex;align-items:center;gap:24px;margin-bottom:14px;padding:0 4px;">
+        <div style="font-size:13px;color:#9A9189;">
+          Mostrando <strong style="color:#3A3530;">73 lançamentos</strong> em novembro 2025
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;margin-left:auto;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;color:#9A9189;">Entradas</span>
+            <span class="tnum" style="font-size:13px;font-weight:500;color:#7A9264;">R$ 34.650,00</span>
+          </div>
+          <div style="width:1px;height:14px;background:#E8E5DF;"></div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;color:#9A9189;">Saídas</span>
+            <span class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">−R$ 26.830,50</span>
+          </div>
+          <div style="width:1px;height:14px;background:#E8E5DF;"></div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;color:#9A9189;">Resultado</span>
+            <span class="tnum" style="font-size:13px;font-weight:500;color:#3A3530;">R$ 7.819,50</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;box-shadow:0 1px 2px rgba(58,53,48,0.04);overflow:hidden;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">
+                <div class="cb" id="cb-all" onclick="toggleAll(this)" style="margin:0 auto;"></div>
+              </th>
+              <th style="width:110px;">
+                <div style="display:flex;align-items:center;gap:4px;cursor:pointer;" onclick="sortBy('data')">
+                  Data <i data-lucide="chevrons-up-down" style="width:12px;height:12px;stroke-width:2;color:#C0BBB4;"></i>
+                </div>
+              </th>
+              <th>Descrição</th>
+              <th style="width:170px;">Categoria</th>
+              <th style="width:130px;">Conta</th>
+              <th style="width:130px;">
+                <div style="display:flex;align-items:center;gap:4px;cursor:pointer;" onclick="sortBy('valor')">
+                  Valor <i data-lucide="chevrons-up-down" style="width:12px;height:12px;stroke-width:2;color:#C0BBB4;"></i>
+                </div>
+              </th>
+              <th style="width:110px;">Status</th>
+              <th style="width:80px;text-align:center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+
+            <!-- ROW 1 — entrada com anexo -->
+            <tr onclick="toggleRow(this, 1)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">28/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#ACC095;flex-shrink:0;"></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:500;color:#3A3530;">Pacote 8 aulas — Carla Mendes</div>
+                    <div style="font-size:11px;color:#9A9189;margin-top:2px;display:flex;align-items:center;gap:4px;">
+                      <i data-lucide="paperclip" style="width:11px;height:11px;stroke-width:1.5;"></i> 1 anexo
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-success">1.01 Pilates</span></td>
+              <td style="font-size:12px;color:#6B635B;">Itaú PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#7A9264;">+R$ 720,00</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn" title="Editar"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn" title="Mais"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <!-- Expanded anexo row 1 -->
+            <tr id="expanded-1" style="display:none;">
+              <td colspan="8" style="padding:0;">
+                <div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;display:flex;align-items:center;gap:12px;">
+                  <div style="display:flex;align-items:center;gap:8px;background:#FFF;border:1px solid #E8E5DF;border-radius:6px;padding:8px 12px;">
+                    <i data-lucide="file-text" style="width:16px;height:16px;stroke-width:1.5;color:#9A9189;"></i>
+                    <span style="font-size:12px;color:#6B635B;">recibo_carla_nov25.pdf</span>
+                    <button class="action-btn" style="width:22px;height:22px;" title="Baixar"><i data-lucide="download" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+                  </div>
+                  <button class="btn-ghost" style="font-size:12px;gap:5px;border:1px dashed #D3D2CD;">
+                    <i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i>Adicionar anexo
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- ROW 2 — saída -->
+            <tr onclick="toggleRow(this, 2)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">28/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#C85A3E;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Aluguel sala 903</div>
+                </div>
+              </td>
+              <td><span class="badge badge-danger">4.02.01 Aluguel</span></td>
+              <td style="font-size:12px;color:#6B635B;">Itaú PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">−R$ 3.200,00</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn" title="Editar"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn" title="Mais"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-2" style="display:none;">
+              <td colspan="8" style="padding:0;">
+                <div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;display:flex;align-items:center;gap:12px;">
+                  <span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span>
+                  <button class="btn-ghost" style="font-size:12px;gap:5px;border:1px dashed #D3D2CD;">
+                    <i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i>Adicionar anexo
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- ROW 3 -->
+            <tr onclick="toggleRow(this, 3)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">27/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#ACC095;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Avaliação Fisio — João Lima</div>
+                </div>
+              </td>
+              <td><span class="badge badge-success">1.05 Primeira Consulta</span></td>
+              <td style="font-size:12px;color:#6B635B;">Nubank PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#7A9264;">+R$ 180,00</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-3" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 4 -->
+            <tr onclick="toggleRow(this, 4)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">26/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#C85A3E;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Energia CELESC</div>
+                </div>
+              </td>
+              <td><span class="badge badge-danger">4.02.02 Luz/Água/Gás</span></td>
+              <td style="font-size:12px;color:#6B635B;">Itaú PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">−R$ 487,30</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-4" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 5 -->
+            <tr onclick="toggleRow(this, 5)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">25/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#ACC095;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Fisio Pélvica — Ana Souza</div>
+                </div>
+              </td>
+              <td><span class="badge badge-success">1.03 Fisio Pélvica</span></td>
+              <td style="font-size:12px;color:#6B635B;">Nubank PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#7A9264;">+R$ 320,00</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-5" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 6 — PENDENTE -->
+            <tr onclick="toggleRow(this, 6)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">25/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#C85A3E;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Simples Nacional</div>
+                </div>
+              </td>
+              <td><span class="badge badge-warning">2.01 Simples</span></td>
+              <td style="font-size:12px;color:#6B635B;">Itaú PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">−R$ 2.401,00</td>
+              <td><span class="status-pill status-pendente"><i data-lucide="clock" style="width:12px;height:12px;stroke-width:2;"></i>Pendente</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-6" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 7 -->
+            <tr onclick="toggleRow(this, 7)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">24/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#ACC095;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Aula de Pilates — Beatriz Costa</div>
+                </div>
+              </td>
+              <td><span class="badge badge-success">1.01 Pilates</span></td>
+              <td style="font-size:12px;color:#6B635B;">Caixinha</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#7A9264;">+R$ 90,00</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-7" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 8 -->
+            <tr onclick="toggleRow(this, 8)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">23/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#C85A3E;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Salário — Juliana Recepção</div>
+                </div>
+              </td>
+              <td><span class="badge badge-danger">4.01.01 Salário</span></td>
+              <td style="font-size:12px;color:#6B635B;">Itaú PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">−R$ 2.400,00</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-8" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 9 — Transferência -->
+            <tr onclick="toggleRow(this, 9)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">22/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#D2B06E;flex-shrink:0;"></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:500;color:#3A3530;">Transferência Itaú → Nubank</div>
+                    <div style="font-size:11px;color:#9A9189;margin-top:2px;">Entre contas próprias</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-beige">Transferência</span></td>
+              <td style="font-size:12px;color:#6B635B;">Itaú PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#6B635B;">R$ 5.000,00</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-9" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 10 — PENDENTE -->
+            <tr onclick="toggleRow(this, 10)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">21/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#ACC095;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Combo Fisio + Pilates — Renata Alves</div>
+                </div>
+              </td>
+              <td><span class="badge badge-success">1.06 Combo</span></td>
+              <td style="font-size:12px;color:#6B635B;">Nubank PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#7A9264;">+R$ 980,00</td>
+              <td><span class="status-pill status-pendente"><i data-lucide="clock" style="width:12px;height:12px;stroke-width:2;"></i>Pendente</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-10" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 11 -->
+            <tr onclick="toggleRow(this, 11)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">20/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#C85A3E;flex-shrink:0;"></div>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">Vivo Empresas</div>
+                </div>
+              </td>
+              <td><span class="badge badge-danger">4.02.03 Telefone</span></td>
+              <td style="font-size:12px;color:#6B635B;">Itaú PJ</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">−R$ 189,90</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-11" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;"><span style="font-size:12px;color:#9A9189;">Nenhum anexo.</span></div></td></tr>
+
+            <!-- ROW 12 — Taping com anexo -->
+            <tr onclick="toggleRow(this, 12)">
+              <td onclick="event.stopPropagation()">
+                <div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div>
+              </td>
+              <td style="color:#9A9189;font-size:12px;">19/11/2025</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:7px;height:7px;border-radius:99px;background:#ACC095;flex-shrink:0;"></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:500;color:#3A3530;">Taping — Maria Fernanda</div>
+                    <div style="font-size:11px;color:#9A9189;margin-top:2px;display:flex;align-items:center;gap:4px;">
+                      <i data-lucide="paperclip" style="width:11px;height:11px;stroke-width:1.5;"></i> 2 anexos
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-success">1.04 Taping</span></td>
+              <td style="font-size:12px;color:#6B635B;">Caixinha</td>
+              <td class="tnum" style="font-size:13px;font-weight:500;color:#7A9264;">+R$ 150,00</td>
+              <td><span class="status-pill status-realizado"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Realizado</span></td>
+              <td onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                  <button class="action-btn"><i data-lucide="pencil" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  <button class="action-btn"><i data-lucide="more-horizontal" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr id="expanded-12" style="display:none;"><td colspan="8" style="padding:0;"><div style="background:#F7F5F2;border-top:1px dashed #E8E5DF;padding:14px 68px;display:flex;align-items:center;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;background:#FFF;border:1px solid #E8E5DF;border-radius:6px;padding:8px 12px;">
+                <i data-lucide="file-image" style="width:15px;height:15px;stroke-width:1.5;color:#9A9189;"></i>
+                <span style="font-size:12px;color:#6B635B;">foto_taping_01.jpg</span>
+                <button class="action-btn" style="width:22px;height:22px;"><i data-lucide="download" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;background:#FFF;border:1px solid #E8E5DF;border-radius:6px;padding:8px 12px;">
+                <i data-lucide="file-image" style="width:15px;height:15px;stroke-width:1.5;color:#9A9189;"></i>
+                <span style="font-size:12px;color:#6B635B;">foto_taping_02.jpg</span>
+                <button class="action-btn" style="width:22px;height:22px;"><i data-lucide="download" style="width:13px;height:13px;stroke-width:1.5;"></i></button>
+              </div>
+            </div></td></tr>
+
+          </tbody>
+        </table>
+
+        <!-- RODAPÉ: totais + paginação -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid #E8E5DF;background:#F9F8F6;">
+          <div style="font-size:12px;color:#9A9189;">
+            Página <strong style="color:#3A3530;">1</strong> de <strong style="color:#3A3530;">7</strong> · 73 lançamentos
+          </div>
+
+          <!-- Totais filtrados -->
+          <div style="display:flex;align-items:center;gap:20px;">
+            <div style="font-size:12px;color:#9A9189;">Total filtrado:</div>
+            <span class="tnum" style="font-size:13px;font-weight:500;color:#7A9264;">+R$ 34.650,00</span>
+            <span class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">−R$ 26.830,50</span>
+            <div style="width:1px;height:14px;background:#E8E5DF;"></div>
+            <span class="tnum" style="font-size:13px;font-weight:600;color:#3A3530;">= R$ 7.819,50</span>
+          </div>
+
+          <!-- Pagination -->
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button class="page-btn" disabled style="opacity:0.4;">
+              <i data-lucide="chevron-left" style="width:14px;height:14px;stroke-width:2;"></i>
+            </button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <span style="font-size:13px;color:#9A9189;padding:0 4px;">…</span>
+            <button class="page-btn">7</button>
+            <button class="page-btn">
+              <i data-lucide="chevron-right" style="width:14px;height:14px;stroke-width:2;"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- BATCH ACTION BAR (aparece ao selecionar) -->
+<div class="batch-bar" id="batch-bar">
+  <span style="font-size:13px;font-weight:500;" id="batch-count">0 selecionados</span>
+  <div style="width:1px;height:18px;background:rgba(255,255,255,0.2);"></div>
+  <button class="batch-btn">
+    <i data-lucide="tag" style="width:14px;height:14px;stroke-width:1.5;"></i>
+    Categorizar em lote
+  </button>
+  <button class="batch-btn">
+    <i data-lucide="check-circle" style="width:14px;height:14px;stroke-width:1.5;"></i>
+    Marcar como realizado
+  </button>
+  <button class="batch-btn danger">
+    <i data-lucide="trash-2" style="width:14px;height:14px;stroke-width:1.5;"></i>
+    Excluir
+  </button>
+  <button class="batch-btn" onclick="clearSelection()" style="margin-left:8px;">
+    <i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i>
+    Cancelar
+  </button>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  // ─── Expand row ──────────────────────────────────────────────────────────────
+  function toggleRow(row, id) {
+    const exp = document.getElementById('expanded-' + id);
+    const isOpen = exp.style.display !== 'none';
+    exp.style.display = isOpen ? 'none' : 'table-row';
+    row.style.background = isOpen ? '' : '#FBF7F4';
+    // re-init icons inside expanded rows
+    lucide.createIcons();
+  }
+
+  // ─── Checkbox ────────────────────────────────────────────────────────────────
+  let selectedCount = 0;
+
+  function toggleCb(cb) {
+    const isChecked = cb.classList.toggle('checked');
+    if (isChecked) {
+      cb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      selectedCount++;
+    } else {
+      cb.innerHTML = '';
+      selectedCount--;
+    }
+    updateBatchBar();
+  }
+
+  function toggleAll(cbAll) {
+    const isChecked = cbAll.classList.toggle('checked');
+    if (isChecked) {
+      cbAll.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    } else {
+      cbAll.innerHTML = '';
+    }
+    const cbs = document.querySelectorAll('#table-body .cb');
+    cbs.forEach(cb => {
+      if (isChecked) {
+        cb.classList.add('checked');
+        cb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      } else {
+        cb.classList.remove('checked');
+        cb.innerHTML = '';
+      }
+    });
+    selectedCount = isChecked ? cbs.length : 0;
+    updateBatchBar();
+  }
+
+  function updateBatchBar() {
+    const bar = document.getElementById('batch-bar');
+    const countEl = document.getElementById('batch-count');
+    if (selectedCount > 0) {
+      bar.classList.add('visible');
+      countEl.textContent = selectedCount + (selectedCount === 1 ? ' selecionado' : ' selecionados');
+    } else {
+      bar.classList.remove('visible');
+    }
+    lucide.createIcons();
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.cb.checked').forEach(cb => {
+      cb.classList.remove('checked');
+      cb.innerHTML = '';
+    });
+    selectedCount = 0;
+    updateBatchBar();
+  }
+
+  function clearFilters() {
+    document.querySelectorAll('.filter-select').forEach(s => s.selectedIndex = 0);
+    document.querySelectorAll('.search-input').forEach(i => i.value = '');
+  }
+
+  function sortBy(col) {
+    // visual feedback only in mockup
+    console.log('sort by', col);
+  }
+</script>
+</body>
+</html>

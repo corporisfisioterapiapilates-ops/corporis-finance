@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lançamentos — Modal Novo — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; margin: 0; overflow: hidden; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: 240px; height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* ── Topbar ── */
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 16px; }
+
+    /* ── Overlay + Drawer ── */
+    .overlay { position: fixed; inset: 0; background: rgba(58,53,48,.22); z-index: 40; backdrop-filter: blur(1px); }
+    .drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 480px;
+      background: #FFFFFF; z-index: 50; display: flex; flex-direction: column;
+      box-shadow: -8px 0 32px rgba(58,53,48,.10), -2px 0 6px rgba(58,53,48,.06);
+      animation: slideIn .22s cubic-bezier(.22,.61,.36,1);
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity:.6; } to { transform: translateX(0); opacity:1; } }
+
+    /* ── Drawer header ── */
+    .drawer-header { padding: 24px 28px 20px; border-bottom: 1px solid #E8E5DF; flex-shrink: 0; }
+
+    /* ── Drawer body ── */
+    .drawer-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+    .drawer-body::-webkit-scrollbar { width: 5px; }
+    .drawer-body::-webkit-scrollbar-thumb { background: #D3D2CD; border-radius: 99px; }
+
+    /* ── Drawer footer ── */
+    .drawer-footer { padding: 16px 28px; border-top: 1px solid #E8E5DF; flex-shrink: 0; background: #FAFAF8; display: flex; align-items: center; gap: 10px; }
+
+    /* ── Type toggle ── */
+    .type-toggle { display: flex; background: #F3F2EE; border-radius: 8px; padding: 4px; gap: 2px; }
+    .type-btn {
+      flex: 1; padding: 9px 0; border-radius: 6px; border: none; cursor: pointer;
+      font-family: 'Ubuntu', sans-serif; font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      color: #9A9189; background: transparent; transition: all .15s;
+    }
+    .type-btn.active-entrada  { background: #FFF; color: #7A9264; box-shadow: 0 1px 3px rgba(58,53,48,.08); }
+    .type-btn.active-saida    { background: #FFF; color: #C85A3E; box-shadow: 0 1px 3px rgba(58,53,48,.08); }
+    .type-btn.active-transfer { background: #FFF; color: #B8914E; box-shadow: 0 1px 3px rgba(58,53,48,.08); }
+    .type-btn:hover:not(.active-entrada):not(.active-saida):not(.active-transfer) { background: #ECEAE5; color: #6B635B; }
+
+    /* ── Form elements ── */
+    .form-label { font-size: 12px; font-weight: 500; color: #6B635B; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%; background: #FFFFFF; border: 1px solid #E8E5DF; border-radius: 8px;
+      padding: 10px 14px; font-family: 'Ubuntu', sans-serif; font-size: 14px; color: #3A3530;
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    .form-input:focus { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,.18); }
+    .form-input::placeholder { color: #C0BBB4; }
+    .form-input.has-value { border-color: #D3D2CD; }
+
+    /* Value field — large */
+    .value-input-wrap { position: relative; }
+    .value-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; font-weight: 500; color: #9A9189; pointer-events: none; font-family: 'Fraunces', serif; }
+    .value-input {
+      width: 100%; background: #F7F5F2; border: 1.5px solid #E8E5DF; border-radius: 10px;
+      padding: 16px 16px 16px 52px; font-family: 'Fraunces', serif; font-size: 32px; font-weight: 400;
+      color: #3A3530; outline: none; transition: border-color .15s, box-shadow .15s;
+      font-variant-numeric: tabular-nums;
+    }
+    .value-input:focus { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,.18); background: #FFF; }
+    .value-input.entrada { color: #7A9264; }
+    .value-input.saida   { color: #C85A3E; }
+
+    /* Select custom */
+    .form-select {
+      width: 100%; background: #FFFFFF; border: 1px solid #E8E5DF; border-radius: 8px;
+      padding: 10px 36px 10px 14px; font-family: 'Ubuntu', sans-serif; font-size: 14px; color: #3A3530;
+      outline: none; appearance: none; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+    }
+    .form-select:focus { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,.18); }
+
+    /* Account preview card */
+    .account-preview {
+      background: #F7F5F2; border: 1px solid #E8E5DF; border-radius: 8px;
+      padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    /* Status toggle */
+    .status-toggle { display: flex; gap: 10px; }
+    .status-opt {
+      flex: 1; padding: 10px 0; border-radius: 8px; border: 1.5px solid #E8E5DF;
+      background: #FFF; cursor: pointer; font-family: 'Ubuntu', sans-serif;
+      font-size: 13px; font-weight: 500; color: #9A9189;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: all .15s;
+    }
+    .status-opt:hover { border-color: #D3D2CD; color: #6B635B; }
+    .status-opt.active-realizado { border-color: #ACC095; background: #EEF2E8; color: #7A9264; }
+    .status-opt.active-pendente  { border-color: #D2B06E; background: #F7F0DD; color: #B8914E; }
+
+    /* Drop zone */
+    .dropzone {
+      border: 1.5px dashed #D3D2CD; border-radius: 10px; padding: 24px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+      cursor: pointer; transition: all .15s; background: #FAFAF8;
+    }
+    .dropzone:hover { border-color: #F08353; background: #FBE9E3; }
+
+    /* Buttons */
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:11px 20px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background .15s; white-space:nowrap; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-secondary { background:transparent; color:#F08353; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:11px 20px; border-radius:8px; border:1.2px solid #F08353; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; white-space:nowrap; }
+    .btn-secondary:hover { background:#FBE9E3; }
+    .btn-ghost { background:transparent; color:#9A9189; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:14px; padding:11px 16px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; }
+    .btn-ghost:hover { background:#F3F2EE; color:#6B635B; }
+
+    /* Avatar */
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+    .notif-btn { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; transition:background .15s; position:relative; }
+    .notif-btn:hover { background:#F3F2EE; }
+    .notif-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* Tag chips (categoria) */
+    .cat-chip { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; padding:4px 9px; border-radius:4px; }
+
+    /* Recorrência */
+    .recur-option { display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:7px; border:1.2px solid #E8E5DF; cursor:pointer; font-size:13px; color:#6B635B; transition:all .15s; flex:1; }
+    .recur-option:hover { border-color:#D3D2CD; background:#F7F5F2; }
+    .recur-option.active { border-color:#F08353; background:#FBE9E3; color:#E07040; font-weight:500; }
+
+    /* Section divider */
+    .section-divider { height:1px; background:#E8E5DF; margin: 4px 0; }
+
+    /* Combobox dropdown simulation */
+    .cat-dropdown { background:#FFF; border:1px solid #E8E5DF; border-radius:10px; box-shadow:0 4px 16px rgba(58,53,48,.10); overflow:hidden; }
+    .cat-group-label { font-size:10px; font-weight:500; color:#9A9189; text-transform:uppercase; letter-spacing:.1em; padding:10px 14px 4px; }
+    .cat-item { padding:9px 14px; font-size:13px; color:#3A3530; cursor:pointer; display:flex; align-items:center; gap:10px; transition:background .12s; }
+    .cat-item:hover, .cat-item.selected { background:#FBE9E3; color:#E07040; }
+    .cat-item .cat-code { font-size:11px; color:#9A9189; font-variant-numeric:tabular-nums; width:42px; flex-shrink:0; }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-thumb { background:#D3D2CD; border-radius:99px; }
+  </style>
+</head>
+<body>
+<div style="display:flex;height:100vh;overflow:hidden;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/>
+        <circle cx="17" cy="11" r="3.5" fill="#F08353"/>
+        <path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div>
+        <div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div>
+      </div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item active" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA
+        <span style="margin-left:auto;font-size:9px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#F7F0DD;color:#B8914E;">beta</span>
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Larissa Ferraz</div>
+        <div style="font-size:11px;color:#9A9189;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Corporis — Xanxerê/SC</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN (dimmed) -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;position:relative;">
+
+    <!-- Topbar -->
+    <header class="topbar" style="opacity:.5;pointer-events:none;">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">lançamentos</div>
+      <div style="position:relative;">
+        <i data-lucide="search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+        <input style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:8px 12px 8px 34px;font-family:'Ubuntu',sans-serif;font-size:13px;width:210px;" type="text" placeholder="Buscar lançamentos…">
+      </div>
+      <button style="background:#F08353;color:#FFF;font-family:'Ubuntu',sans-serif;font-weight:500;font-size:14px;padding:9px 16px;border-radius:8px;border:none;display:inline-flex;align-items:center;gap:7px;">
+        <i data-lucide="plus" style="width:16px;height:16px;stroke-width:2;"></i>Novo Lançamento
+      </button>
+      <button class="notif-btn"><i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i><span class="notif-dot"></span></button>
+      <div class="avatar">L</div>
+    </header>
+
+    <!-- Page bg dimmed -->
+    <div style="flex:1;padding:28px 32px;overflow:hidden;opacity:.35;pointer-events:none;">
+      <div style="height:48px;background:#FFF;border:1px solid #E8E5DF;border-radius:12px;margin-bottom:16px;"></div>
+      <div style="height:32px;margin-bottom:14px;"></div>
+      <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;height:480px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" onclick="/* close drawer */"></div>
+
+<!-- DRAWER -->
+<div class="drawer" id="drawer">
+
+  <!-- Header -->
+  <div class="drawer-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+      <div>
+        <div class="font-display" style="font-size:20px;color:#3A3530;">novo lançamento</div>
+        <div style="font-size:13px;color:#9A9189;margin-top:4px;">Preencha os dados do lançamento</div>
+      </div>
+      <button onclick="closeDrawer()" style="width:32px;height:32px;border-radius:7px;border:none;background:#F3F2EE;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B635B;transition:background .15s;" onmouseover="this.style.background='#E8E5DF'" onmouseout="this.style.background='#F3F2EE'">
+        <i data-lucide="x" style="width:16px;height:16px;stroke-width:2;"></i>
+      </button>
+    </div>
+
+    <!-- Type toggle -->
+    <div class="type-toggle" style="margin-top:20px;">
+      <button class="type-btn active-saida" id="btn-saida" onclick="setType('saida')">
+        <i data-lucide="arrow-up-circle" style="width:16px;height:16px;stroke-width:1.5;"></i>
+        Saída
+      </button>
+      <button class="type-btn" id="btn-entrada" onclick="setType('entrada')">
+        <i data-lucide="arrow-down-circle" style="width:16px;height:16px;stroke-width:1.5;"></i>
+        Entrada
+      </button>
+      <button class="type-btn" id="btn-transfer" onclick="setType('transfer')">
+        <i data-lucide="arrow-left-right" style="width:16px;height:16px;stroke-width:1.5;"></i>
+        Transferência
+      </button>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="drawer-body">
+
+    <!-- Valor -->
+    <div>
+      <label class="form-label">Valor</label>
+      <div class="value-input-wrap">
+        <span class="value-prefix" id="value-prefix">R$</span>
+        <input class="value-input saida tnum" id="value-input" type="text" value="3.200,00" placeholder="0,00" oninput="formatValue(this)" onfocus="this.select()">
+      </div>
+    </div>
+
+    <!-- Data + Descrição -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div>
+        <label class="form-label">Data</label>
+        <div style="position:relative;">
+          <i data-lucide="calendar" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;z-index:1;"></i>
+          <input class="form-input has-value" type="text" value="28/11/2025" style="padding-left:36px;">
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Competência</label>
+        <div style="position:relative;">
+          <i data-lucide="calendar-range" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;z-index:1;"></i>
+          <input class="form-input has-value" type="text" value="Novembro 2025" style="padding-left:36px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Descrição -->
+    <div>
+      <label class="form-label">Descrição</label>
+      <input class="form-input has-value" type="text" value="Aluguel sala 903" placeholder="Ex: Aula de Pilates — Ana Souza">
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- Conta de origem -->
+    <div id="conta-origem-wrap">
+      <label class="form-label">Conta</label>
+      <select class="form-select" id="conta-select" onchange="updateAccountPreview()">
+        <option value="itau">Itaú PJ — Conta Corrente</option>
+        <option value="nubank">Nubank PJ — Conta Corrente</option>
+        <option value="caixinha">Caixinha — Caixa Físico</option>
+        <option value="itau-cc">Cartão Itaú Black</option>
+        <option value="nubank-cc">Cartão Nubank</option>
+      </select>
+      <!-- Preview de saldo -->
+      <div class="account-preview" id="account-preview">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div style="width:28px;height:28px;border-radius:7px;background:#F7F0DD;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="building" style="width:14px;height:14px;stroke-width:1.5;color:#B8914E;"></i>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#3A3530;">Itaú PJ</div>
+            <div style="font-size:11px;color:#9A9189;">Saldo atual</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="tnum" style="font-size:14px;font-weight:500;color:#7A9264;" id="preview-saldo">R$ 18.420,50</div>
+          <div style="font-size:11px;color:#9A9189;" id="preview-after">após: R$ 15.220,50</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conta de destino (só aparece em transferência) -->
+    <div id="conta-destino-wrap" style="display:none;">
+      <label class="form-label">Conta de Destino</label>
+      <select class="form-select">
+        <option value="nubank">Nubank PJ — Conta Corrente</option>
+        <option value="itau">Itaú PJ — Conta Corrente</option>
+        <option value="caixinha">Caixinha — Caixa Físico</option>
+      </select>
+      <div class="account-preview" style="margin-top:8px;">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div style="width:28px;height:28px;border-radius:7px;background:#F3F2EE;display:flex;align-items:center;justify-content:center;">
+            <i data-lucide="building" style="width:14px;height:14px;stroke-width:1.5;color:#6B635B;"></i>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#3A3530;">Nubank PJ</div>
+            <div style="font-size:11px;color:#9A9189;">Saldo atual</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="tnum" style="font-size:14px;font-weight:500;color:#7A9264;">R$ 6.280,30</div>
+          <div style="font-size:11px;color:#9A9189;">após: R$ 11.280,30</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categoria — combobox com dropdown aberto -->
+    <div>
+      <label class="form-label">Categoria</label>
+      <div style="position:relative;">
+        <i data-lucide="tag" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;z-index:1;"></i>
+        <input class="form-input has-value" id="cat-input" type="text" value="4.02.01 Aluguel e Condomínio" placeholder="Buscar categoria…" style="padding-left:36px;" onfocus="openCatDropdown()" onblur="setTimeout(closeCatDropdown,150)">
+      </div>
+      <!-- Dropdown simulado — aberto no mockup -->
+      <div class="cat-dropdown" id="cat-dropdown" style="margin-top:6px;display:none;max-height:220px;overflow-y:auto;">
+        <div style="padding:8px 10px;border-bottom:1px solid #E8E5DF;">
+          <input class="form-input" type="text" placeholder="Buscar…" style="padding:7px 12px;font-size:13px;" onclick="event.stopPropagation()">
+        </div>
+        <div class="cat-group-label">4. Despesas Operacionais · Administrativo</div>
+        <div class="cat-item selected" onclick="selectCat(this,'4.02.01 Aluguel e Condomínio')">
+          <span class="cat-code">4.02.01</span>Aluguel e Condomínio
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'4.02.02 Luz/Água/Gás')">
+          <span class="cat-code">4.02.02</span>Luz / Água / Gás
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'4.02.03 Telefone e Internet')">
+          <span class="cat-code">4.02.03</span>Telefone e Internet
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'4.02.04 Contador')">
+          <span class="cat-code">4.02.04</span>Contador
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'4.02.07 Sistemas')">
+          <span class="cat-code">4.02.07</span>Sistemas
+        </div>
+        <div class="cat-group-label">4. Despesas Operacionais · RH</div>
+        <div class="cat-item" onclick="selectCat(this,'4.01.01 Salário')">
+          <span class="cat-code">4.01.01</span>Salário
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'4.01.06 FGTS')">
+          <span class="cat-code">4.01.06</span>FGTS
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'4.01.13 Pró-labore')">
+          <span class="cat-code">4.01.13</span>Pró-labore
+        </div>
+        <div class="cat-group-label">1. Receita Bruta</div>
+        <div class="cat-item" onclick="selectCat(this,'1.01 Pilates')">
+          <span class="cat-code">1.01</span>Pilates
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'1.02 Fisioterapia')">
+          <span class="cat-code">1.02</span>Fisioterapia
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'1.03 Fisio Pélvica')">
+          <span class="cat-code">1.03</span>Fisio Pélvica
+        </div>
+        <div class="cat-item" onclick="selectCat(this,'1.06 Combo')">
+          <span class="cat-code">1.06</span>Combo
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div>
+      <label class="form-label">Status</label>
+      <div class="status-toggle">
+        <button class="status-opt active-realizado" id="status-realizado" onclick="setStatus('realizado')">
+          <i data-lucide="check-circle" style="width:15px;height:15px;stroke-width:1.5;"></i>
+          Realizado
+        </button>
+        <button class="status-opt" id="status-pendente" onclick="setStatus('pendente')">
+          <i data-lucide="clock" style="width:15px;height:15px;stroke-width:1.5;"></i>
+          Pendente
+        </button>
+      </div>
+    </div>
+
+    <!-- Recorrência -->
+    <div>
+      <label class="form-label">Recorrência</label>
+      <div style="display:flex;gap:8px;">
+        <button class="recur-option active" id="recur-unica" onclick="setRecur('unica')">
+          <i data-lucide="circle" style="width:14px;height:14px;stroke-width:1.5;"></i>
+          Única vez
+        </button>
+        <button class="recur-option" id="recur-mensal" onclick="setRecur('mensal')">
+          <i data-lucide="repeat" style="width:14px;height:14px;stroke-width:1.5;"></i>
+          Mensal
+        </button>
+        <button class="recur-option" id="recur-parcelado" onclick="setRecur('parcelado')">
+          <i data-lucide="layers" style="width:14px;height:14px;stroke-width:1.5;"></i>
+          Parcelado
+        </button>
+      </div>
+      <!-- Parcelamento expandido (oculto por padrão) -->
+      <div id="parcelamento-wrap" style="display:none;margin-top:12px;background:#F7F5F2;border-radius:8px;padding:14px;display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="form-label" style="font-size:11px;">Nº de parcelas</label>
+            <input class="form-input" type="number" value="12" min="2" max="60" style="font-size:14px;">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:11px;">Valor por parcela</label>
+            <input class="form-input tnum" type="text" value="R$ 266,67" readonly style="background:#F3F2EE;color:#6B635B;font-size:14px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- Observações -->
+    <div>
+      <label class="form-label">Observações <span style="color:#C0BBB4;font-weight:400;text-transform:none;font-size:11px;letter-spacing:0;">(opcional)</span></label>
+      <textarea class="form-input" rows="2" placeholder="Notas internas, referências, número do contrato…" style="resize:vertical;line-height:1.5;"></textarea>
+    </div>
+
+    <!-- Anexos -->
+    <div>
+      <label class="form-label">Anexos <span style="color:#C0BBB4;font-weight:400;text-transform:none;font-size:11px;letter-spacing:0;">(opcional)</span></label>
+      <div class="dropzone" onclick="document.getElementById('file-input').click()">
+        <div style="width:40px;height:40px;border-radius:10px;background:#F3F2EE;display:flex;align-items:center;justify-content:center;">
+          <i data-lucide="upload-cloud" style="width:20px;height:20px;stroke-width:1.5;color:#9A9189;"></i>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:13px;font-weight:500;color:#6B635B;">Arraste arquivos ou clique para selecionar</div>
+          <div style="font-size:11px;color:#9A9189;margin-top:3px;">PDF, JPG, PNG — até 10 MB cada</div>
+        </div>
+      </div>
+      <input id="file-input" type="file" style="display:none;" multiple>
+      <!-- Arquivo já anexado (exemplo) -->
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#F7F5F2;border:1px solid #E8E5DF;border-radius:8px;">
+        <i data-lucide="file-text" style="width:16px;height:16px;stroke-width:1.5;color:#9A9189;flex-shrink:0;"></i>
+        <span style="font-size:12px;color:#6B635B;flex:1;">recibo_aluguel_nov25.pdf</span>
+        <span style="font-size:11px;color:#9A9189;">84 KB</span>
+        <button style="width:24px;height:24px;border-radius:5px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9A9189;" onmouseover="this.style.background='#E8E5DF'" onmouseout="this.style.background='transparent'">
+          <i data-lucide="x" style="width:13px;height:13px;stroke-width:2;"></i>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /drawer-body -->
+
+  <!-- Footer -->
+  <div class="drawer-footer">
+    <button class="btn-primary" style="flex:1;" onclick="salvar()">
+      <i data-lucide="check" style="width:16px;height:16px;stroke-width:2;"></i>
+      Salvar lançamento
+    </button>
+    <button class="btn-secondary" onclick="salvarENovo()">
+      <i data-lucide="plus" style="width:15px;height:15px;stroke-width:2;"></i>
+      Salvar e novo
+    </button>
+    <button class="btn-ghost" onclick="closeDrawer()">Cancelar</button>
+  </div>
+
+</div><!-- /drawer -->
+
+<!-- Toast de confirmação (aparece ao salvar) -->
+<div id="toast" style="
+  position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(80px);
+  background:#3A3530; color:#FFF; border-radius:10px; padding:14px 22px;
+  display:flex; align-items:center; gap:10px; box-shadow:0 8px 24px rgba(58,53,48,.25);
+  font-size:14px; font-weight:500; transition:transform .3s cubic-bezier(.22,.61,.36,1);
+  z-index:200; white-space:nowrap;">
+  <i data-lucide="check-circle" style="width:18px;height:18px;stroke-width:1.5;color:#ACC095;"></i>
+  Lançamento salvo com sucesso!
+</div>
+
+<script>
+  lucide.createIcons();
+
+  // ── Current state ────────────────────────────────────────────────────────────
+  let currentType   = 'saida';
+  let currentStatus = 'realizado';
+  let currentRecur  = 'unica';
+
+  const accountData = {
+    itau:     { name:'Itaú PJ', saldo: 18420.50, icon:'building', iconBg:'#F7F0DD', iconColor:'#B8914E' },
+    nubank:   { name:'Nubank PJ', saldo: 6280.30, icon:'building', iconBg:'#F3F2EE', iconColor:'#6B635B' },
+    caixinha: { name:'Caixinha', saldo: 340.00, icon:'banknote', iconBg:'#EEF2E8', iconColor:'#7A9264' },
+    'itau-cc':  { name:'Cartão Itaú Black', saldo: -3480.20, icon:'credit-card', iconBg:'#FBE9E3', iconColor:'#C85A3E' },
+    'nubank-cc':{ name:'Cartão Nubank', saldo: -1250.00, icon:'credit-card', iconBg:'#F0EEE9', iconColor:'#6B635B' },
+  };
+
+  // ── Type ─────────────────────────────────────────────────────────────────────
+  function setType(t) {
+    currentType = t;
+    ['saida','entrada','transfer'].forEach(x => {
+      document.getElementById('btn-' + x).className = 'type-btn';
+    });
+    document.getElementById('btn-' + t).className = 'type-btn active-' + (t === 'transfer' ? 'transfer' : t);
+
+    const vi = document.getElementById('value-input');
+    vi.className = 'value-input tnum ' + (t === 'entrada' ? 'entrada' : t === 'saida' ? 'saida' : '');
+
+    // show/hide destino
+    document.getElementById('conta-destino-wrap').style.display = t === 'transfer' ? 'block' : 'none';
+
+    // update header title
+    const titles = { saida: 'novo lançamento', entrada: 'novo lançamento', transfer: 'nova transferência' };
+    document.querySelector('.drawer-header .font-display').textContent = titles[t];
+
+    updateAccountPreview();
+    lucide.createIcons();
+  }
+
+  // ── Account preview ──────────────────────────────────────────────────────────
+  function updateAccountPreview() {
+    const sel  = document.getElementById('conta-select').value;
+    const acc  = accountData[sel] || accountData['itau'];
+    const val  = parseFloat(document.getElementById('value-input').value.replace(/\./g,'').replace(',','.')) || 0;
+
+    const saldo = acc.saldo;
+    let after   = currentType === 'entrada' ? saldo + val : saldo - val;
+
+    document.getElementById('preview-saldo').textContent = formatBRL(saldo);
+    document.getElementById('preview-saldo').style.color  = saldo < 0 ? '#C85A3E' : '#7A9264';
+    document.getElementById('preview-after').textContent  = 'após: ' + formatBRL(after);
+    document.getElementById('preview-after').style.color  = after < 0 ? '#C85A3E' : '#9A9189';
+  }
+
+  function formatBRL(v) {
+    return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  }
+
+  // ── Status ───────────────────────────────────────────────────────────────────
+  function setStatus(s) {
+    currentStatus = s;
+    document.getElementById('status-realizado').className = 'status-opt' + (s==='realizado' ? ' active-realizado' : '');
+    document.getElementById('status-pendente').className  = 'status-opt' + (s==='pendente'  ? ' active-pendente'  : '');
+    lucide.createIcons();
+  }
+
+  // ── Recorrência ──────────────────────────────────────────────────────────────
+  function setRecur(r) {
+    currentRecur = r;
+    ['unica','mensal','parcelado'].forEach(x => {
+      document.getElementById('recur-' + x).className = 'recur-option' + (r === x ? ' active' : '');
+    });
+    const pw = document.getElementById('parcelamento-wrap');
+    pw.style.display = r === 'parcelado' ? 'grid' : 'none';
+    lucide.createIcons();
+  }
+
+  // ── Categoria dropdown ───────────────────────────────────────────────────────
+  function openCatDropdown()  { document.getElementById('cat-dropdown').style.display = 'block'; }
+  function closeCatDropdown() { document.getElementById('cat-dropdown').style.display = 'none';  }
+  function selectCat(el, val) {
+    document.getElementById('cat-input').value = val;
+    document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    closeCatDropdown();
+  }
+
+  // ── Value formatting ─────────────────────────────────────────────────────────
+  function formatValue(input) {
+    let raw = input.value.replace(/\D/g, '');
+    let num = parseInt(raw || '0') / 100;
+    input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    updateAccountPreview();
+  }
+
+  // ── Save ─────────────────────────────────────────────────────────────────────
+  function salvar() {
+    showToast();
+    setTimeout(closeDrawer, 1800);
+  }
+  function salvarENovo() {
+    showToast();
+    // reset fields
+    document.getElementById('value-input').value = '0,00';
+    document.querySelector('input[type="text"][placeholder*="Descrição"], input[value="Aluguel sala 903"]') && (document.querySelector('input[value="Aluguel sala 903"]').value = '');
+  }
+  function closeDrawer() {
+    document.getElementById('drawer').style.transform = 'translateX(100%)';
+    document.getElementById('drawer').style.opacity = '0';
+    document.querySelector('.overlay').style.opacity = '0';
+  }
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(80px)'; }, 2500);
+    lucide.createIcons();
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+  updateAccountPreview();
+</script>
+</body>
+</html>

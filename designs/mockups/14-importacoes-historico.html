@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notificações — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; display: flex; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; }
+
+    /* ── App sidebar ── */
+    .app-sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; overflow: hidden; }
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 14px; flex-shrink: 0; }
+
+    /* ── Layout ── */
+    .notif-layout { flex: 1; display: flex; overflow: hidden; }
+
+    /* ── Filter panel ── */
+    .filter-panel { width: 220px; border-right: 1px solid #E8E5DF; padding: 20px 12px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; overflow-y: auto; background: #FAFAF8; }
+    .filter-label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: #C0BBB4; padding: 12px 12px 6px; }
+    .filter-label:first-child { padding-top: 0; }
+    .filter-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; color: #6B635B; transition: background .12s; }
+    .filter-item:hover { background: #F3F2EE; }
+    .filter-item.active { background: #FBE9E3; color: #E07040; font-weight: 500; }
+    .filter-count { font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 99px; background: #F3F2EE; color: #9A9189; }
+    .filter-item.active .filter-count { background: rgba(240,131,83,.18); color: #E07040; }
+
+    /* ── Notification feed ── */
+    .notif-feed { flex: 1; overflow-y: auto; }
+    .notif-feed::-webkit-scrollbar { width: 5px; }
+    .notif-feed::-webkit-scrollbar-thumb { background: #D3D2CD; border-radius: 99px; }
+
+    /* ── Date group header ── */
+    .date-group { padding: 16px 28px 8px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: #FAFAF8; z-index: 2; }
+    .date-group-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: #9A9189; }
+    .date-group-line { flex: 1; height: 1px; background: #E8E5DF; }
+
+    /* ── Notification item ── */
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 16px 28px;
+      border-bottom: 1px solid #F0EEE9;
+      cursor: pointer; transition: background .12s;
+      position: relative;
+    }
+    .notif-item:hover { background: #F9F8F5; }
+    .notif-item.unread { background: #FFFAF8; }
+    .notif-item.unread:hover { background: #FFF4F0; }
+
+    /* Unread indicator */
+    .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: #F08353; flex-shrink: 0; margin-top: 6px; }
+    .read-dot { width: 8px; height: 8px; flex-shrink: 0; }
+
+    /* Icon */
+    .notif-icon-wrap { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* Content */
+    .notif-content { flex: 1; min-width: 0; }
+    .notif-title { font-size: 13px; font-weight: 500; color: #3A3530; margin-bottom: 3px; line-height: 1.4; }
+    .notif-item.unread .notif-title { font-weight: 600; }
+    .notif-body { font-size: 13px; color: #6B635B; line-height: 1.55; margin-bottom: 6px; }
+    .notif-meta { display: flex; align-items: center; gap: 10px; font-size: 11px; color: #C0BBB4; }
+    .notif-time { }
+    .notif-source { display: flex; align-items: center; gap: 4px; }
+
+    /* Action buttons */
+    .notif-actions { display: flex; gap: 6px; opacity: 0; transition: opacity .15s; flex-shrink: 0; }
+    .notif-item:hover .notif-actions { opacity: 1; }
+    .notif-act { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #C0BBB4; transition: all .12s; }
+    .notif-act:hover { background: #F3F2EE; color: #6B635B; }
+    .notif-act.dismiss:hover { background: #FBE9E3; color: #C85A3E; }
+
+    /* Inline card inside notif */
+    .notif-card { background: #FFF; border: 1px solid #E8E5DF; border-radius: 8px; padding: 11px 14px; margin-top: 8px; display: flex; align-items: center; gap: 12px; }
+    .notif-card-val { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .notif-card-label { font-size: 11px; color: #9A9189; margin-top: 1px; }
+
+    /* CTA link */
+    .notif-cta { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: #F08353; text-decoration: none; margin-top: 6px; transition: color .12s; }
+    .notif-cta:hover { color: #F6A958; }
+
+    /* Badge */
+    .badge { display:inline-flex; align-items:center; font-size:10px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; padding:2px 7px; border-radius:4px; white-space:nowrap; }
+    .badge-danger  { background:#FBE9E3; color:#C85A3E; }
+    .badge-warning { background:#F7F0DD; color:#B8914E; }
+    .badge-success { background:#EEF2E8; color:#7A9264; }
+    .badge-info    { background:#F0EEE9; color:#6B635B; }
+    .badge-ai      { background:linear-gradient(90deg,#FBE9E3,#F7F0DD); color:#E07040; border:1px solid #F0B090; }
+
+    /* Buttons */
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:13px; padding:8px 16px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-ghost { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:13px; padding:7px 11px; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s; }
+    .btn-ghost:hover { background:#F3F2EE; }
+    .btn-ghost-sm { background:transparent; color:#9A9189; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:12px; padding:5px 10px; border-radius:5px; border:1px solid #E8E5DF; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all .12s; }
+    .btn-ghost-sm:hover { background:#F3F2EE; color:#6B635B; }
+
+    /* Avatar / notif bell */
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+    .notif-bell { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; transition:background .15s; position:relative; }
+    .notif-bell:hover { background:#F3F2EE; }
+    .ndot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* Empty state */
+    .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:14px; text-align:center; padding:48px; }
+
+    /* Tag chip */
+    .type-chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; padding:2px 7px; border-radius:4px; }
+
+    /* Progress mini */
+    .prog-mini { height:4px; background:#F0EEE9; border-radius:99px; overflow:hidden; width:120px; }
+    .prog-mini-fill { height:100%; border-radius:99px; }
+  </style>
+</head>
+<body>
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="app-sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/><circle cx="17" cy="11" r="3.5" fill="#F08353"/><path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/></svg>
+      <div><div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div><div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div></div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#"><i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA<span style="margin-left:auto;font-size:9px;font-weight:500;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#F7F0DD;color:#B8914E;">beta</span></a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#3A3530;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Larissa Ferraz</div><div style="font-size:11px;color:#9A9189;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Corporis — Xanxerê/SC</div></div>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">notificações</div>
+
+      <!-- Count + actions -->
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;color:#9A9189;"><strong style="color:#3A3530;">6</strong> não lidas</span>
+        <div style="width:1px;height:16px;background:#E8E5DF;"></div>
+        <button class="btn-ghost" style="font-size:12px;" onclick="markAllRead()">
+          <i data-lucide="check-check" style="width:13px;height:13px;stroke-width:1.5;"></i>
+          Marcar todas como lidas
+        </button>
+        <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;" onclick="clearAll()">
+          <i data-lucide="trash-2" style="width:13px;height:13px;stroke-width:1.5;"></i>
+          Limpar lidas
+        </button>
+        <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;" onclick="goToSettings()">
+          <i data-lucide="settings" style="width:13px;height:13px;stroke-width:1.5;"></i>
+          Preferências
+        </button>
+      </div>
+
+      <button class="notif-bell"><i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i><span class="ndot" id="bell-dot"></span></button>
+      <div class="avatar">L</div>
+    </header>
+
+    <!-- Content -->
+    <div class="notif-layout">
+
+      <!-- ── Filter panel ── -->
+      <div class="filter-panel">
+        <div class="filter-label">Mostrar</div>
+        <div class="filter-item active" onclick="filterFeed('all',this)">
+          <span style="display:flex;align-items:center;gap:8px;"><i data-lucide="inbox" style="width:14px;height:14px;stroke-width:1.5;"></i>Todas</span>
+          <span class="filter-count" id="count-all">12</span>
+        </div>
+        <div class="filter-item" onclick="filterFeed('unread',this)">
+          <span style="display:flex;align-items:center;gap:8px;"><i data-lucide="circle" style="width:14px;height:14px;stroke-width:1.5;"></i>Não lidas</span>
+          <span class="filter-count" id="count-unread">6</span>
+        </div>
+
+        <div class="filter-label">Por tipo</div>
+        <div class="filter-item" onclick="filterFeed('alerta',this)">
+          <span style="display:flex;align-items:center;gap:8px;"><i data-lucide="alert-triangle" style="width:14px;height:14px;stroke-width:1.5;color:#C85A3E;"></i>Alertas</span>
+          <span class="filter-count">3</span>
+        </div>
+        <div class="filter-item" onclick="filterFeed('vencimento',this)">
+          <span style="display:flex;align-items:center;gap:8px;"><i data-lucide="calendar-clock" style="width:14px;height:14px;stroke-width:1.5;color:#F08353;"></i>Vencimentos</span>
+          <span class="filter-count">2</span>
+        </div>
+        <div class="filter-item" onclick="filterFeed('importacao',this)">
+          <span style="display:flex;align-items:center;gap:8px;"><i data-lucide="upload-cloud" style="width:14px;height:14px;stroke-width:1.5;color:#7A9264;"></i>Importações</span>
+          <span class="filter-count">3</span>
+        </div>
+        <div class="filter-item" onclick="filterFeed('ia',this)">
+          <span style="display:flex;align-items:center;gap:8px;"><i data-lucide="sparkles" style="width:14px;height:14px;stroke-width:1.5;color:#B8914E;"></i>Insights IA</span>
+          <span class="filter-count">2</span>
+        </div>
+        <div class="filter-item" onclick="filterFeed('sistema',this)">
+          <span style="display:flex;align-items:center;gap:8px;"><i data-lucide="info" style="width:14px;height:14px;stroke-width:1.5;color:#9A9189;"></i>Sistema</span>
+          <span class="filter-count">2</span>
+        </div>
+      </div>
+
+      <!-- ── Feed ── -->
+      <div class="notif-feed" id="feed">
+
+        <!-- ═══ HOJE ═══ -->
+        <div class="date-group">
+          <span class="date-group-label">Hoje · 28 de novembro, 2025</span>
+          <div class="date-group-line"></div>
+          <span style="font-size:11px;color:#9A9189;">4 notificações</span>
+        </div>
+
+        <!-- 1. ALERTA — fatura vencendo -->
+        <div class="notif-item unread" data-type="vencimento">
+          <div class="unread-dot"></div>
+          <div class="notif-icon-wrap" style="background:#FBE9E3;">
+            <i data-lucide="credit-card" style="width:20px;height:20px;stroke-width:1.5;color:#F08353;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title">Fatura Itaú Black vence em 10 dias</div>
+              <span class="badge badge-warning">Vencimento</span>
+            </div>
+            <div class="notif-body">Sua fatura de novembro fecha em <strong>03/12</strong> com total parcial de <strong>R$ 3.480,20</strong>. O pagamento deve ser feito até <strong>10/12</strong> pela conta Itaú PJ.</div>
+            <div class="notif-card">
+              <div style="flex:1;">
+                <div class="notif-card-val" style="color:#C85A3E;">R$ 3.480,20</div>
+                <div class="notif-card-label">Fatura parcial · 32 compras</div>
+              </div>
+              <div style="text-align:right;">
+                <div class="notif-card-val" style="font-size:13px;color:#6B635B;">10/12/2025</div>
+                <div class="notif-card-label">Vencimento</div>
+              </div>
+              <div style="width:1px;height:32px;background:#E8E5DF;"></div>
+              <div style="text-align:right;">
+                <div class="notif-card-val tnum" style="font-size:13px;color:#7A9264;">R$ 18.420</div>
+                <div class="notif-card-label">Saldo Itaú PJ</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <a href="#" class="notif-cta"><i data-lucide="eye" style="width:12px;height:12px;stroke-width:2;"></i>Ver fatura completa</a>
+              <span style="color:#E8E5DF;">·</span>
+              <a href="#" class="notif-cta" style="color:#7A9264;"><i data-lucide="check" style="width:12px;height:12px;stroke-width:2;"></i>Marcar como lida</a>
+            </div>
+            <div class="notif-meta">
+              <span class="notif-time">há 23 minutos</span>
+              <span class="notif-source"><i data-lucide="credit-card" style="width:10px;height:10px;stroke-width:1.5;"></i>Cartão Itaú Black</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act" title="Arquivar"><i data-lucide="archive" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 2. IA INSIGHT — desvio de orçado -->
+        <div class="notif-item unread" data-type="ia">
+          <div class="unread-dot"></div>
+          <div class="notif-icon-wrap" style="background:linear-gradient(135deg,#FBE9E3,#F7F0DD);">
+            <i data-lucide="sparkles" style="width:20px;height:20px;stroke-width:1.5;color:#F08353;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title">Insight IA — Lavanderia acima do orçado</div>
+              <span class="badge badge-ai"><i data-lucide="sparkles" style="width:9px;height:9px;stroke-width:1.5;"></i>IA</span>
+            </div>
+            <div class="notif-body">O Consultor IA detectou que <strong>3.02 Lavanderia</strong> gastou R$ 2.050 em novembro, <strong>+28% acima do orçado</strong> (R$ 1.600). Com base nos últimos 3 meses, esse aumento pode ser sazonal — verifique se há novos fornecedores ou aumento de volume.</div>
+            <div class="notif-card">
+              <div style="flex:1;">
+                <div style="font-size:12px;color:#9A9189;margin-bottom:4px;">Orçado × Realizado · nov/25</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="prog-mini"><div class="prog-mini-fill" style="width:100%;background:#C85A3E;"></div></div>
+                  <span style="font-size:12px;font-weight:500;color:#C85A3E;">128% do orçado</span>
+                </div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:13px;font-weight:600;color:#C85A3E;">+R$ 450</div>
+                <div style="font-size:11px;color:#9A9189;">acima do meta</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <a href="#" class="notif-cta"><i data-lucide="target" style="width:12px;height:12px;stroke-width:2;"></i>Ver Orçado × Realizado</a>
+              <span style="color:#E8E5DF;">·</span>
+              <a href="#" class="notif-cta"><i data-lucide="sparkles" style="width:12px;height:12px;stroke-width:1.5;"></i>Perguntar ao Consultor</a>
+            </div>
+            <div class="notif-meta">
+              <span class="notif-time">há 1 hora</span>
+              <span class="notif-source"><i data-lucide="sparkles" style="width:10px;height:10px;stroke-width:1.5;"></i>Consultor IA</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act" title="Arquivar"><i data-lucide="archive" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 3. IMPORTAÇÃO CONCLUÍDA -->
+        <div class="notif-item unread" data-type="importacao">
+          <div class="unread-dot"></div>
+          <div class="notif-icon-wrap" style="background:#EEF2E8;">
+            <i data-lucide="upload-cloud" style="width:20px;height:20px;stroke-width:1.5;color:#7A9264;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title">Importação concluída — fatura Itaú Black nov/25</div>
+              <span class="badge badge-success">Concluído</span>
+            </div>
+            <div class="notif-body">A IA processou <strong>32 transações</strong> da fatura. <strong>28 foram categorizadas automaticamente</strong> com confiança alta ou média. Restam 4 aguardando sua revisão.</div>
+            <div class="notif-card">
+              <div style="display:flex;align-items:center;gap:16px;width:100%;">
+                <div style="text-align:center;flex:1;">
+                  <div style="font-size:18px;font-weight:600;color:#7A9264;">28</div>
+                  <div style="font-size:11px;color:#9A9189;">Categorizadas</div>
+                </div>
+                <div style="width:1px;height:32px;background:#E8E5DF;"></div>
+                <div style="text-align:center;flex:1;">
+                  <div style="font-size:18px;font-weight:600;color:#B8914E;">4</div>
+                  <div style="font-size:11px;color:#9A9189;">Para revisar</div>
+                </div>
+                <div style="width:1px;height:32px;background:#E8E5DF;"></div>
+                <div style="text-align:center;flex:1;">
+                  <div style="font-size:18px;font-weight:600;color:#3A3530;">0</div>
+                  <div style="font-size:11px;color:#9A9189;">Erros</div>
+                </div>
+                <div style="width:1px;height:32px;background:#E8E5DF;"></div>
+                <div style="flex:2;">
+                  <div style="font-size:12px;color:#9A9189;margin-bottom:5px;">Progresso</div>
+                  <div class="prog-mini" style="width:100%;"><div class="prog-mini-fill" style="width:88%;background:linear-gradient(90deg,#ACC095,#F08353);"></div></div>
+                  <div style="font-size:11px;color:#7A9264;font-weight:500;margin-top:3px;">88% concluído</div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:8px;">
+              <a href="#" class="notif-cta"><i data-lucide="check-square" style="width:12px;height:12px;stroke-width:2;"></i>Revisar 4 pendentes agora</a>
+            </div>
+            <div class="notif-meta">
+              <span class="notif-time">há 2 horas</span>
+              <span class="notif-source"><i data-lucide="upload" style="width:10px;height:10px;stroke-width:1.5;"></i>Importações</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act" title="Arquivar"><i data-lucide="archive" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 4. ALERTA — saldo baixo numa conta -->
+        <div class="notif-item unread" data-type="alerta">
+          <div class="unread-dot"></div>
+          <div class="notif-icon-wrap" style="background:#FBE9E3;">
+            <i data-lucide="alert-triangle" style="width:20px;height:20px;stroke-width:1.5;color:#C85A3E;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title">Saldo da Caixinha abaixo do mínimo</div>
+              <span class="badge badge-danger">Alerta</span>
+            </div>
+            <div class="notif-body">O saldo da conta <strong>Caixinha (Caixa Físico)</strong> atingiu <strong>R$ 340,00</strong> — abaixo do limiar de alerta configurado em <strong>R$ 500,00</strong>. Considere fazer um suprimento.</div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <a href="#" class="notif-cta"><i data-lucide="arrow-left-right" style="width:12px;height:12px;stroke-width:2;"></i>Lançar suprimento</a>
+              <span style="color:#E8E5DF;">·</span>
+              <a href="#" class="notif-cta" style="color:#9A9189;"><i data-lucide="settings" style="width:12px;height:12px;stroke-width:1.5;"></i>Ajustar limiar</a>
+            </div>
+            <div class="notif-meta">
+              <span class="notif-time">há 4 horas</span>
+              <span class="notif-source"><i data-lucide="banknote" style="width:10px;height:10px;stroke-width:1.5;"></i>Caixinha</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act" title="Arquivar"><i data-lucide="archive" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- ═══ ONTEM ═══ -->
+        <div class="date-group">
+          <span class="date-group-label">Ontem · 27 de novembro, 2025</span>
+          <div class="date-group-line"></div>
+          <span style="font-size:11px;color:#9A9189;">4 notificações</span>
+        </div>
+
+        <!-- 5. IA INSIGHT — sazonalidade Pilates -->
+        <div class="notif-item unread" data-type="ia">
+          <div class="unread-dot"></div>
+          <div class="notif-icon-wrap" style="background:linear-gradient(135deg,#FBE9E3,#F7F0DD);">
+            <i data-lucide="sparkles" style="width:20px;height:20px;stroke-width:1.5;color:#F08353;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title">Insight IA — Melhor mês de Pilates desde junho</div>
+              <span class="badge badge-ai"><i data-lucide="sparkles" style="width:9px;height:9px;stroke-width:1.5;"></i>IA</span>
+            </div>
+            <div class="notif-body">Novembro registrou <strong>R$ 12.960</strong> em receita de Pilates — <strong>+17,8% acima do orçado</strong> e o maior valor desde junho. A IA detectou um padrão de crescimento consistente neste serviço nos últimos 3 meses. Considere revisar o orçamento de dezembro para cima.</div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <a href="#" class="notif-cta"><i data-lucide="trending-up" style="width:12px;height:12px;stroke-width:2;"></i>Ver DFC completo</a>
+              <span style="color:#E8E5DF;">·</span>
+              <a href="#" class="notif-cta"><i data-lucide="target" style="width:12px;height:12px;stroke-width:1.5;"></i>Ajustar orçamento</a>
+            </div>
+            <div class="notif-meta">
+              <span class="notif-time">27/11 · 18h42</span>
+              <span class="notif-source"><i data-lucide="sparkles" style="width:10px;height:10px;stroke-width:1.5;"></i>Consultor IA</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act" title="Arquivar"><i data-lucide="archive" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 6. IMPORTAÇÃO PARCIAL — Nubank CSV -->
+        <div class="notif-item unread" data-type="importacao">
+          <div class="unread-dot"></div>
+          <div class="notif-icon-wrap" style="background:#F7F0DD;">
+            <i data-lucide="alert-circle" style="width:20px;height:20px;stroke-width:1.5;color:#B8914E;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title">Importação parcial — extrato Nubank PJ out/25</div>
+              <span class="badge badge-warning">Parcial</span>
+            </div>
+            <div class="notif-body">O arquivo <strong>extrato_nubank_out25.csv</strong> foi importado com sucesso, mas <strong>3 linhas foram ignoradas</strong> por formato inválido (vírgula dupla nas colunas de valor). Os demais 31 lançamentos foram processados normalmente.</div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <a href="#" class="notif-cta"><i data-lucide="eye" style="width:12px;height:12px;stroke-width:2;"></i>Ver detalhes da importação</a>
+              <span style="color:#E8E5DF;">·</span>
+              <a href="#" class="notif-cta" style="color:#9A9189;"><i data-lucide="refresh-cw" style="width:12px;height:12px;stroke-width:1.5;"></i>Tentar novamente</a>
+            </div>
+            <div class="notif-meta">
+              <span class="notif-time">27/11 · 09h15</span>
+              <span class="notif-source"><i data-lucide="upload" style="width:10px;height:10px;stroke-width:1.5;"></i>Importações</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act" title="Arquivar"><i data-lucide="archive" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- ═══ ESTA SEMANA ═══ -->
+        <div class="date-group">
+          <span class="date-group-label">Esta semana</span>
+          <div class="date-group-line"></div>
+          <span style="font-size:11px;color:#9A9189;">4 notificações</span>
+        </div>
+
+        <!-- 7. IMPORTAÇÃO — extrato Itaú (lida) -->
+        <div class="notif-item" data-type="importacao">
+          <div class="read-dot"></div>
+          <div class="notif-icon-wrap" style="background:#EEF2E8;">
+            <i data-lucide="upload-cloud" style="width:20px;height:20px;stroke-width:1.5;color:#7A9264;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title" style="color:#6B635B;">Importação concluída — extrato Itaú PJ out/25</div>
+              <span class="badge badge-success">Concluído</span>
+            </div>
+            <div class="notif-body" style="color:#9A9189;">68 transações importadas e categorizadas com sucesso. Nenhum erro detectado.</div>
+            <div class="notif-meta">
+              <span class="notif-time">22/11 · 09h15</span>
+              <span class="notif-source"><i data-lucide="upload" style="width:10px;height:10px;stroke-width:1.5;"></i>Importações</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 8. ALERTA — desvio de orçado Marketing (lida) -->
+        <div class="notif-item" data-type="alerta">
+          <div class="read-dot"></div>
+          <div class="notif-icon-wrap" style="background:#FBE9E3;opacity:.7;">
+            <i data-lucide="trending-up" style="width:20px;height:20px;stroke-width:1.5;color:#C85A3E;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title" style="color:#6B635B;">Desvio do orçado — 4.03.07 Marketing +50%</div>
+              <span class="badge badge-danger">Alerta</span>
+            </div>
+            <div class="notif-body" style="color:#9A9189;">A conta de Assessoria de Marketing ultrapassou o orçado em R$ 400 (50% acima). Orçado: R$ 800 · Realizado: R$ 1.200.</div>
+            <div class="notif-meta">
+              <span class="notif-time">21/11 · 14h08</span>
+              <span class="notif-source"><i data-lucide="target" style="width:10px;height:10px;stroke-width:1.5;"></i>Orçado × Realizado</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 9. SISTEMA — atualização -->
+        <div class="notif-item" data-type="sistema">
+          <div class="read-dot"></div>
+          <div class="notif-icon-wrap" style="background:#F3F2EE;">
+            <i data-lucide="zap" style="width:20px;height:20px;stroke-width:1.5;color:#9A9189;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title" style="color:#6B635B;">Nova funcionalidade: Cenário Pessimista na Projeção</div>
+              <span class="badge badge-info">Sistema</span>
+            </div>
+            <div class="notif-body" style="color:#9A9189;">A Projeção de Caixa agora permite comparar os três cenários (pessimista, base e otimista) simultaneamente em um único gráfico.</div>
+            <div class="notif-meta">
+              <span class="notif-time">20/11 · 10h00</span>
+              <span class="notif-source"><i data-lucide="info" style="width:10px;height:10px;stroke-width:1.5;"></i>Corporis</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 10. VENCIMENTO — folha dezembro (lida) -->
+        <div class="notif-item" data-type="vencimento">
+          <div class="read-dot"></div>
+          <div class="notif-icon-wrap" style="background:#F7F0DD;">
+            <i data-lucide="users" style="width:20px;height:20px;stroke-width:1.5;color:#B8914E;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title" style="color:#6B635B;">Lembrete — Folha de dezembro em 15 dias</div>
+              <span class="badge badge-warning">Vencimento</span>
+            </div>
+            <div class="notif-body" style="color:#9A9189;">A folha de pagamento (salários + pró-labore) de dezembro vence em <strong>15/12</strong>. Valor estimado: R$ 9.800.</div>
+            <div class="notif-meta">
+              <span class="notif-time">19/11 · 08h00</span>
+              <span class="notif-source"><i data-lucide="calendar" style="width:10px;height:10px;stroke-width:1.5;"></i>Agenda</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 11. SISTEMA — resumo semanal -->
+        <div class="notif-item" data-type="sistema">
+          <div class="read-dot"></div>
+          <div class="notif-icon-wrap" style="background:#F3F2EE;">
+            <i data-lucide="file-bar-chart" style="width:20px;height:20px;stroke-width:1.5;color:#9A9189;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title" style="color:#6B635B;">Resumo semanal — semana de 18 a 24/nov</div>
+              <span class="badge badge-info">Resumo</span>
+            </div>
+            <div class="notif-body" style="color:#9A9189;">Entradas: <strong style="color:#7A9264;">R$ 8.420</strong> · Saídas: <strong style="color:#C85A3E;">R$ 5.890</strong> · Resultado: <strong>+R$ 2.530</strong> na semana. Saldo acumulado: R$ 25.040.</div>
+            <div class="notif-meta">
+              <span class="notif-time">25/11 · 08h00</span>
+              <span class="notif-source"><i data-lucide="calendar" style="width:10px;height:10px;stroke-width:1.5;"></i>Resumo semanal</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- 12. ALERTA — duplicata detectada -->
+        <div class="notif-item" data-type="alerta">
+          <div class="read-dot"></div>
+          <div class="notif-icon-wrap" style="background:#F7F0DD;">
+            <i data-lucide="copy" style="width:20px;height:20px;stroke-width:1.5;color:#B8914E;"></i>
+          </div>
+          <div class="notif-content">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <div class="notif-title" style="color:#6B635B;">Possível duplicata detectada na conciliação</div>
+              <span class="badge badge-warning">Duplicata</span>
+            </div>
+            <div class="notif-body" style="color:#9A9189;">Durante a importação da fatura Itaú Black, a IA identificou uma possível duplicata: Posto Shell R$ 180,00 em 03/10 aparece tanto no extrato quanto na fatura.</div>
+            <div class="notif-meta">
+              <span class="notif-time">28/11 · 13h22</span>
+              <span class="notif-source"><i data-lucide="upload" style="width:10px;height:10px;stroke-width:1.5;"></i>Importações</span>
+            </div>
+          </div>
+          <div class="notif-actions">
+            <button class="notif-act dismiss" title="Dispensar" onclick="dismissNotif(this)"><i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i></button>
+          </div>
+        </div>
+
+        <!-- Spacer -->
+        <div style="height:32px;"></div>
+
+      </div><!-- /feed -->
+    </div><!-- /notif-layout -->
+  </div><!-- /main -->
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:#3A3530;color:#FFF;border-radius:10px;padding:13px 22px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(58,53,48,.25);font-size:14px;font-weight:500;transition:transform .3s cubic-bezier(.22,.61,.36,1);z-index:200;white-space:nowrap;">
+  <i data-lucide="check-circle" style="width:18px;height:18px;stroke-width:1.5;color:#ACC095;"></i>
+  <span id="toast-msg">Feito!</span>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  function dismissNotif(btn) {
+    const item = btn.closest('.notif-item');
+    item.style.transition = 'opacity .25s, max-height .3s, padding .3s';
+    item.style.opacity = '0';
+    item.style.maxHeight = item.offsetHeight + 'px';
+    requestAnimationFrame(() => {
+      item.style.maxHeight = '0';
+      item.style.paddingTop = '0';
+      item.style.paddingBottom = '0';
+    });
+    setTimeout(() => item.remove(), 320);
+    showToast('Notificação removida');
+    updateCount();
+  }
+
+  function markAllRead() {
+    document.querySelectorAll('.notif-item.unread').forEach(item => {
+      item.classList.remove('unread');
+      const dot = item.querySelector('.unread-dot');
+      if (dot) { dot.className = 'read-dot'; }
+    });
+    document.getElementById('count-unread').textContent = '0';
+    document.getElementById('bell-dot').style.display = 'none';
+    showToast('Todas marcadas como lidas!');
+  }
+
+  function clearAll() {
+    document.querySelectorAll('.notif-item:not(.unread)').forEach(item => {
+      item.remove();
+    });
+    showToast('Notificações lidas removidas!');
+    updateCount();
+  }
+
+  function filterFeed(type, navEl) {
+    document.querySelectorAll('.filter-item').forEach(i => i.classList.remove('active'));
+    navEl.classList.add('active');
+    document.querySelectorAll('.notif-item').forEach(item => {
+      if (type === 'all') {
+        item.style.display = '';
+      } else if (type === 'unread') {
+        item.style.display = item.classList.contains('unread') ? '' : 'none';
+      } else {
+        item.style.display = item.dataset.type === type ? '' : 'none';
+      }
+    });
+  }
+
+  function updateCount() {
+    const all = document.querySelectorAll('.notif-item').length;
+    const unread = document.querySelectorAll('.notif-item.unread').length;
+    document.getElementById('count-all').textContent = all;
+    document.getElementById('count-unread').textContent = unread;
+    if (unread === 0) document.getElementById('bell-dot').style.display = 'none';
+  }
+
+  function goToSettings() { showToast('Abrindo preferências de notificações…'); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    lucide.createIcons();
+    clearTimeout(window._toast);
+    window._toast = setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(100px)'; }, 2400);
+  }
+
+  // Mark item as read on click
+  document.querySelectorAll('.notif-item').forEach(item => {
+    item.addEventListener('click', () => {
+      if (item.classList.contains('unread')) {
+        item.classList.remove('unread');
+        const dot = item.querySelector('.unread-dot');
+        if (dot) dot.className = 'read-dot';
+        updateCount();
+      }
+    });
+  });
+</script>
+</body>
+</html>

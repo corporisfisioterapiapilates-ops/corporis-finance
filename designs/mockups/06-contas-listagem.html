@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contas e Cartões — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; margin: 0; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    .sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 16px; }
+
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:10px 18px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background .15s; white-space:nowrap; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-secondary { background:transparent; color:#F08353; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:10px 18px; border-radius:8px; border:1.2px solid #F08353; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; white-space:nowrap; }
+    .btn-secondary:hover { background:#FBE9E3; }
+    .btn-ghost { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:13px; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s; }
+    .btn-ghost:hover { background:#F3F2EE; }
+
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+    .notif-btn { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; position:relative; transition:background .15s; }
+    .notif-btn:hover { background:#F3F2EE; }
+    .notif-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* Account card */
+    .acc-card {
+      background: #FFFFFF; border: 1px solid #E8E5DF; border-radius: 16px;
+      overflow: hidden; box-shadow: 0 1px 3px rgba(58,53,48,.05);
+      transition: box-shadow .2s, transform .15s;
+    }
+    .acc-card:hover { box-shadow: 0 6px 24px rgba(58,53,48,.09); transform: translateY(-2px); }
+
+    /* Card stripe */
+    .acc-stripe { height: 5px; }
+
+    /* Card body */
+    .acc-body { padding: 24px; }
+
+    /* Stat row */
+    .stat-row { display: flex; flex-direction: column; gap: 2px; }
+    .stat-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .07em; color: #9A9189; }
+    .stat-value { font-size: 14px; font-weight: 500; color: #3A3530; }
+
+    /* Divider */
+    .acc-divider { height: 1px; background: #F0EEE9; margin: 18px 0; }
+
+    /* Progress bar (limite cartão) */
+    .limit-bar-wrap { height: 6px; background: #F0EEE9; border-radius: 99px; overflow: hidden; margin-top: 8px; }
+    .limit-bar-fill { height: 100%; border-radius: 99px; transition: width .4s; }
+
+    /* Badge */
+    .badge { display:inline-flex; align-items:center; font-size:10px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; padding:3px 8px; border-radius:4px; white-space:nowrap; gap:4px; }
+    .badge-success { background:#EEF2E8; color:#7A9264; }
+    .badge-danger  { background:#FBE9E3; color:#C85A3E; }
+    .badge-warning { background:#F7F0DD; color:#B8914E; }
+    .badge-info    { background:#F0EEE9; color:#6B635B; }
+
+    /* Action btn */
+    .act-btn { width:32px; height:32px; border-radius:7px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#9A9189; transition:all .12s; }
+    .act-btn:hover { background:#F3F2EE; color:#6B635B; }
+
+    /* Empty state */
+    .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 24px; gap:14px; text-align:center; }
+
+    /* Section label */
+    .section-label { font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:.1em; color:#9A9189; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+    .section-label::after { content:''; flex:1; height:1px; background:#E8E5DF; }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-thumb { background:#D3D2CD; border-radius:99px; }
+  </style>
+</head>
+<body>
+<div style="display:flex;min-height:100vh;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/>
+        <circle cx="17" cy="11" r="3.5" fill="#F08353"/>
+        <path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div>
+        <div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div>
+      </div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item active" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA
+        <span style="margin-left:auto;font-size:9px;font-weight:500;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:#F7F0DD;color:#B8914E;">beta</span>
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#3A3530;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Larissa Ferraz</div>
+        <div style="font-size:11px;color:#9A9189;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Corporis — Xanxerê/SC</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+    <header class="topbar">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">contas e cartões</div>
+      <div style="position:relative;">
+        <i data-lucide="search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+        <input style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:8px 12px 8px 34px;font-family:'Ubuntu',sans-serif;font-size:13px;color:#3A3530;outline:none;width:210px;" type="text" placeholder="Buscar lançamentos, contas…">
+      </div>
+      <button class="btn-primary"><i data-lucide="plus" style="width:16px;height:16px;stroke-width:2;"></i>Novo Lançamento</button>
+      <button class="notif-btn"><i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i><span class="notif-dot"></span></button>
+      <div class="avatar">L</div>
+    </header>
+
+    <main style="flex:1;overflow-y:auto;padding:32px;">
+
+      <!-- Summary strip -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px;">
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:20px 24px;box-shadow:0 1px 2px rgba(58,53,48,.04);">
+          <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:8px;">Saldo em contas</div>
+          <div class="font-display tnum" style="font-size:28px;color:#7A9264;">R$ 25.040,80</div>
+          <div style="font-size:12px;color:#9A9189;margin-top:4px;">3 contas bancárias ativas</div>
+        </div>
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:20px 24px;box-shadow:0 1px 2px rgba(58,53,48,.04);">
+          <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:8px;">Fatura em aberto</div>
+          <div class="font-display tnum" style="font-size:28px;color:#C85A3E;">R$ 4.730,20</div>
+          <div style="font-size:12px;color:#9A9189;margin-top:4px;">2 cartões · próximo vence 10/12</div>
+        </div>
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:20px 24px;box-shadow:0 1px 2px rgba(58,53,48,.04);">
+          <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:8px;">Posição líquida</div>
+          <div class="font-display tnum" style="font-size:28px;color:#3A3530;">R$ 20.310,60</div>
+          <div style="font-size:12px;color:#9A9189;margin-top:4px;">saldo − faturas em aberto</div>
+        </div>
+      </div>
+
+      <!-- ── CONTAS BANCÁRIAS ── -->
+      <div class="section-label">Contas bancárias</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:36px;">
+
+        <!-- Itaú PJ -->
+        <div class="acc-card">
+          <div class="acc-stripe" style="background:linear-gradient(90deg,#F08353,#F6A958);"></div>
+          <div class="acc-body">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;">
+                  <i data-lucide="building-2" style="width:22px;height:22px;stroke-width:1.5;color:#F08353;"></i>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:500;color:#3A3530;">Itaú PJ</div>
+                  <div style="font-size:12px;color:#9A9189;">Conta Corrente</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:2px;">
+                <button class="act-btn" title="Editar"><i data-lucide="pencil" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+                <button class="act-btn" title="Mais"><i data-lucide="more-horizontal" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+              </div>
+            </div>
+
+            <!-- Saldo destaque -->
+            <div style="background:#F7F5F2;border-radius:10px;padding:16px;margin-bottom:18px;text-align:center;">
+              <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:4px;">Saldo atual</div>
+              <div class="font-display tnum" style="font-size:32px;color:#7A9264;">R$ 18.420,50</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="stat-row">
+                <span class="stat-label">Saldo inicial</span>
+                <span class="stat-value tnum">R$ 12.000,00</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Início em</span>
+                <span class="stat-value">01/11/2025</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Lançamentos</span>
+                <span class="stat-value">47 no mês</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Último movimento</span>
+                <span class="stat-value">28/11/2025</span>
+              </div>
+            </div>
+
+            <div class="acc-divider"></div>
+
+            <div style="display:flex;gap:8px;">
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;">
+                <i data-lucide="arrow-left-right" style="width:13px;height:13px;stroke-width:1.5;"></i>
+                Ver lançamentos
+              </button>
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;">
+                <i data-lucide="upload" style="width:13px;height:13px;stroke-width:1.5;"></i>
+                Importar extrato
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nubank PJ -->
+        <div class="acc-card">
+          <div class="acc-stripe" style="background:linear-gradient(90deg,#6B635B,#9A9189);"></div>
+          <div class="acc-body">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:#F0EEE9;display:flex;align-items:center;justify-content:center;">
+                  <i data-lucide="building-2" style="width:22px;height:22px;stroke-width:1.5;color:#6B635B;"></i>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:500;color:#3A3530;">Nubank PJ</div>
+                  <div style="font-size:12px;color:#9A9189;">Conta Corrente</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:2px;">
+                <button class="act-btn"><i data-lucide="pencil" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+                <button class="act-btn"><i data-lucide="more-horizontal" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+              </div>
+            </div>
+            <div style="background:#F7F5F2;border-radius:10px;padding:16px;margin-bottom:18px;text-align:center;">
+              <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:4px;">Saldo atual</div>
+              <div class="font-display tnum" style="font-size:32px;color:#7A9264;">R$ 6.280,30</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="stat-row"><span class="stat-label">Saldo inicial</span><span class="stat-value tnum">R$ 5.000,00</span></div>
+              <div class="stat-row"><span class="stat-label">Início em</span><span class="stat-value">01/11/2025</span></div>
+              <div class="stat-row"><span class="stat-label">Lançamentos</span><span class="stat-value">21 no mês</span></div>
+              <div class="stat-row"><span class="stat-label">Último movimento</span><span class="stat-value">27/11/2025</span></div>
+            </div>
+            <div class="acc-divider"></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;"><i data-lucide="arrow-left-right" style="width:13px;height:13px;stroke-width:1.5;"></i>Ver lançamentos</button>
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;"><i data-lucide="upload" style="width:13px;height:13px;stroke-width:1.5;"></i>Importar extrato</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Caixinha -->
+        <div class="acc-card">
+          <div class="acc-stripe" style="background:linear-gradient(90deg,#ACC095,#D2B06E);"></div>
+          <div class="acc-body">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;">
+                  <i data-lucide="banknote" style="width:22px;height:22px;stroke-width:1.5;color:#7A9264;"></i>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:500;color:#3A3530;">Caixinha</div>
+                  <div style="font-size:12px;color:#9A9189;">Caixa Físico</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:2px;">
+                <button class="act-btn"><i data-lucide="pencil" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+                <button class="act-btn"><i data-lucide="more-horizontal" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+              </div>
+            </div>
+            <div style="background:#EEF2E8;border-radius:10px;padding:16px;margin-bottom:18px;text-align:center;">
+              <div style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#7A9264;margin-bottom:4px;">Saldo atual</div>
+              <div class="font-display tnum" style="font-size:32px;color:#7A9264;">R$ 340,00</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="stat-row"><span class="stat-label">Saldo inicial</span><span class="stat-value tnum">R$ 200,00</span></div>
+              <div class="stat-row"><span class="stat-label">Início em</span><span class="stat-value">01/11/2025</span></div>
+              <div class="stat-row"><span class="stat-label">Lançamentos</span><span class="stat-value">5 no mês</span></div>
+              <div class="stat-row"><span class="stat-label">Último movimento</span><span class="stat-value">24/11/2025</span></div>
+            </div>
+            <div class="acc-divider"></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;"><i data-lucide="arrow-left-right" style="width:13px;height:13px;stroke-width:1.5;"></i>Ver lançamentos</button>
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;"><i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i>Lançar entrada</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Add conta button -->
+      <div style="margin-bottom:40px;">
+        <button class="btn-secondary" onclick="openModal('conta')">
+          <i data-lucide="plus" style="width:15px;height:15px;stroke-width:2;"></i>
+          Nova conta bancária
+        </button>
+      </div>
+
+      <!-- ── CARTÕES DE CRÉDITO ── -->
+      <div class="section-label">Cartões de crédito</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:32px;">
+
+        <!-- Itaú Black -->
+        <div class="acc-card" style="border-color:#F0B090;">
+          <div class="acc-stripe" style="background:linear-gradient(90deg,#3A3530,#6B635B);"></div>
+          <div class="acc-body">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:#3A3530;display:flex;align-items:center;justify-content:center;">
+                  <i data-lucide="credit-card" style="width:22px;height:22px;stroke-width:1.5;color:#F6A958;"></i>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:500;color:#3A3530;">Itaú Black</div>
+                  <div style="font-size:12px;color:#9A9189;">Cartão de Crédito · Mastercard</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="badge badge-warning">Vence 10/12</span>
+                <button class="act-btn"><i data-lucide="pencil" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+                <button class="act-btn"><i data-lucide="more-horizontal" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+              </div>
+            </div>
+
+            <!-- Fatura em destaque -->
+            <div style="background:linear-gradient(135deg,#3A3530,#5A5048);border-radius:12px;padding:18px 20px;margin-bottom:18px;color:#FFF;">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                <div>
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);margin-bottom:4px;">Fatura aberta</div>
+                  <div class="tnum" style="font-size:18px;font-weight:500;color:#F6A958;">R$ 3.480,20</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);margin-bottom:4px;">Fatura anterior</div>
+                  <div class="tnum" style="font-size:18px;font-weight:500;color:rgba(255,255,255,.7);">R$ 2.910,00</div>
+                  <div style="font-size:10px;color:rgba(172,192,149,.8);margin-top:2px;display:flex;align-items:center;gap:3px;">
+                    <i data-lucide="check-circle" style="width:10px;height:10px;stroke-width:2;"></i>Paga
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);margin-bottom:4px;">Limite disponível</div>
+                  <div class="tnum" style="font-size:18px;font-weight:500;color:#ACC095;">R$ 11.519,80</div>
+                </div>
+              </div>
+              <!-- Barra de uso do limite -->
+              <div style="margin-top:14px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                  <span style="font-size:11px;color:rgba(255,255,255,.45);">Limite usado: 23%</span>
+                  <span style="font-size:11px;color:rgba(255,255,255,.45);">Limite total: R$ 15.000,00</span>
+                </div>
+                <div style="height:4px;background:rgba(255,255,255,.15);border-radius:99px;">
+                  <div style="height:100%;width:23%;background:#F6A958;border-radius:99px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">
+              <div class="stat-row"><span class="stat-label">Fechamento</span><span class="stat-value">Dia 03</span></div>
+              <div class="stat-row"><span class="stat-label">Vencimento</span><span class="stat-value">Dia 10</span></div>
+              <div class="stat-row"><span class="stat-label">Paga por</span><span class="stat-value">Itaú PJ</span></div>
+              <div class="stat-row"><span class="stat-label">Compras</span><span class="stat-value">32 no mês</span></div>
+            </div>
+
+            <div class="acc-divider"></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;"><i data-lucide="eye" style="width:13px;height:13px;stroke-width:1.5;"></i>Ver fatura</button>
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;"><i data-lucide="upload" style="width:13px;height:13px;stroke-width:1.5;"></i>Importar fatura</button>
+              <button class="btn-primary" style="font-size:12px;padding:8px 14px;"><i data-lucide="check" style="width:13px;height:13px;stroke-width:2;"></i>Pagar fatura</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nubank -->
+        <div class="acc-card">
+          <div class="acc-stripe" style="background:linear-gradient(90deg,#7B61C4,#9A80D4);"></div>
+          <div class="acc-body">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:#F0EEE9;display:flex;align-items:center;justify-content:center;">
+                  <i data-lucide="credit-card" style="width:22px;height:22px;stroke-width:1.5;color:#6B635B;"></i>
+                </div>
+                <div>
+                  <div style="font-size:15px;font-weight:500;color:#3A3530;">Nubank</div>
+                  <div style="font-size:12px;color:#9A9189;">Cartão de Crédito · Mastercard</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="badge badge-info">Vence 18/12</span>
+                <button class="act-btn"><i data-lucide="pencil" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+                <button class="act-btn"><i data-lucide="more-horizontal" style="width:15px;height:15px;stroke-width:1.5;"></i></button>
+              </div>
+            </div>
+
+            <div style="background:#F7F5F2;border-radius:12px;padding:18px 20px;margin-bottom:18px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                <div>
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9A9189;margin-bottom:4px;">Fatura aberta</div>
+                  <div class="tnum" style="font-size:18px;font-weight:500;color:#C85A3E;">R$ 1.250,00</div>
+                </div>
+                <div>
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9A9189;margin-bottom:4px;">Fatura anterior</div>
+                  <div class="tnum" style="font-size:18px;font-weight:500;color:#9A9189;">R$ 980,00</div>
+                  <div style="font-size:10px;color:#7A9264;margin-top:2px;display:flex;align-items:center;gap:3px;">
+                    <i data-lucide="check-circle" style="width:10px;height:10px;stroke-width:2;"></i>Paga
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9A9189;margin-bottom:4px;">Limite disponível</div>
+                  <div class="tnum" style="font-size:18px;font-weight:500;color:#7A9264;">R$ 6.750,00</div>
+                </div>
+              </div>
+              <div style="margin-top:14px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                  <span style="font-size:11px;color:#9A9189;">Limite usado: 16%</span>
+                  <span style="font-size:11px;color:#9A9189;">Limite total: R$ 8.000,00</span>
+                </div>
+                <div class="limit-bar-wrap">
+                  <div class="limit-bar-fill" style="width:16%;background:#ACC095;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">
+              <div class="stat-row"><span class="stat-label">Fechamento</span><span class="stat-value">Dia 11</span></div>
+              <div class="stat-row"><span class="stat-label">Vencimento</span><span class="stat-value">Dia 18</span></div>
+              <div class="stat-row"><span class="stat-label">Paga por</span><span class="stat-value">Nubank PJ</span></div>
+              <div class="stat-row"><span class="stat-label">Compras</span><span class="stat-value">18 no mês</span></div>
+            </div>
+
+            <div class="acc-divider"></div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;"><i data-lucide="eye" style="width:13px;height:13px;stroke-width:1.5;"></i>Ver fatura</button>
+              <button class="btn-ghost" style="flex:1;justify-content:center;border:1px solid #E8E5DF;font-size:12px;"><i data-lucide="upload" style="width:13px;height:13px;stroke-width:1.5;"></i>Importar fatura</button>
+              <button class="btn-secondary" style="font-size:12px;padding:8px 14px;"><i data-lucide="check" style="width:13px;height:13px;stroke-width:2;"></i>Pagar fatura</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Add cartão -->
+      <button class="btn-secondary" onclick="openModal('cartao')">
+        <i data-lucide="plus" style="width:15px;height:15px;stroke-width:2;"></i>
+        Novo cartão de crédito
+      </button>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+  function openModal(type) {
+    alert('Abrindo modal de cadastro: ' + type);
+  }
+</script>
+</body>
+</html>

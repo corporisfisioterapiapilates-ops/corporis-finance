@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Importações — Upload — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; margin: 0; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    /* Sidebar */
+    .sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* Topbar */
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 16px; }
+
+    /* Buttons */
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:10px 18px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background .15s; white-space:nowrap; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-secondary { background:transparent; color:#F08353; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:10px 18px; border-radius:8px; border:1.2px solid #F08353; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; white-space:nowrap; }
+    .btn-secondary:hover { background:#FBE9E3; }
+    .btn-ghost { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:13px; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s; }
+    .btn-ghost:hover { background:#F3F2EE; }
+
+    /* Avatar / notif */
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+    .notif-btn { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; transition:background .15s; position:relative; }
+    .notif-btn:hover { background:#F3F2EE; }
+    .notif-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* Upload card */
+    .upload-card {
+      background: #FFFFFF;
+      border: 1px solid #E8E5DF;
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: 0 1px 3px rgba(58,53,48,.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: box-shadow .2s, border-color .2s, transform .15s;
+      cursor: pointer;
+    }
+    .upload-card:hover {
+      box-shadow: 0 6px 20px rgba(58,53,48,.09);
+      border-color: #D3D2CD;
+      transform: translateY(-2px);
+    }
+    .upload-card.active-drop {
+      border-color: #F08353;
+      box-shadow: 0 0 0 3px rgba(240,131,83,.15), 0 6px 20px rgba(58,53,48,.09);
+    }
+
+    /* Drop zone inside card */
+    .drop-zone {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 40px 28px;
+      border: 2px dashed #E8E5DF;
+      border-radius: 12px;
+      margin: 16px;
+      transition: border-color .15s, background .15s;
+      background: #FAFAF8;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragging { border-color: #F08353; background: #FBE9E3; }
+
+    /* Badge */
+    .badge { display:inline-flex; align-items:center; font-size:10px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; padding:3px 8px; border-radius:4px; white-space:nowrap; }
+    .badge-success { background:#EEF2E8; color:#7A9264; }
+    .badge-danger  { background:#FBE9E3; color:#C85A3E; }
+    .badge-warning { background:#F7F0DD; color:#B8914E; }
+    .badge-info    { background:#F0EEE9; color:#6B635B; }
+    .badge-orange  { background:#FBE9E3; color:#E07040; }
+
+    /* History table */
+    .hist-table { width:100%; border-collapse:separate; border-spacing:0; }
+    .hist-table thead th { font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:#9A9189; padding:10px 16px; background:#F3F2EE; border-bottom:1px solid #E8E5DF; text-align:left; white-space:nowrap; }
+    .hist-table thead th:first-child { border-radius:8px 0 0 0; padding-left:20px; }
+    .hist-table thead th:last-child  { border-radius:0 8px 0 0; }
+    .hist-table tbody tr { border-bottom:1px solid #E8E5DF; transition:background .12s; }
+    .hist-table tbody tr:hover { background:#FAFAF8; }
+    .hist-table tbody td { padding:13px 16px; font-size:13px; color:#3A3530; vertical-align:middle; }
+    .hist-table tbody td:first-child { padding-left:20px; }
+    .hist-table tbody tr:last-child td { border-bottom:none; }
+
+    /* Progress bar */
+    .progress-bar-wrap { height:4px; background:#E8E5DF; border-radius:99px; overflow:hidden; margin-top:8px; }
+    .progress-bar-fill { height:100%; border-radius:99px; transition:width .4s ease; }
+
+    /* File chip (uploaded file preview) */
+    .file-chip { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#F3F2EE; border:1px solid #E8E5DF; border-radius:8px; }
+
+    /* Format tag */
+    .fmt-tag { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:500; letter-spacing:.06em; text-transform:uppercase; padding:3px 7px; border-radius:4px; border:1px solid; }
+
+    /* Action btn */
+    .action-btn { width:30px; height:30px; border-radius:6px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#9A9189; transition:all .12s; }
+    .action-btn:hover { background:#F3F2EE; color:#6B635B; }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-thumb { background:#D3D2CD; border-radius:99px; }
+  </style>
+</head>
+<body>
+<div style="display:flex;min-height:100vh;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/>
+        <circle cx="17" cy="11" r="3.5" fill="#F08353"/>
+        <path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div>
+        <div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div>
+      </div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA
+        <span style="margin-left:auto;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;padding:2px 6px;border-radius:4px;background:#F7F0DD;color:#B8914E;">beta</span>
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item active" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Larissa Ferraz</div>
+        <div style="font-size:11px;color:#9A9189;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Corporis — Xanxerê/SC</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">importações</div>
+      <div style="position:relative;">
+        <i data-lucide="search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+        <input style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:8px 12px 8px 34px;font-family:'Ubuntu',sans-serif;font-size:13px;color:#3A3530;outline:none;width:210px;" type="text" placeholder="Buscar lançamentos, contas…">
+      </div>
+      <button class="btn-primary">
+        <i data-lucide="plus" style="width:16px;height:16px;stroke-width:2;"></i>Novo Lançamento
+      </button>
+      <button class="notif-btn">
+        <i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i>
+        <span class="notif-dot"></span>
+      </button>
+      <div class="avatar">L</div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main style="flex:1;overflow-y:auto;padding:32px;">
+
+      <!-- Page header -->
+      <div style="margin-bottom:32px;">
+        <div class="font-display" style="font-size:28px;color:#3A3530;">importar extratos e faturas</div>
+        <div style="font-size:14px;color:#9A9189;margin-top:6px;max-width:560px;">Faça upload dos seus extratos bancários ou faturas de cartão. A Corporis usa IA para sugerir categorias automaticamente e agilizar a conciliação.</div>
+      </div>
+
+      <!-- 3 Upload cards -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:40px;">
+
+        <!-- Card 1: Extrato bancário -->
+        <div class="upload-card" id="card-extrato" onclick="activateCard('extrato')"
+          ondragover="handleDragOver(event,'extrato')" ondragleave="handleDragLeave('extrato')" ondrop="handleDrop(event,'extrato')">
+          <!-- Card header stripe -->
+          <div style="height:5px;background:linear-gradient(90deg,#ACC095,#D2B06E);"></div>
+          <div style="padding:24px 24px 0;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+              <div style="width:48px;height:48px;border-radius:12px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="landmark" style="width:22px;height:22px;stroke-width:1.5;color:#7A9264;"></i>
+              </div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+                <span class="fmt-tag" style="background:#EEF2E8;color:#7A9264;border-color:#C4DDB4;">OFX</span>
+                <span class="fmt-tag" style="background:#F3F2EE;color:#6B635B;border-color:#D3D2CD;">CSV</span>
+              </div>
+            </div>
+            <div class="font-display" style="font-size:18px;color:#3A3530;margin-bottom:6px;">extrato bancário</div>
+            <div style="font-size:13px;color:#9A9189;line-height:1.55;margin-bottom:6px;">Importe o extrato direto do seu banco em formato OFX (recomendado) ou CSV.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+              <span style="font-size:11px;color:#9A9189;display:flex;align-items:center;gap:4px;">
+                <i data-lucide="check" style="width:11px;height:11px;stroke-width:2.5;color:#ACC095;"></i>Itaú
+              </span>
+              <span style="font-size:11px;color:#9A9189;display:flex;align-items:center;gap:4px;">
+                <i data-lucide="check" style="width:11px;height:11px;stroke-width:2.5;color:#ACC095;"></i>Nubank
+              </span>
+              <span style="font-size:11px;color:#9A9189;display:flex;align-items:center;gap:4px;">
+                <i data-lucide="check" style="width:11px;height:11px;stroke-width:2.5;color:#ACC095;"></i>Bradesco
+              </span>
+              <span style="font-size:11px;color:#9A9189;display:flex;align-items:center;gap:4px;">
+                <i data-lucide="check" style="width:11px;height:11px;stroke-width:2.5;color:#ACC095;"></i>Sicoob
+              </span>
+            </div>
+          </div>
+          <div class="drop-zone" id="dz-extrato" style="margin:0 16px 16px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:#FFF;border:1px solid #E8E5DF;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(58,53,48,.06);">
+              <i data-lucide="upload-cloud" style="width:22px;height:22px;stroke-width:1.5;color:#9A9189;"></i>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:13px;font-weight:500;color:#6B635B;">Arraste o arquivo aqui</div>
+              <div style="font-size:12px;color:#9A9189;margin-top:3px;">ou <span style="color:#F08353;cursor:pointer;" onclick="event.stopPropagation();document.getElementById('file-extrato').click()">clique para selecionar</span></div>
+            </div>
+            <input id="file-extrato" type="file" accept=".ofx,.csv" style="display:none" onchange="fileSelected('extrato',this)">
+          </div>
+        </div>
+
+        <!-- Card 2: Fatura de cartão — COM ARQUIVO JÁ CARREGADO -->
+        <div class="upload-card" id="card-fatura" style="border-color:#F08353;box-shadow:0 0 0 2px rgba(240,131,83,.12),0 4px 16px rgba(58,53,48,.08);">
+          <div style="height:5px;background:linear-gradient(90deg,#F08353,#F6A958);"></div>
+          <div style="padding:24px 24px 0;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+              <div style="width:48px;height:48px;border-radius:12px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="credit-card" style="width:22px;height:22px;stroke-width:1.5;color:#F08353;"></i>
+              </div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+                <span class="fmt-tag" style="background:#FBE9E3;color:#E07040;border-color:#F0B090;">PDF</span>
+              </div>
+            </div>
+            <div class="font-display" style="font-size:18px;color:#3A3530;margin-bottom:6px;">fatura de cartão</div>
+            <div style="font-size:13px;color:#9A9189;line-height:1.55;margin-bottom:6px;">Importe a fatura em PDF. A IA extrai cada compra individualmente com data e valor.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+              <span style="font-size:11px;color:#9A9189;display:flex;align-items:center;gap:4px;">
+                <i data-lucide="check" style="width:11px;height:11px;stroke-width:2.5;color:#ACC095;"></i>Itaú Black
+              </span>
+              <span style="font-size:11px;color:#9A9189;display:flex;align-items:center;gap:4px;">
+                <i data-lucide="check" style="width:11px;height:11px;stroke-width:2.5;color:#ACC095;"></i>Nubank
+              </span>
+              <span style="font-size:11px;color:#9A9189;display:flex;align-items:center;gap:4px;">
+                <i data-lucide="check" style="width:11px;height:11px;stroke-width:2.5;color:#ACC095;"></i>XP Visa
+              </span>
+            </div>
+          </div>
+
+          <!-- Estado: arquivo carregado + processando IA -->
+          <div style="margin:0 16px 16px;background:#FBE9E3;border:1.5px solid #F0B090;border-radius:12px;padding:18px 20px;">
+            <!-- File info -->
+            <div class="file-chip" style="background:#FFF;border-color:#F0B090;margin-bottom:14px;">
+              <div style="width:32px;height:32px;border-radius:7px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="file-text" style="width:16px;height:16px;stroke-width:1.5;color:#F08353;"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">fatura_itau_black_nov25.pdf</div>
+                <div style="font-size:11px;color:#9A9189;margin-top:1px;">1,2 MB · Cartão Itaú Black</div>
+              </div>
+              <button class="action-btn" onclick="event.stopPropagation()">
+                <i data-lucide="x" style="width:14px;height:14px;stroke-width:2;"></i>
+              </button>
+            </div>
+
+            <!-- IA processando -->
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <div style="width:28px;height:28px;border-radius:7px;background:#F08353;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="sparkles" style="width:14px;height:14px;stroke-width:1.5;color:#FFF;"></i>
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:#3A3530;">IA analisando a fatura…</div>
+                <div style="font-size:11px;color:#9A9189;">Identificando compras e sugerindo categorias</div>
+              </div>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" style="width:72%;background:linear-gradient(90deg,#F08353,#F6A958);" id="progress-bar"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px;">
+              <span style="font-size:11px;color:#9A9189;">23 de 32 transações processadas</span>
+              <span style="font-size:11px;font-weight:500;color:#F08353;">72%</span>
+            </div>
+
+            <!-- Fatura summary (preview antecipado) -->
+            <div style="margin-top:14px;padding-top:14px;border-top:1px dashed #F0B090;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#B8914E;font-weight:500;margin-bottom:3px;">Fechamento</div>
+                <div style="font-size:13px;font-weight:500;color:#3A3530;">03/11/2025</div>
+              </div>
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#B8914E;font-weight:500;margin-bottom:3px;">Vencimento</div>
+                <div style="font-size:13px;font-weight:500;color:#3A3530;">10/12/2025</div>
+              </div>
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#B8914E;font-weight:500;margin-bottom:3px;">Total</div>
+                <div class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">R$ 3.480,20</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Lote livre -->
+        <div class="upload-card" id="card-lote" onclick="activateCard('lote')"
+          ondragover="handleDragOver(event,'lote')" ondragleave="handleDragLeave('lote')" ondrop="handleDrop(event,'lote')">
+          <div style="height:5px;background:linear-gradient(90deg,#D2B06E,#EAD7AC);"></div>
+          <div style="padding:24px 24px 0;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;">
+              <div style="width:48px;height:48px;border-radius:12px;background:#F7F0DD;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="layers" style="width:22px;height:22px;stroke-width:1.5;color:#B8914E;"></i>
+              </div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+                <span class="fmt-tag" style="background:#F7F0DD;color:#B8914E;border-color:#D2B06E;">OFX</span>
+                <span class="fmt-tag" style="background:#F3F2EE;color:#6B635B;border-color:#D3D2CD;">CSV</span>
+                <span class="fmt-tag" style="background:#FBE9E3;color:#E07040;border-color:#F0B090;">PDF</span>
+              </div>
+            </div>
+            <div class="font-display" style="font-size:18px;color:#3A3530;margin-bottom:6px;">lote livre</div>
+            <div style="font-size:13px;color:#9A9189;line-height:1.55;margin-bottom:6px;">Arraste múltiplos arquivos de qualquer tipo. A Corporis detecta automaticamente o formato e a conta correspondente.</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;">
+              <i data-lucide="info" style="width:13px;height:13px;stroke-width:1.5;color:#B8914E;flex-shrink:0;"></i>
+              <span style="font-size:11px;color:#B8914E;">Até 10 arquivos por vez · 20 MB máx.</span>
+            </div>
+          </div>
+          <div class="drop-zone" id="dz-lote" style="margin:0 16px 16px;">
+            <div style="position:relative;width:56px;height:44px;">
+              <!-- Stacked files icon -->
+              <div style="position:absolute;left:10px;top:4px;width:32px;height:38px;border-radius:6px;background:#F7F0DD;border:1.5px solid #D2B06E;transform:rotate(-8deg);"></div>
+              <div style="position:absolute;left:14px;top:2px;width:32px;height:38px;border-radius:6px;background:#F3F2EE;border:1.5px solid #D3D2CD;transform:rotate(-3deg);"></div>
+              <div style="position:absolute;left:18px;top:0;width:32px;height:38px;border-radius:6px;background:#FFF;border:1.5px solid #E8E5DF;display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="file-plus" style="width:16px;height:16px;stroke-width:1.5;color:#9A9189;"></i>
+              </div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:13px;font-weight:500;color:#6B635B;">Solte vários arquivos aqui</div>
+              <div style="font-size:12px;color:#9A9189;margin-top:3px;">ou <span style="color:#F08353;cursor:pointer;" onclick="event.stopPropagation();document.getElementById('file-lote').click()">clique para selecionar</span></div>
+            </div>
+            <input id="file-lote" type="file" multiple style="display:none" onchange="fileSelected('lote',this)">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dica IA -->
+      <div style="background:linear-gradient(135deg,#FBE9E3 0%,#F7F0DD 100%);border:1px solid #F0B090;border-radius:12px;padding:18px 22px;display:flex;align-items:flex-start;gap:16px;margin-bottom:40px;">
+        <div style="width:36px;height:36px;border-radius:9px;background:#F08353;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+          <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;color:#FFF;"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:500;color:#3A3530;margin-bottom:4px;">Como funciona a categorização automática</div>
+          <div style="font-size:13px;color:#6B635B;line-height:1.6;">A Corporis analisa cada transação e sugere a categoria mais provável com base no seu histórico e nas regras que você já salvou. Você revisa, ajusta e confirma — quanto mais você usa, mais precisa fica a IA.</div>
+        </div>
+        <a href="#" style="font-size:12px;color:#F08353;text-decoration:none;white-space:nowrap;display:flex;align-items:center;gap:4px;flex-shrink:0;margin-top:2px;">
+          Configurar regras <i data-lucide="arrow-right" style="width:12px;height:12px;stroke-width:2;"></i>
+        </a>
+      </div>
+
+      <!-- Histórico de importações -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div>
+            <div class="font-display" style="font-size:20px;color:#3A3530;">importações anteriores</div>
+            <div style="font-size:13px;color:#9A9189;margin-top:3px;">Clique em uma importação para ver os lançamentos ou reverter</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <select style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:8px 32px 8px 12px;font-family:'Ubuntu',sans-serif;font-size:13px;color:#3A3530;outline:none;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;">
+              <option>Todos os tipos</option>
+              <option>Extrato</option>
+              <option>Fatura</option>
+              <option>Lote</option>
+            </select>
+            <select style="background:#FFF;border:1px solid #E8E5DF;border-radius:8px;padding:8px 32px 8px 12px;font-family:'Ubuntu',sans-serif;font-size:13px;color:#3A3530;outline:none;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 10px center;">
+              <option>Todos os status</option>
+              <option>Concluído</option>
+              <option>Parcial</option>
+              <option>Erro</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;box-shadow:0 1px 2px rgba(58,53,48,.04);overflow:hidden;">
+          <table class="hist-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Arquivo</th>
+                <th>Tipo</th>
+                <th>Conta</th>
+                <th>Período</th>
+                <th style="text-align:center;">Lançamentos</th>
+                <th>Status</th>
+                <th style="text-align:center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <!-- Row 1 — processando (fatura atual) -->
+              <tr style="background:#FBF7F4;">
+                <td style="color:#9A9189;font-size:12px;white-space:nowrap;">28/11/2025 14:23</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:28px;height:28px;border-radius:6px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <i data-lucide="file-text" style="width:14px;height:14px;stroke-width:1.5;color:#F08353;"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;color:#3A3530;">fatura_itau_black_nov25.pdf</div>
+                      <div style="font-size:11px;color:#9A9189;">1,2 MB</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-orange">Fatura</span></td>
+                <td style="font-size:13px;color:#6B635B;">Cartão Itaú Black</td>
+                <td style="font-size:12px;color:#9A9189;">out/nov 2025</td>
+                <td style="text-align:center;">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:5px;">
+                    <span style="font-size:13px;font-weight:500;color:#3A3530;">23/32</span>
+                  </div>
+                  <div class="progress-bar-wrap" style="margin-top:5px;width:80px;margin-left:auto;margin-right:auto;">
+                    <div class="progress-bar-fill" style="width:72%;background:#F08353;"></div>
+                  </div>
+                </td>
+                <td>
+                  <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 9px;border-radius:99px;background:#F7F0DD;color:#B8914E;">
+                    <span style="width:6px;height:6px;border-radius:99px;background:#F08353;animation:pulse 1.2s infinite;display:inline-block;"></span>
+                    Processando
+                  </span>
+                </td>
+                <td style="text-align:center;">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="action-btn" title="Continuar" style="color:#F08353;"><i data-lucide="arrow-right" style="width:14px;height:14px;stroke-width:2;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 2 — concluído -->
+              <tr>
+                <td style="color:#9A9189;font-size:12px;white-space:nowrap;">22/11/2025 09:15</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:28px;height:28px;border-radius:6px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <i data-lucide="file" style="width:14px;height:14px;stroke-width:1.5;color:#7A9264;"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;color:#3A3530;">extrato_itau_out25.ofx</div>
+                      <div style="font-size:11px;color:#9A9189;">342 KB</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-success">Extrato</span></td>
+                <td style="font-size:13px;color:#6B635B;">Itaú PJ</td>
+                <td style="font-size:12px;color:#9A9189;">out 2025</td>
+                <td style="text-align:center;font-size:13px;font-weight:500;color:#3A3530;">68</td>
+                <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 9px;border-radius:99px;background:#EEF2E8;color:#7A9264;"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Concluído</span></td>
+                <td style="text-align:center;">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="action-btn" title="Ver lançamentos"><i data-lucide="eye" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                    <button class="action-btn" title="Reverter" style="color:#C85A3E;"><i data-lucide="rotate-ccw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 3 — parcial -->
+              <tr>
+                <td style="color:#9A9189;font-size:12px;white-space:nowrap;">22/11/2025 09:14</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:28px;height:28px;border-radius:6px;background:#F7F0DD;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <i data-lucide="file" style="width:14px;height:14px;stroke-width:1.5;color:#B8914E;"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;color:#3A3530;">extrato_nubank_out25.csv</div>
+                      <div style="font-size:11px;color:#9A9189;">156 KB</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-success">Extrato</span></td>
+                <td style="font-size:13px;color:#6B635B;">Nubank PJ</td>
+                <td style="font-size:12px;color:#9A9189;">out 2025</td>
+                <td style="text-align:center;">
+                  <span style="font-size:13px;font-weight:500;color:#3A3530;">31</span>
+                  <span style="font-size:11px;color:#B8914E;display:block;margin-top:1px;">3 ignorados</span>
+                </td>
+                <td>
+                  <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 9px;border-radius:99px;background:#F7F0DD;color:#B8914E;">
+                    <i data-lucide="alert-circle" style="width:12px;height:12px;stroke-width:2;"></i>Parcial
+                  </span>
+                </td>
+                <td style="text-align:center;">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="action-btn" title="Ver detalhes"><i data-lucide="eye" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                    <button class="action-btn" title="Reverter" style="color:#C85A3E;"><i data-lucide="rotate-ccw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 4 — concluído fatura -->
+              <tr>
+                <td style="color:#9A9189;font-size:12px;white-space:nowrap;">10/11/2025 17:42</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:28px;height:28px;border-radius:6px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <i data-lucide="file-text" style="width:14px;height:14px;stroke-width:1.5;color:#F08353;"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;color:#3A3530;">fatura_nubank_out25.pdf</div>
+                      <div style="font-size:11px;color:#9A9189;">890 KB</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-orange">Fatura</span></td>
+                <td style="font-size:13px;color:#6B635B;">Cartão Nubank</td>
+                <td style="font-size:12px;color:#9A9189;">set/out 2025</td>
+                <td style="text-align:center;font-size:13px;font-weight:500;color:#3A3530;">24</td>
+                <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 9px;border-radius:99px;background:#EEF2E8;color:#7A9264;"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Concluído</span></td>
+                <td style="text-align:center;">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="action-btn" title="Ver lançamentos"><i data-lucide="eye" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                    <button class="action-btn" title="Reverter" style="color:#C85A3E;"><i data-lucide="rotate-ccw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 5 — erro -->
+              <tr>
+                <td style="color:#9A9189;font-size:12px;white-space:nowrap;">02/11/2025 11:08</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:28px;height:28px;border-radius:6px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <i data-lucide="file-x" style="width:14px;height:14px;stroke-width:1.5;color:#C85A3E;"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;color:#3A3530;">extrato_set25_corrompido.ofx</div>
+                      <div style="font-size:11px;color:#C85A3E;display:flex;align-items:center;gap:3px;">
+                        <i data-lucide="alert-circle" style="width:10px;height:10px;stroke-width:2;"></i>
+                        Arquivo corrompido ou formato inválido
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-success">Extrato</span></td>
+                <td style="font-size:13px;color:#9A9189;">—</td>
+                <td style="font-size:12px;color:#9A9189;">—</td>
+                <td style="text-align:center;font-size:13px;color:#9A9189;">—</td>
+                <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 9px;border-radius:99px;background:#FBE9E3;color:#C85A3E;"><i data-lucide="x-circle" style="width:12px;height:12px;stroke-width:2;"></i>Erro</span></td>
+                <td style="text-align:center;">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="action-btn" title="Tentar novamente" style="color:#F08353;"><i data-lucide="refresh-cw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 6 — concluído lote -->
+              <tr>
+                <td style="color:#9A9189;font-size:12px;white-space:nowrap;">25/10/2025 16:30</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:28px;height:28px;border-radius:6px;background:#F7F0DD;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                      <i data-lucide="layers" style="width:14px;height:14px;stroke-width:1.5;color:#B8914E;"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;color:#3A3530;">Lote — set 2025 (3 arquivos)</div>
+                      <div style="font-size:11px;color:#9A9189;">2,1 MB total</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-info">Lote</span></td>
+                <td style="font-size:13px;color:#6B635B;">Múltiplas</td>
+                <td style="font-size:12px;color:#9A9189;">set 2025</td>
+                <td style="text-align:center;font-size:13px;font-weight:500;color:#3A3530;">112</td>
+                <td><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:4px 9px;border-radius:99px;background:#EEF2E8;color:#7A9264;"><i data-lucide="check-circle" style="width:12px;height:12px;stroke-width:2;"></i>Concluído</span></td>
+                <td style="text-align:center;">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="action-btn" title="Ver lançamentos"><i data-lucide="eye" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                    <button class="action-btn" title="Reverter" style="color:#C85A3E;"><i data-lucide="rotate-ccw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+
+          <!-- Footer -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-top:1px solid #E8E5DF;background:#F9F8F6;">
+            <div style="font-size:12px;color:#9A9189;">6 importações · <strong style="color:#3A3530;">235 lançamentos</strong> no total</div>
+            <a href="#" style="font-size:12px;color:#F08353;text-decoration:none;display:flex;align-items:center;gap:4px;">
+              Ver histórico completo <i data-lucide="arrow-right" style="width:12px;height:12px;stroke-width:2;"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<style>
+  @keyframes pulse {
+    0%,100% { opacity:1; }
+    50% { opacity:.3; }
+  }
+</style>
+
+<!-- Toast de upload -->
+<div id="toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:#3A3530;color:#FFF;border-radius:10px;padding:13px 22px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(58,53,48,.25);font-size:14px;font-weight:500;transition:transform .3s cubic-bezier(.22,.61,.36,1);z-index:200;white-space:nowrap;">
+  <i data-lucide="check-circle" style="width:18px;height:18px;stroke-width:1.5;color:#ACC095;"></i>
+  <span id="toast-msg">Arquivo enviado com sucesso!</span>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  // Animate progress bar for the in-progress import
+  let progress = 72;
+  setInterval(() => {
+    if (progress < 100) {
+      progress = Math.min(100, progress + Math.random() * 2);
+      const bars = document.querySelectorAll('.progress-bar-fill');
+      bars.forEach(b => { b.style.width = progress + '%'; });
+      document.querySelectorAll('[style*="72%"]').forEach(el => {
+        if (el.tagName !== 'DIV' || !el.classList.contains('progress-bar-fill')) return;
+      });
+    }
+  }, 1800);
+
+  function activateCard(type) {
+    // visual feedback
+  }
+
+  function handleDragOver(e, type) {
+    e.preventDefault();
+    document.getElementById('dz-' + type).classList.add('dragging');
+    document.getElementById('card-' + type).classList.add('active-drop');
+  }
+
+  function handleDragLeave(type) {
+    document.getElementById('dz-' + type).classList.remove('dragging');
+    document.getElementById('card-' + type).classList.remove('active-drop');
+  }
+
+  function handleDrop(e, type) {
+    e.preventDefault();
+    handleDragLeave(type);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) showToast(`${files.length} arquivo(s) recebido(s) — processando…`);
+  }
+
+  function fileSelected(type, input) {
+    if (input.files.length > 0) {
+      const name = input.files[0].name;
+      showToast(`"${name}" enviado — a IA está analisando…`);
+    }
+  }
+
+  function showToast(msg) {
+    document.getElementById('toast-msg').textContent = msg || 'Arquivo enviado com sucesso!';
+    const t = document.getElementById('toast');
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    lucide.createIcons();
+    setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(100px)'; }, 3000);
+  }
+</script>
+</body>
+</html>

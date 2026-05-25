@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bem-vinda — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,300;9..144,0,400;9..144,1,300&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; min-height: 100vh; display: flex; flex-direction: column; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    /* ── TOP HEADER ── */
+    .onb-header {
+      height: 68px;
+      background: #FAFAF8;
+      border-bottom: 1px solid #E8E5DF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      flex-shrink: 0;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .step-pip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pip {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 500;
+      transition: all .3s;
+      flex-shrink: 0;
+    }
+    .pip.done     { background: #ACC095; color: #FFF; }
+    .pip.active   { background: #F08353; color: #FFF; box-shadow: 0 0 0 4px rgba(240,131,83,.18); }
+    .pip.upcoming { background: #F3F2EE; color: #C0BBB4; }
+    .pip-label {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .pip-label.done     { color: #9A9189; }
+    .pip-label.active   { color: #3A3530; }
+    .pip-label.upcoming { color: #C0BBB4; }
+    .pip-connector {
+      width: 36px; height: 2px;
+      border-radius: 99px;
+      transition: background .3s;
+    }
+    .pip-connector.done   { background: #ACC095; }
+    .pip-connector.empty  { background: #E8E5DF; }
+
+    /* ── MAIN ── */
+    .onb-body {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 52px 24px 40px;
+      overflow-y: auto;
+    }
+
+    .step-card {
+      width: 100%;
+      max-width: 600px;
+      background: #FFF;
+      border: 1px solid #E8E5DF;
+      border-radius: 20px;
+      box-shadow: 0 4px 32px rgba(58,53,48,.07), 0 1px 4px rgba(58,53,48,.04);
+      overflow: hidden;
+      display: none;
+      animation: fadeCard .35s cubic-bezier(.22,.61,.36,1) both;
+    }
+    .step-card.active { display: block; }
+
+    @keyframes fadeCard {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-banner {
+      height: 8px;
+    }
+
+    .card-body {
+      padding: 40px 44px;
+    }
+
+    /* ── FORM ── */
+    .field-wrap { display: flex; flex-direction: column; gap: 6px; margin-bottom: 20px; }
+    .field-label { font-size: 12px; font-weight: 500; color: #6B635B; text-transform: uppercase; letter-spacing: .07em; }
+    .field-input {
+      width: 100%; background: #FAFAF8; border: 1.5px solid #E8E5DF; border-radius: 10px;
+      padding: 12px 14px; font-family: 'Ubuntu', sans-serif; font-size: 14px; color: #3A3530;
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    .field-input:focus { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,.16); background: #FFF; }
+    .field-input::placeholder { color: #C0BBB4; }
+    .field-select {
+      width: 100%; background: #FAFAF8; border: 1.5px solid #E8E5DF; border-radius: 10px;
+      padding: 12px 36px 12px 14px; font-family: 'Ubuntu', sans-serif; font-size: 14px; color: #3A3530;
+      outline: none; appearance: none; cursor: pointer; transition: border-color .15s, box-shadow .15s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+    }
+    .field-select:focus { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,.16); background-color: #FFF; }
+
+    .field-hint { font-size: 12px; color: #9A9189; margin-top: 4px; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: #F08353; color: #FFF; font-family: 'Ubuntu', sans-serif;
+      font-weight: 500; font-size: 15px; padding: 13px 28px; border-radius: 10px;
+      border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 9px;
+      transition: background .15s, box-shadow .15s, transform .1s;
+    }
+    .btn-primary:hover { background: #F6A958; box-shadow: 0 4px 16px rgba(240,131,83,.28); transform: translateY(-1px); }
+    .btn-secondary {
+      background: transparent; color: #9A9189; font-family: 'Ubuntu', sans-serif;
+      font-weight: 400; font-size: 14px; padding: 13px 20px; border-radius: 10px;
+      border: 1.5px solid #E8E5DF; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+      transition: all .15s;
+    }
+    .btn-secondary:hover { border-color: #D3D2CD; color: #6B635B; background: #F7F5F2; }
+    .btn-ghost { background: transparent; color: #9A9189; border: none; font-family: 'Ubuntu', sans-serif; font-size: 13px; cursor: pointer; padding: 8px; transition: color .15s; }
+    .btn-ghost:hover { color: #6B635B; }
+
+    /* ── Color picker ── */
+    .color-picker { display: flex; gap: 10px; flex-wrap: wrap; }
+    .color-swatch {
+      width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+      border: 2.5px solid transparent; transition: all .15s; display: flex; align-items: center; justify-content: center;
+    }
+    .color-swatch.selected { border-color: #3A3530; transform: scale(1.12); }
+    .color-swatch:hover { transform: scale(1.1); }
+
+    /* ── Plan de contas tree ── */
+    .plan-tree { display: flex; flex-direction: column; gap: 1px; max-height: 340px; overflow-y: auto; border: 1.5px solid #E8E5DF; border-radius: 10px; background: #FAFAF8; }
+    .plan-group { }
+    .plan-group-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; cursor: pointer; user-select: none;
+      background: #F3F2EE; font-size: 12px; font-weight: 500; color: #6B635B;
+      text-transform: uppercase; letter-spacing: .07em;
+      border-bottom: 1px solid #E8E5DF;
+      transition: background .12s;
+    }
+    .plan-group-header:hover { background: #ECEAE5; }
+    .plan-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px 9px 38px;
+      font-size: 13px; color: #3A3530;
+      border-bottom: 1px solid #F0EEE9;
+      background: #FFF;
+    }
+    .plan-item:last-child { border-bottom: none; }
+    .plan-item .code { font-size: 11px; color: #9A9189; font-variant-numeric: tabular-nums; width: 36px; flex-shrink: 0; }
+    .plan-item .badge-plan { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: .06em; margin-left: auto; flex-shrink: 0; }
+
+    /* Toggle switch */
+    .toggle-wrap { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F0EEE9; }
+    .toggle-wrap:last-child { border-bottom: none; }
+    .toggle { width: 40px; height: 22px; border-radius: 99px; background: #E8E5DF; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+    .toggle.on { background: #F08353; }
+    .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #FFF; top: 3px; left: 3px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .toggle.on::after { left: 21px; }
+
+    /* ── Saldo input ── */
+    .saldo-wrap { position: relative; }
+    .saldo-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #9A9189; pointer-events: none; font-family: 'Fraunces', serif; }
+    .saldo-input {
+      width: 100%; background: #FAFAF8; border: 1.5px solid #E8E5DF; border-radius: 10px;
+      padding: 13px 14px 13px 46px; font-family: 'Fraunces', serif; font-size: 24px;
+      color: #3A3530; outline: none; transition: border-color .15s, box-shadow .15s;
+      font-variant-numeric: tabular-nums;
+    }
+    .saldo-input:focus { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,.16); background: #FFF; }
+
+    /* ── Step 4 action cards ── */
+    .action-card {
+      flex: 1; border: 1.5px solid #E8E5DF; border-radius: 12px; padding: 22px 20px;
+      cursor: pointer; transition: all .18s; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .action-card:hover { border-color: #F08353; background: #FBE9E3; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(240,131,83,.12); }
+    .action-card.secondary-action:hover { border-color: #ACC095; background: #EEF2E8; }
+    .action-card-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: #D3D2CD; border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="onb-header">
+  <!-- Logo -->
+  <div style="display:flex;align-items:center;gap:11px;">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+      <circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/>
+      <circle cx="17" cy="11" r="3.5" fill="#F08353"/>
+      <path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="font-display" style="font-size:19px;color:#F08353;line-height:1;">corporis</div>
+      <div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:1px;">FINANCE</div>
+    </div>
+  </div>
+
+  <!-- Progress steps -->
+  <div class="progress-wrap" id="progress">
+    <!-- Steps rendered by JS -->
+  </div>
+
+  <!-- Skip -->
+  <button class="btn-ghost" onclick="goStep(4)" id="skip-btn">Pular configuração →</button>
+</header>
+
+<!-- BODY -->
+<div class="onb-body">
+
+  <!-- ══ STEP 1 — Boas-vindas ══ -->
+  <div class="step-card active" id="step-1">
+    <div class="card-banner" style="background:linear-gradient(90deg,#F08353,#F6A958,#D2B06E);"></div>
+    <div class="card-body">
+      <div style="text-align:center;margin-bottom:36px;">
+        <!-- Ilustração acolhedora -->
+        <div style="width:88px;height:88px;border-radius:24px;background:linear-gradient(135deg,#FBE9E3,#F7F0DD);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 4px 20px rgba(240,131,83,.15);">
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <circle cx="22" cy="14" r="6" fill="#F08353"/>
+            <path d="M22 20 C18 26 12 30 10 38" stroke="#F08353" stroke-width="3" stroke-linecap="round"/>
+            <path d="M22 20 C26 26 32 30 34 38" stroke="#F08353" stroke-width="3" stroke-linecap="round"/>
+            <path d="M14 24 C18 22 26 22 30 24" stroke="#D2B06E" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="font-display" style="font-size:30px;color:#3A3530;margin-bottom:10px;">bem-vinda à corporis</div>
+        <p style="font-size:15px;color:#9A9189;line-height:1.65;max-width:420px;margin:0 auto;">
+          Vamos configurar sua conta em <strong style="color:#F08353;">4 passos rápidos</strong> — leva menos de 3 minutos e você já terá controle total do seu caixa.
+        </p>
+      </div>
+
+      <!-- Campo nome empresa -->
+      <div class="field-wrap">
+        <label class="field-label">Nome da sua clínica</label>
+        <input class="field-input" type="text" placeholder="Ex: Corporis Pilates & Fisioterapia" value="Corporis Pilates & Fisioterapia">
+        <div class="field-hint">Como aparecerá nos relatórios e DFC</div>
+      </div>
+
+      <!-- Campo seu nome -->
+      <div class="field-wrap" style="margin-bottom:0;">
+        <label class="field-label">Seu nome</label>
+        <input class="field-input" type="text" placeholder="Ex: Larissa Ferraz" value="Larissa Ferraz">
+      </div>
+
+      <!-- Chips informativos -->
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;padding:20px;background:#F7F5F2;border-radius:12px;">
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;">
+          <i data-lucide="shield-check" style="width:15px;height:15px;stroke-width:1.5;color:#ACC095;"></i>
+          Dados seguros e criptografados
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;">
+          <i data-lucide="lock" style="width:15px;height:15px;stroke-width:1.5;color:#ACC095;"></i>
+          Sem compartilhamento com terceiros
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#6B635B;">
+          <i data-lucide="undo-2" style="width:15px;height:15px;stroke-width:1.5;color:#ACC095;"></i>
+          Pode alterar tudo depois
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:32px;">
+        <button class="btn-primary" onclick="goStep(2)">
+          Próximo passo
+          <i data-lucide="arrow-right" style="width:16px;height:16px;stroke-width:2;"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STEP 2 — Primeira conta bancária ══ -->
+  <div class="step-card" id="step-2">
+    <div class="card-banner" style="background:linear-gradient(90deg,#ACC095,#D2B06E);"></div>
+    <div class="card-body">
+      <div style="margin-bottom:28px;">
+        <div style="font-size:12px;color:#F08353;font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Passo 2 de 4</div>
+        <div class="font-display" style="font-size:26px;color:#3A3530;margin-bottom:8px;">cadastrar primeira conta</div>
+        <p style="font-size:14px;color:#9A9189;line-height:1.55;">Adicione a conta bancária principal da sua clínica. Você pode adicionar mais depois.</p>
+      </div>
+
+      <!-- Tipo de conta -->
+      <div class="field-wrap">
+        <label class="field-label">Tipo de conta</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <div onclick="selectAccountType(this,'corrente')" class="acc-type-btn" style="border:1.5px solid #F08353;background:#FBE9E3;border-radius:9px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .15s;">
+            <i data-lucide="building-2" style="width:20px;height:20px;stroke-width:1.5;color:#F08353;margin-bottom:6px;"></i>
+            <div style="font-size:12px;font-weight:500;color:#3A3530;">Conta Corrente</div>
+          </div>
+          <div onclick="selectAccountType(this,'poupanca')" class="acc-type-btn" style="border:1.5px solid #E8E5DF;border-radius:9px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .15s;">
+            <i data-lucide="piggy-bank" style="width:20px;height:20px;stroke-width:1.5;color:#9A9189;margin-bottom:6px;"></i>
+            <div style="font-size:12px;font-weight:500;color:#9A9189;">Poupança</div>
+          </div>
+          <div onclick="selectAccountType(this,'caixa')" class="acc-type-btn" style="border:1.5px solid #E8E5DF;border-radius:9px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .15s;">
+            <i data-lucide="banknote" style="width:20px;height:20px;stroke-width:1.5;color:#9A9189;margin-bottom:6px;"></i>
+            <div style="font-size:12px;font-weight:500;color:#9A9189;">Caixa Físico</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="field-wrap" style="margin-bottom:0;">
+          <label class="field-label">Nome da conta</label>
+          <input class="field-input" type="text" placeholder="Ex: Itaú PJ" value="Itaú PJ">
+        </div>
+        <div class="field-wrap" style="margin-bottom:0;">
+          <label class="field-label">Banco</label>
+          <select class="field-select">
+            <option>Itaú</option>
+            <option>Nubank</option>
+            <option>Bradesco</option>
+            <option>Sicoob</option>
+            <option>Sicredi</option>
+            <option>Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Cor da conta -->
+      <div class="field-wrap" style="margin-top:20px;">
+        <label class="field-label">Cor de identificação</label>
+        <div class="color-picker">
+          <div class="color-swatch selected" style="background:#F08353;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#ACC095;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#D2B06E;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#6B635B;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#EAD7AC;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#C85A3E;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#F6A958;" onclick="selectColor(this)"></div>
+          <div class="color-swatch" style="background:#9A9189;" onclick="selectColor(this)"></div>
+        </div>
+      </div>
+
+      <!-- Saldo inicial -->
+      <div class="field-wrap" style="margin-bottom:0;">
+        <label class="field-label">Saldo inicial</label>
+        <div class="saldo-wrap">
+          <span class="saldo-prefix">R$</span>
+          <input class="saldo-input" type="text" value="18.420,50" oninput="formatSaldo(this)">
+        </div>
+        <div class="field-hint">Saldo da conta na data de início (você define abaixo)</div>
+      </div>
+
+      <!-- Data início -->
+      <div class="field-wrap" style="margin-top:16px;margin-bottom:0;">
+        <label class="field-label">Data de início</label>
+        <div style="position:relative;">
+          <i data-lucide="calendar" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke-width:1.5;color:#9A9189;pointer-events:none;z-index:1;"></i>
+          <input class="field-input" type="text" value="01/11/2025" style="padding-left:40px;">
+        </div>
+        <div class="field-hint">Lançamentos anteriores a esta data não serão considerados</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:32px;">
+        <button class="btn-secondary" onclick="goStep(1)">
+          <i data-lucide="arrow-left" style="width:15px;height:15px;stroke-width:2;"></i>Voltar
+        </button>
+        <button class="btn-primary" onclick="goStep(3)">
+          Próximo passo
+          <i data-lucide="arrow-right" style="width:16px;height:16px;stroke-width:2;"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STEP 3 — Plano de contas ══ -->
+  <div class="step-card" id="step-3">
+    <div class="card-banner" style="background:linear-gradient(90deg,#D2B06E,#EAD7AC);"></div>
+    <div class="card-body">
+      <div style="margin-bottom:24px;">
+        <div style="font-size:12px;color:#F08353;font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Passo 3 de 4</div>
+        <div class="font-display" style="font-size:26px;color:#3A3530;margin-bottom:8px;">plano de contas</div>
+        <p style="font-size:14px;color:#9A9189;line-height:1.55;">A Corporis já preparou um plano de contas ideal para clínicas de fisio e pilates. Revise e ative o que faz sentido para você.</p>
+      </div>
+
+      <!-- Info chip -->
+      <div style="display:flex;align-items:center;gap:9px;background:#F7F0DD;border:1px solid #D2B06E;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
+        <i data-lucide="sparkles" style="width:15px;height:15px;stroke-width:1.5;color:#B8914E;flex-shrink:0;"></i>
+        <span style="font-size:13px;color:#6B635B;">Este plano foi criado especificamente para clínicas de fisioterapia e pilates.</span>
+      </div>
+
+      <!-- Tree -->
+      <div class="plan-tree">
+
+        <!-- Grupo 1 -->
+        <div class="plan-group">
+          <div class="plan-group-header" onclick="toggleGroup(this)">
+            <i data-lucide="chevron-down" style="width:14px;height:14px;stroke-width:2;transition:transform .2s;"></i>
+            <span style="color:#7A9264;">■</span> 1. Receita Bruta
+            <span style="margin-left:auto;font-size:11px;color:#9A9189;font-weight:400;">6 contas</span>
+          </div>
+          <div class="group-items">
+            <div class="plan-item"><span class="code">1.01</span>Pilates<span class="badge-plan" style="background:#EEF2E8;color:#7A9264;">Entrada</span></div>
+            <div class="plan-item"><span class="code">1.02</span>Fisioterapia<span class="badge-plan" style="background:#EEF2E8;color:#7A9264;">Entrada</span></div>
+            <div class="plan-item"><span class="code">1.03</span>Fisio Pélvica<span class="badge-plan" style="background:#EEF2E8;color:#7A9264;">Entrada</span></div>
+            <div class="plan-item"><span class="code">1.04</span>Taping<span class="badge-plan" style="background:#EEF2E8;color:#7A9264;">Entrada</span></div>
+            <div class="plan-item"><span class="code">1.05</span>Primeira Consulta<span class="badge-plan" style="background:#EEF2E8;color:#7A9264;">Entrada</span></div>
+            <div class="plan-item"><span class="code">1.06</span>Combo<span class="badge-plan" style="background:#EEF2E8;color:#7A9264;">Entrada</span></div>
+          </div>
+        </div>
+
+        <!-- Grupo 4 parcial -->
+        <div class="plan-group">
+          <div class="plan-group-header" onclick="toggleGroup(this)">
+            <i data-lucide="chevron-down" style="width:14px;height:14px;stroke-width:2;"></i>
+            <span style="color:#C85A3E;">■</span> 4. Despesas Operacionais
+            <span style="margin-left:auto;font-size:11px;color:#9A9189;font-weight:400;">30 contas</span>
+          </div>
+          <div class="group-items">
+            <div class="plan-item" style="background:#F7F5F2;font-size:12px;font-weight:500;color:#9A9189;padding-left:14px;">
+              <i data-lucide="chevron-right" style="width:12px;height:12px;stroke-width:1.5;"></i>
+              &nbsp;4.1 RH — 14 contas
+            </div>
+            <div class="plan-item"><span class="code">4.01.01</span>Salário<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+            <div class="plan-item"><span class="code">4.01.06</span>FGTS<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+            <div class="plan-item"><span class="code">4.01.13</span>Pró-labore<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+            <div class="plan-item" style="background:#F7F5F2;font-size:12px;font-weight:500;color:#9A9189;padding-left:14px;">
+              <i data-lucide="chevron-right" style="width:12px;height:12px;stroke-width:1.5;"></i>
+              &nbsp;4.2 Administrativo — 17 contas
+            </div>
+            <div class="plan-item"><span class="code">4.02.01</span>Aluguel e Condomínio<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+            <div class="plan-item"><span class="code">4.02.02</span>Luz/Água/Gás<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+            <div class="plan-item"><span class="code">4.02.07</span>Sistemas<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+          </div>
+        </div>
+
+        <!-- Outros grupos -->
+        <div class="plan-group">
+          <div class="plan-group-header" onclick="toggleGroup(this)">
+            <i data-lucide="chevron-right" style="width:14px;height:14px;stroke-width:2;"></i>
+            <span style="color:#B8914E;">■</span> 2. Impostos sobre Receita
+            <span style="margin-left:auto;font-size:11px;color:#9A9189;font-weight:400;">2 contas</span>
+          </div>
+          <div class="group-items" style="display:none;">
+            <div class="plan-item"><span class="code">2.01</span>Simples Nacional<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+            <div class="plan-item"><span class="code">2.02</span>DARF<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+          </div>
+        </div>
+        <div class="plan-group">
+          <div class="plan-group-header" onclick="toggleGroup(this)">
+            <i data-lucide="chevron-right" style="width:14px;height:14px;stroke-width:2;"></i>
+            <span style="color:#C85A3E;">■</span> 3. Custos
+            <span style="margin-left:auto;font-size:11px;color:#9A9189;font-weight:400;">3 contas</span>
+          </div>
+          <div class="group-items" style="display:none;">
+            <div class="plan-item"><span class="code">3.02</span>Lavanderia<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+            <div class="plan-item"><span class="code">3.03</span>Materiais Fisio<span class="badge-plan" style="background:#FBE9E3;color:#C85A3E;">Saída</span></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Toggles de features -->
+      <div style="margin-top:20px;background:#FAFAF8;border:1.5px solid #E8E5DF;border-radius:12px;padding:6px 16px;">
+        <div class="toggle-wrap">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:#3A3530;">Adicionar conta nova a este plano</div>
+            <div style="font-size:12px;color:#9A9189;margin-top:2px;">Quero criar uma categoria personalizada</div>
+          </div>
+          <button class="btn-ghost" style="font-size:12px;color:#F08353;display:flex;align-items:center;gap:5px;">
+            <i data-lucide="plus" style="width:13px;height:13px;stroke-width:2;"></i>Adicionar
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:28px;">
+        <button class="btn-secondary" onclick="goStep(2)">
+          <i data-lucide="arrow-left" style="width:15px;height:15px;stroke-width:2;"></i>Voltar
+        </button>
+        <button class="btn-primary" onclick="goStep(4)">
+          Ficou ótimo, próximo!
+          <i data-lucide="arrow-right" style="width:16px;height:16px;stroke-width:2;"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STEP 4 — Tudo pronto ══ -->
+  <div class="step-card" id="step-4">
+    <div class="card-banner" style="background:linear-gradient(90deg,#ACC095,#F08353,#D2B06E);"></div>
+    <div class="card-body" style="text-align:center;">
+
+      <!-- Celebração -->
+      <div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#EEF2E8,#FBE9E3);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;box-shadow:0 8px 32px rgba(172,192,149,.25);">
+        <i data-lucide="party-popper" style="width:44px;height:44px;stroke-width:1.2;color:#F08353;"></i>
+      </div>
+
+      <div class="font-display" style="font-size:30px;color:#3A3530;margin-bottom:10px;">tudo pronto, Larissa!</div>
+      <p style="font-size:15px;color:#9A9189;line-height:1.65;max-width:400px;margin:0 auto 36px;">
+        Sua conta está configurada. Agora escolha como quer começar — você pode fazer os dois depois.
+      </p>
+
+      <!-- Resumo do que foi configurado -->
+      <div style="background:#F7F5F2;border-radius:12px;padding:18px 20px;text-align:left;margin-bottom:32px;">
+        <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:#9A9189;margin-bottom:12px;">Configurado agora</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6B635B;">
+            <i data-lucide="check-circle" style="width:15px;height:15px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>
+            Clínica: <strong style="color:#3A3530;">Corporis Pilates & Fisioterapia</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6B635B;">
+            <i data-lucide="check-circle" style="width:15px;height:15px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>
+            Conta: <strong style="color:#3A3530;">Itaú PJ — R$ 18.420,50</strong>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#6B635B;">
+            <i data-lucide="check-circle" style="width:15px;height:15px;stroke-width:1.5;color:#ACC095;flex-shrink:0;"></i>
+            Plano de contas: <strong style="color:#3A3530;">41 categorias ativadas</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action cards -->
+      <div style="display:flex;gap:14px;margin-bottom:24px;">
+        <div class="action-card" onclick="startImport()">
+          <div class="action-card-icon" style="background:#FBE9E3;">
+            <i data-lucide="upload-cloud" style="width:26px;height:26px;stroke-width:1.5;color:#F08353;"></i>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:500;color:#3A3530;margin-bottom:4px;">Importar extrato</div>
+            <div style="font-size:12px;color:#9A9189;line-height:1.5;">Suba seu extrato OFX ou fatura PDF e deixe a IA categorizar</div>
+          </div>
+        </div>
+        <div class="action-card secondary-action" onclick="startManual()">
+          <div class="action-card-icon" style="background:#EEF2E8;">
+            <i data-lucide="plus-circle" style="width:26px;height:26px;stroke-width:1.5;color:#7A9264;"></i>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:500;color:#3A3530;margin-bottom:4px;">Lançar manualmente</div>
+            <div style="font-size:12px;color:#9A9189;line-height:1.5;">Adicione lançamentos um a um com nosso formulário rápido</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-ghost" onclick="goDashboard()" style="font-size:13px;color:#9A9189;text-decoration:underline;text-underline-offset:3px;">
+        Explorar o dashboard primeiro
+      </button>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER PROGRESS BAR (mobile-like bottom) -->
+<div style="height:4px;background:#E8E5DF;flex-shrink:0;">
+  <div id="footer-progress" style="height:100%;background:linear-gradient(90deg,#F08353,#F6A958);border-radius:99px;transition:width .4s ease;width:25%;"></div>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  let currentStep = 1;
+  const totalSteps = 4;
+  const stepLabels = ['Boas-vindas','Conta bancária','Plano de contas','Tudo pronto'];
+
+  function renderProgress() {
+    const wrap = document.getElementById('progress');
+    wrap.innerHTML = '';
+    for (let i = 1; i <= totalSteps; i++) {
+      const state = i < currentStep ? 'done' : i === currentStep ? 'active' : 'upcoming';
+      const pipEl = document.createElement('div');
+      pipEl.className = 'step-pip';
+      pipEl.innerHTML = `
+        <div class="pip ${state}" onclick="goStep(${i})" style="cursor:pointer;">
+          ${state === 'done'
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+            : i}
+        </div>
+        <span class="pip-label ${state}">${stepLabels[i-1]}</span>
+      `;
+      wrap.appendChild(pipEl);
+      if (i < totalSteps) {
+        const conn = document.createElement('div');
+        conn.className = 'pip-connector ' + (i < currentStep ? 'done' : 'empty');
+        wrap.appendChild(conn);
+      }
+    }
+  }
+
+  function goStep(n) {
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    currentStep = Math.min(Math.max(n, 1), totalSteps);
+    const card = document.getElementById('step-' + currentStep);
+    card.classList.add('active');
+    card.style.animation = 'none';
+    requestAnimationFrame(() => { card.style.animation = ''; });
+
+    renderProgress();
+    document.getElementById('footer-progress').style.width = (currentStep / totalSteps * 100) + '%';
+    document.getElementById('skip-btn').style.display = currentStep === 4 ? 'none' : '';
+    lucide.createIcons();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function selectAccountType(el, type) {
+    document.querySelectorAll('.acc-type-btn').forEach(b => {
+      b.style.borderColor = '#E8E5DF'; b.style.background = '';
+      b.querySelector('div').style.color = '#9A9189';
+      b.querySelector('i').style.color = '#9A9189';
+    });
+    el.style.borderColor = '#F08353'; el.style.background = '#FBE9E3';
+    el.querySelector('div').style.color = '#3A3530';
+    el.querySelector('i').style.color = '#F08353';
+    lucide.createIcons();
+  }
+
+  function selectColor(el) {
+    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function toggleGroup(header) {
+    const items = header.nextElementSibling;
+    const icon  = header.querySelector('i');
+    const open  = items.style.display !== 'none' && items.style.display !== '';
+    items.style.display = open ? 'none' : 'block';
+    icon.setAttribute('data-lucide', open ? 'chevron-right' : 'chevron-down');
+    lucide.createIcons();
+  }
+
+  function formatSaldo(input) {
+    let raw = input.value.replace(/\D/g,'');
+    let num = parseInt(raw || '0') / 100;
+    input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  }
+
+  function startImport()  { alert('Redirecionando para Importações…'); }
+  function startManual()  { alert('Abrindo formulário de novo lançamento…'); }
+  function goDashboard()  { alert('Indo para o Dashboard…'); }
+
+  renderProgress();
+</script>
+</body>
+</html>

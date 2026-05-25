@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            orange: { DEFAULT: '#F08353', soft: '#FBE9E3', hover: '#F6A958' },
+            tangerine: '#F6A958',
+            beige: { DEFAULT: '#D2B06E', light: '#EAD7AC', soft: '#F7F0DD' },
+            green: { DEFAULT: '#ACC095', soft: '#EEF2E8', strong: '#7A9264' },
+            danger: { DEFAULT: '#C85A3E', soft: '#FBE9E3', bg: '#FBE9E3' },
+            base: '#FAFAF8',
+            surface: '#FFFFFF',
+            sunken: '#F3F2EE',
+            ink: { DEFAULT: '#3A3530', secondary: '#6B635B', tertiary: '#9A9189' },
+            line: { DEFAULT: '#E8E5DF', strong: '#D3D2CD' },
+          },
+          fontFamily: {
+            display: ['Fraunces', 'Georgia', 'serif'],
+            sans: ['Ubuntu', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'sm-warm': '0 1px 2px rgba(58,53,48,0.04)',
+            'md-warm': '0 2px 8px rgba(58,53,48,0.06), 0 1px 2px rgba(58,53,48,0.04)',
+            'lg-warm': '0 8px 24px rgba(58,53,48,0.08), 0 2px 6px rgba(58,53,48,0.04)',
+            'focus-orange': '0 0 0 3px rgba(240,131,83,0.18)',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; margin: 0; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum", "lnum"; }
+
+    /* Sidebar */
+    .sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background 0.15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content: ''; position: absolute; left: -8px; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: #F08353; border-radius: 0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: 0.1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* Topbar */
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 16px; }
+
+    /* KPI Cards */
+    .kpi-card { background: #FFFFFF; border: 1px solid #E8E5DF; border-radius: 12px; padding: 24px; box-shadow: 0 1px 2px rgba(58,53,48,0.04); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #D3D2CD; border-radius: 99px; }
+
+    /* Badge */
+    .badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; }
+    .badge-success { background: #EEF2E8; color: #7A9264; }
+    .badge-danger { background: #FBE9E3; color: #C85A3E; }
+    .badge-warning { background: #F7F0DD; color: #B8914E; }
+    .badge-info { background: #F0EEE9; color: #6B635B; }
+    .badge-beige { background: #F0E8D0; color: #9A7240; }
+
+    /* Chart container */
+    .chart-container { position: relative; }
+
+    /* Variação % */
+    .var-up { color: #7A9264; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 3px; }
+    .var-down { color: #C85A3E; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 3px; }
+
+    /* Divider */
+    .divider { height: 1px; background: #E8E5DF; margin: 0; }
+
+    /* Account card */
+    .account-card { background: #FFFFFF; border: 1px solid #E8E5DF; border-radius: 10px; padding: 16px; box-shadow: 0 1px 2px rgba(58,53,48,0.04); display: flex; align-items: center; gap: 14px; }
+    .account-dot { width: 10px; height: 10px; border-radius: 99px; flex-shrink: 0; }
+
+    /* Upcoming row */
+    .upcoming-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #E8E5DF; gap: 12px; }
+    .upcoming-row:last-child { border-bottom: none; }
+
+    /* Transaction row */
+    .tx-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #E8E5DF; gap: 12px; }
+    .tx-row:last-child { border-bottom: none; }
+    .tx-row:hover { background: #FAFAF8; margin: 0 -24px; padding-left: 24px; padding-right: 24px; border-radius: 6px; }
+
+    /* Primary button */
+    .btn-primary { background: #F08353; color: #FFFFFF; font-family: 'Ubuntu', sans-serif; font-weight: 500; font-size: 14px; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background 0.15s; }
+    .btn-primary:hover { background: #F6A958; }
+
+    /* Ghost button */
+    .btn-ghost { background: transparent; color: #6B635B; font-family: 'Ubuntu', sans-serif; font-weight: 400; font-size: 13px; padding: 7px 12px; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
+    .btn-ghost:hover { background: #F3F2EE; }
+
+    /* Search input */
+    .search-input { background: #FFFFFF; border: 1px solid #E8E5DF; border-radius: 8px; padding: 9px 14px 9px 38px; font-family: 'Ubuntu', sans-serif; font-size: 14px; color: #3A3530; outline: none; width: 240px; }
+    .search-input:focus { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,0.18); }
+
+    /* Avatar */
+    .avatar { width: 36px; height: 36px; border-radius: 99px; background: #F08353; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; flex-shrink: 0; }
+
+    /* Notification bell */
+    .notif-btn { width: 36px; height: 36px; border-radius: 8px; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6B635B; transition: background 0.15s; position: relative; }
+    .notif-btn:hover { background: #F3F2EE; }
+    .notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 99px; background: #F08353; border: 2px solid #FAFAF8; }
+
+    /* Logo icon */
+    .logo-icon { width: 32px; height: 32px; border-radius: 50%; background: #EAD7AC; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; overflow: visible; }
+
+    /* Donut legend */
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+<div style="display:flex; min-height:100vh;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- Logo -->
+    <div style="padding: 24px 20px 20px; display:flex; align-items:center; gap:12px; border-bottom: 1px solid #E8E5DF;">
+      <!-- Logo icon: bola bege + ponto laranja + arco tracejado -->
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity="0.9"/>
+        <circle cx="17" cy="11" r="3.5" fill="#F08353"/>
+        <path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="font-display" style="font-size:20px; color:#F08353; line-height:1;">corporis</div>
+        <div style="font-size:9px; font-weight:500; letter-spacing:0.15em; color:#D2B06E; text-transform:uppercase; line-height:1; margin-top:2px;">FINANCE</div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav style="flex:1; padding: 12px 0; overflow-y: auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item active" href="#">
+        <i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Lançamentos
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Contas e Cartões
+      </a>
+
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        DFC
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Orçado x Realizado
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Projeção de Caixa
+      </a>
+
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#" style="position:relative;">
+        <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Consultor IA
+        <span class="badge badge-warning" style="margin-left:auto;font-size:9px;padding:2px 6px;">beta</span>
+      </a>
+
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Plano de Contas
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Importações
+      </a>
+      <a class="nav-item" href="#">
+        <i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>
+        Configurações
+      </a>
+    </nav>
+
+    <!-- Sidebar footer -->
+    <div style="padding: 16px 12px; border-top: 1px solid #E8E5DF; display:flex; align-items:center; gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">M</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#3A3530;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Dra. Mariana</div>
+        <div style="font-size:11px;color:#9A9189;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Corporis — Xanxerê/SC</div>
+      </div>
+      <button class="btn-ghost" style="padding:6px;border-radius:6px;">
+        <i data-lucide="settings" style="width:15px;height:15px;stroke-width:1.5;color:#9A9189;"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="font-display" style="font-size:22px;color:#3A3530;flex:1;">dashboard</div>
+
+      <!-- Search -->
+      <div style="position:relative;">
+        <i data-lucide="search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+        <input class="search-input" type="text" placeholder="Buscar lançamentos, contas…">
+      </div>
+
+      <!-- Novo Lançamento -->
+      <button class="btn-primary">
+        <i data-lucide="plus" style="width:16px;height:16px;stroke-width:2;"></i>
+        Novo Lançamento
+      </button>
+
+      <!-- Notificações -->
+      <button class="notif-btn">
+        <i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i>
+        <span class="notif-dot"></span>
+      </button>
+
+      <!-- Avatar -->
+      <div class="avatar">M</div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main style="flex:1;overflow-y:auto;padding: 32px;">
+
+      <!-- Period selector -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+        <div>
+          <div style="font-size:13px;color:#9A9189;">Período atual</div>
+          <div style="font-size:15px;font-weight:500;color:#3A3530;margin-top:2px;">novembro de 2025</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn-ghost" style="font-size:13px;border:1px solid #E8E5DF;">
+            <i data-lucide="chevron-left" style="width:14px;height:14px;stroke-width:2;"></i>
+          </button>
+          <div style="font-size:13px;font-weight:500;padding:7px 16px;border:1px solid #E8E5DF;border-radius:6px;background:#FFF;color:#3A3530;">Nov 2025</div>
+          <button class="btn-ghost" style="font-size:13px;border:1px solid #E8E5DF;">
+            <i data-lucide="chevron-right" style="width:14px;height:14px;stroke-width:2;"></i>
+          </button>
+          <button class="btn-ghost" style="font-size:13px;border:1px solid #E8E5DF;color:#F08353;">
+            <i data-lucide="calendar" style="width:14px;height:14px;stroke-width:1.5;"></i>
+            Personalizado
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI CARDS -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
+
+        <!-- Saldo Total -->
+        <div class="kpi-card" style="border-top: 3px solid #F08353;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:#9A9189;">Saldo Total</div>
+            <div style="width:32px;height:32px;border-radius:8px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;">
+              <i data-lucide="landmark" style="width:16px;height:16px;stroke-width:1.5;color:#F08353;"></i>
+            </div>
+          </div>
+          <div class="font-display tnum" style="font-size:30px;color:#3A3530;line-height:1;margin-bottom:8px;">R$ 25.040,80</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="var-up">
+              <i data-lucide="trending-up" style="width:13px;height:13px;stroke-width:2;"></i>
+              +8,3%
+            </span>
+            <span style="font-size:12px;color:#9A9189;">vs. outubro</span>
+          </div>
+        </div>
+
+        <!-- Entradas do mês -->
+        <div class="kpi-card" style="border-top: 3px solid #ACC095;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:#9A9189;">Entradas do Mês</div>
+            <div style="width:32px;height:32px;border-radius:8px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;">
+              <i data-lucide="arrow-down-circle" style="width:16px;height:16px;stroke-width:1.5;color:#7A9264;"></i>
+            </div>
+          </div>
+          <div class="font-display tnum" style="font-size:30px;color:#7A9264;line-height:1;margin-bottom:8px;">R$ 34.650,00</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="var-up">
+              <i data-lucide="trending-up" style="width:13px;height:13px;stroke-width:2;"></i>
+              +12,1%
+            </span>
+            <span style="font-size:12px;color:#9A9189;">vs. outubro</span>
+          </div>
+        </div>
+
+        <!-- Saídas do mês -->
+        <div class="kpi-card" style="border-top: 3px solid #C85A3E;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:#9A9189;">Saídas do Mês</div>
+            <div style="width:32px;height:32px;border-radius:8px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;">
+              <i data-lucide="arrow-up-circle" style="width:16px;height:16px;stroke-width:1.5;color:#C85A3E;"></i>
+            </div>
+          </div>
+          <div class="font-display tnum" style="font-size:30px;color:#C85A3E;line-height:1;margin-bottom:8px;">−R$ 26.830,50</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="var-down">
+              <i data-lucide="trending-up" style="width:13px;height:13px;stroke-width:2;"></i>
+              +5,4%
+            </span>
+            <span style="font-size:12px;color:#9A9189;">vs. outubro</span>
+          </div>
+        </div>
+
+        <!-- Resultado do mês -->
+        <div class="kpi-card" style="border-top: 3px solid #D2B06E;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:#9A9189;">Resultado do Mês</div>
+            <div style="width:32px;height:32px;border-radius:8px;background:#F7F0DD;display:flex;align-items:center;justify-content:center;">
+              <i data-lucide="bar-chart-2" style="width:16px;height:16px;stroke-width:1.5;color:#B8914E;"></i>
+            </div>
+          </div>
+          <div class="font-display tnum" style="font-size:30px;color:#3A3530;line-height:1;margin-bottom:8px;">R$ 7.819,50</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="var-up">
+              <i data-lucide="trending-up" style="width:13px;height:13px;stroke-width:2;"></i>
+              +34,2%
+            </span>
+            <span style="font-size:12px;color:#9A9189;">vs. outubro</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 340px;gap:16px;margin-bottom:24px;">
+
+        <!-- Evolução do Saldo -->
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:24px;box-shadow:0 1px 2px rgba(58,53,48,0.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div>
+              <div class="font-display" style="font-size:16px;color:#3A3530;">evolução do saldo</div>
+              <div style="font-size:12px;color:#9A9189;margin-top:2px;">últimos 6 meses</div>
+            </div>
+            <button class="btn-ghost" style="font-size:12px;gap:4px;">
+              <i data-lucide="maximize-2" style="width:13px;height:13px;stroke-width:1.5;"></i>
+              Expandir
+            </button>
+          </div>
+          <div class="chart-container" style="height:180px;">
+            <canvas id="saldoChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Entradas vs Saídas -->
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:24px;box-shadow:0 1px 2px rgba(58,53,48,0.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div>
+              <div class="font-display" style="font-size:16px;color:#3A3530;">entradas × saídas</div>
+              <div style="font-size:12px;color:#9A9189;margin-top:2px;">últimos 6 meses</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <div style="width:10px;height:10px;border-radius:2px;background:#ACC095;"></div>
+                <span style="font-size:11px;color:#9A9189;">Entradas</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px;">
+                <div style="width:10px;height:10px;border-radius:2px;background:#F08353;opacity:0.6;"></div>
+                <span style="font-size:11px;color:#9A9189;">Saídas</span>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container" style="height:180px;">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Donut Despesas por grupo -->
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:24px;box-shadow:0 1px 2px rgba(58,53,48,0.04);">
+          <div style="margin-bottom:16px;">
+            <div class="font-display" style="font-size:16px;color:#3A3530;">despesas por grupo</div>
+            <div style="font-size:12px;color:#9A9189;margin-top:2px;">novembro 2025</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div class="chart-container" style="height:150px;width:150px;">
+              <canvas id="donutChart"></canvas>
+            </div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:7px;width:100%;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <div class="legend-dot" style="background:#C85A3E;"></div>
+                  <span style="font-size:12px;color:#6B635B;">RH</span>
+                </div>
+                <span class="tnum" style="font-size:12px;font-weight:500;color:#3A3530;">R$ 14.200</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <div class="legend-dot" style="background:#F08353;"></div>
+                  <span style="font-size:12px;color:#6B635B;">Administrativo</span>
+                </div>
+                <span class="tnum" style="font-size:12px;font-weight:500;color:#3A3530;">R$ 7.340</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <div class="legend-dot" style="background:#D2B06E;"></div>
+                  <span style="font-size:12px;color:#6B635B;">Custos</span>
+                </div>
+                <span class="tnum" style="font-size:12px;font-weight:500;color:#3A3530;">R$ 2.890</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <div class="legend-dot" style="background:#ACC095;"></div>
+                  <span style="font-size:12px;color:#6B635B;">Impostos</span>
+                </div>
+                <span class="tnum" style="font-size:12px;font-weight:500;color:#3A3530;">R$ 2.400</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM ROW -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 340px;gap:16px;">
+
+        <!-- Últimos lançamentos -->
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:24px;box-shadow:0 1px 2px rgba(58,53,48,0.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div class="font-display" style="font-size:16px;color:#3A3530;">últimos lançamentos</div>
+            <a href="#" style="font-size:12px;color:#F08353;text-decoration:none;display:flex;align-items:center;gap:4px;">
+              Ver todos
+              <i data-lucide="arrow-right" style="width:12px;height:12px;stroke-width:2;"></i>
+            </a>
+          </div>
+
+          <div class="tx-row">
+            <div style="width:36px;height:36px;border-radius:8px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="users" style="width:16px;height:16px;stroke-width:1.5;color:#7A9264;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Pacote 8 aulas — Carla Mendes</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+                <span class="badge badge-success">1.01 Pilates</span>
+                <span style="font-size:11px;color:#9A9189;">Itaú PJ · 28/11</span>
+              </div>
+            </div>
+            <div class="tnum" style="font-size:14px;font-weight:500;color:#7A9264;flex-shrink:0;">+R$ 720,00</div>
+          </div>
+
+          <div class="tx-row">
+            <div style="width:36px;height:36px;border-radius:8px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="building-2" style="width:16px;height:16px;stroke-width:1.5;color:#C85A3E;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Aluguel sala 903</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+                <span class="badge badge-danger">4.02.01 Aluguel</span>
+                <span style="font-size:11px;color:#9A9189;">Itaú PJ · 28/11</span>
+              </div>
+            </div>
+            <div class="tnum" style="font-size:14px;font-weight:500;color:#C85A3E;flex-shrink:0;">−R$ 3.200,00</div>
+          </div>
+
+          <div class="tx-row">
+            <div style="width:36px;height:36px;border-radius:8px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="stethoscope" style="width:16px;height:16px;stroke-width:1.5;color:#7A9264;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Avaliação Fisio — João Lima</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+                <span class="badge badge-success">1.05 Primeira Consulta</span>
+                <span style="font-size:11px;color:#9A9189;">Nubank PJ · 27/11</span>
+              </div>
+            </div>
+            <div class="tnum" style="font-size:14px;font-weight:500;color:#7A9264;flex-shrink:0;">+R$ 180,00</div>
+          </div>
+
+          <div class="tx-row">
+            <div style="width:36px;height:36px;border-radius:8px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="zap" style="width:16px;height:16px;stroke-width:1.5;color:#C85A3E;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Energia CELESC</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+                <span class="badge badge-danger">4.02.02 Luz/Água/Gás</span>
+                <span style="font-size:11px;color:#9A9189;">Itaú PJ · 26/11</span>
+              </div>
+            </div>
+            <div class="tnum" style="font-size:14px;font-weight:500;color:#C85A3E;flex-shrink:0;">−R$ 487,30</div>
+          </div>
+
+          <div class="tx-row">
+            <div style="width:36px;height:36px;border-radius:8px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="activity" style="width:16px;height:16px;stroke-width:1.5;color:#7A9264;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Fisio Pélvica — Ana Souza</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+                <span class="badge badge-success">1.03 Fisio Pélvica</span>
+                <span style="font-size:11px;color:#9A9189;">Nubank PJ · 25/11</span>
+              </div>
+            </div>
+            <div class="tnum" style="font-size:14px;font-weight:500;color:#7A9264;flex-shrink:0;">+R$ 320,00</div>
+          </div>
+        </div>
+
+        <!-- Próximos vencimentos -->
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:24px;box-shadow:0 1px 2px rgba(58,53,48,0.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div class="font-display" style="font-size:16px;color:#3A3530;">próximos vencimentos</div>
+            <span class="badge badge-warning">7 pendentes</span>
+          </div>
+
+          <div class="upcoming-row">
+            <div style="width:40px;height:40px;border-radius:8px;background:#FBE9E3;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:14px;font-weight:700;color:#F08353;line-height:1;">10</span>
+              <span style="font-size:9px;color:#F08353;text-transform:uppercase;letter-spacing:0.05em;">dez</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;">Cartão Itaú Black</div>
+              <div style="font-size:11px;color:#9A9189;margin-top:2px;">Fatura fechada · Itaú PJ</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="tnum" style="font-size:14px;font-weight:500;color:#C85A3E;">R$ 3.480,20</div>
+              <span class="badge badge-warning" style="margin-top:4px;">vence em 10 dias</span>
+            </div>
+          </div>
+
+          <div class="upcoming-row">
+            <div style="width:40px;height:40px;border-radius:8px;background:#F0EEE9;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:14px;font-weight:700;color:#6B635B;line-height:1;">15</span>
+              <span style="font-size:9px;color:#6B635B;text-transform:uppercase;letter-spacing:0.05em;">dez</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;">Salários — Equipe</div>
+              <div style="font-size:11px;color:#9A9189;margin-top:2px;">4.01.01 Salário · Itaú PJ</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="tnum" style="font-size:14px;font-weight:500;color:#C85A3E;">R$ 9.800,00</div>
+              <span class="badge badge-info" style="margin-top:4px;">15 dias</span>
+            </div>
+          </div>
+
+          <div class="upcoming-row">
+            <div style="width:40px;height:40px;border-radius:8px;background:#F0EEE9;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:14px;font-weight:700;color:#6B635B;line-height:1;">18</span>
+              <span style="font-size:9px;color:#6B635B;text-transform:uppercase;letter-spacing:0.05em;">dez</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;">Cartão Nubank</div>
+              <div style="font-size:11px;color:#9A9189;margin-top:2px;">Fatura aberta · Nubank PJ</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="tnum" style="font-size:14px;font-weight:500;color:#C85A3E;">R$ 1.250,00</div>
+              <span class="badge badge-info" style="margin-top:4px;">18 dias</span>
+            </div>
+          </div>
+
+          <div class="upcoming-row">
+            <div style="width:40px;height:40px;border-radius:8px;background:#F0EEE9;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:14px;font-weight:700;color:#6B635B;line-height:1;">20</span>
+              <span style="font-size:9px;color:#6B635B;text-transform:uppercase;letter-spacing:0.05em;">dez</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;">Vivo Empresas</div>
+              <div style="font-size:11px;color:#9A9189;margin-top:2px;">4.02.03 Telefone · Itaú PJ</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="tnum" style="font-size:14px;font-weight:500;color:#C85A3E;">R$ 189,90</div>
+              <span class="badge badge-info" style="margin-top:4px;">20 dias</span>
+            </div>
+          </div>
+
+          <div class="upcoming-row">
+            <div style="width:40px;height:40px;border-radius:8px;background:#F0EEE9;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;">
+              <span style="font-size:14px;font-weight:700;color:#6B635B;line-height:1;">28</span>
+              <span style="font-size:9px;color:#6B635B;text-transform:uppercase;letter-spacing:0.05em;">dez</span>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:500;color:#3A3530;">FGTS + INSS Patronal</div>
+              <div style="font-size:11px;color:#9A9189;margin-top:2px;">4.01.06 / 4.01.07 · Itaú PJ</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="tnum" style="font-size:14px;font-weight:500;color:#C85A3E;">R$ 1.620,00</div>
+              <span class="badge badge-info" style="margin-top:4px;">28 dias</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contas e Cartões -->
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;padding:24px;box-shadow:0 1px 2px rgba(58,53,48,0.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div class="font-display" style="font-size:16px;color:#3A3530;">contas e cartões</div>
+            <a href="#" style="font-size:12px;color:#F08353;text-decoration:none;display:flex;align-items:center;gap:4px;">
+              Gerenciar
+              <i data-lucide="arrow-right" style="width:12px;height:12px;stroke-width:2;"></i>
+            </a>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;">
+
+            <!-- Itaú PJ -->
+            <div class="account-card">
+              <div style="width:36px;height:36px;border-radius:8px;background:#F7F0DD;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="building" style="width:18px;height:18px;stroke-width:1.5;color:#B8914E;"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:500;color:#3A3530;">Itaú PJ</div>
+                <div style="font-size:11px;color:#9A9189;">Conta Corrente</div>
+              </div>
+              <div class="tnum" style="font-size:14px;font-weight:500;color:#7A9264;text-align:right;flex-shrink:0;">R$ 18.420,50</div>
+            </div>
+
+            <!-- Nubank PJ -->
+            <div class="account-card">
+              <div style="width:36px;height:36px;border-radius:8px;background:#F3F2EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="building" style="width:18px;height:18px;stroke-width:1.5;color:#6B635B;"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:500;color:#3A3530;">Nubank PJ</div>
+                <div style="font-size:11px;color:#9A9189;">Conta Corrente</div>
+              </div>
+              <div class="tnum" style="font-size:14px;font-weight:500;color:#7A9264;text-align:right;flex-shrink:0;">R$ 6.280,30</div>
+            </div>
+
+            <!-- Caixinha -->
+            <div class="account-card">
+              <div style="width:36px;height:36px;border-radius:8px;background:#EEF2E8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="banknote" style="width:18px;height:18px;stroke-width:1.5;color:#7A9264;"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:500;color:#3A3530;">Caixinha</div>
+                <div style="font-size:11px;color:#9A9189;">Caixa Físico</div>
+              </div>
+              <div class="tnum" style="font-size:14px;font-weight:500;color:#7A9264;text-align:right;flex-shrink:0;">R$ 340,00</div>
+            </div>
+
+            <div class="divider" style="margin: 4px 0;"></div>
+
+            <!-- Cartão Itaú Black -->
+            <div class="account-card" style="border-color: #FBE9E3;">
+              <div style="width:36px;height:36px;border-radius:8px;background:#FBE9E3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="credit-card" style="width:18px;height:18px;stroke-width:1.5;color:#C85A3E;"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:500;color:#3A3530;">Itaú Black</div>
+                <div style="font-size:11px;color:#9A9189;">Fatura · vence dia 10</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">R$ 3.480,20</div>
+                <div style="font-size:10px;color:#9A9189;margin-top:1px;">lim. R$ 15.000</div>
+              </div>
+            </div>
+
+            <!-- Cartão Nubank -->
+            <div class="account-card" style="border-color: #E8E5DF;">
+              <div style="width:36px;height:36px;border-radius:8px;background:#F0EEE9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="credit-card" style="width:18px;height:18px;stroke-width:1.5;color:#6B635B;"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:500;color:#3A3530;">Nubank</div>
+                <div style="font-size:11px;color:#9A9189;">Fatura · vence dia 18</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div class="tnum" style="font-size:13px;font-weight:500;color:#C85A3E;">R$ 1.250,00</div>
+                <div style="font-size:10px;color:#9A9189;margin-top:1px;">lim. R$ 8.000</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  // Init Lucide icons
+  lucide.createIcons();
+
+  // ─── Saldo Line Chart ───────────────────────────────────────────────────────
+  const saldoCtx = document.getElementById('saldoChart').getContext('2d');
+
+  const gradient = saldoCtx.createLinearGradient(0, 0, 0, 180);
+  gradient.addColorStop(0, 'rgba(240, 131, 83, 0.18)');
+  gradient.addColorStop(1, 'rgba(240, 131, 83, 0.00)');
+
+  new Chart(saldoCtx, {
+    type: 'line',
+    data: {
+      labels: ['Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov'],
+      datasets: [{
+        label: 'Saldo',
+        data: [18200, 21400, 19800, 22100, 23150, 25040],
+        borderColor: '#F08353',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#F08353',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        fill: true,
+        backgroundColor: gradient,
+        tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: '#3A3530',
+        titleColor: '#E8E5DF',
+        bodyColor: '#FFF',
+        padding: 10,
+        displayColors: false,
+        callbacks: {
+          label: ctx => `R$ ${ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits:2})}`
+        }
+      }},
+      scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: { color: '#9A9189', font: { family: 'Ubuntu', size: 11 } } },
+        y: { grid: { color: '#E8E5DF', drawBorder: false }, border: { display: false }, ticks: { color: '#9A9189', font: { family: 'Ubuntu', size: 11 }, callback: v => `R$ ${(v/1000).toFixed(0)}k` } }
+      }
+    }
+  });
+
+  // ─── Bar Chart ──────────────────────────────────────────────────────────────
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov'],
+      datasets: [
+        {
+          label: 'Entradas',
+          data: [28400, 31200, 29800, 32100, 30900, 34650],
+          backgroundColor: '#ACC095',
+          borderRadius: 4,
+          borderSkipped: false,
+        },
+        {
+          label: 'Saídas',
+          data: [24100, 26800, 25200, 27400, 25450, 26830],
+          backgroundColor: 'rgba(240,131,83,0.55)',
+          borderRadius: 4,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#3A3530',
+          titleColor: '#E8E5DF',
+          bodyColor: '#FFF',
+          padding: 10,
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: R$ ${ctx.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits:2})}`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: { color: '#9A9189', font: { family: 'Ubuntu', size: 11 } } },
+        y: { grid: { color: '#E8E5DF' }, border: { display: false }, ticks: { color: '#9A9189', font: { family: 'Ubuntu', size: 11 }, callback: v => `R$ ${(v/1000).toFixed(0)}k` } }
+      },
+      barPercentage: 0.65,
+      categoryPercentage: 0.75,
+    }
+  });
+
+  // ─── Donut Chart ────────────────────────────────────────────────────────────
+  const donutCtx = document.getElementById('donutChart').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['RH', 'Administrativo', 'Custos', 'Impostos'],
+      datasets: [{
+        data: [14200, 7340, 2890, 2400],
+        backgroundColor: ['#C85A3E', '#F08353', '#D2B06E', '#ACC095'],
+        borderWidth: 0,
+        hoverOffset: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#3A3530',
+          titleColor: '#E8E5DF',
+          bodyColor: '#FFF',
+          padding: 10,
+          callbacks: {
+            label: ctx => `R$ ${ctx.parsed.toLocaleString('pt-BR', {minimumFractionDigits:2})}`
+          }
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>

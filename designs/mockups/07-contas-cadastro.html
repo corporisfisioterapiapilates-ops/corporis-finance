@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Conta — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; overflow: hidden; height: 100vh; display: flex; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    .sidebar { width: 240px; height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* Overlay */
+    .overlay { position: fixed; inset: 0; background: rgba(58,53,48,.24); z-index: 40; backdrop-filter: blur(2px); }
+
+    /* Modal */
+    .modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 520px; background: #FFF; border-radius: 20px; z-index: 50;
+      box-shadow: 0 24px 64px rgba(58,53,48,.18), 0 4px 16px rgba(58,53,48,.08);
+      display: flex; flex-direction: column; max-height: 90vh;
+      animation: popIn .28s cubic-bezier(.22,.61,.36,1) both;
+    }
+    @keyframes popIn {
+      from { opacity:0; transform:translate(-50%,-50%) scale(.95); }
+      to   { opacity:1; transform:translate(-50%,-50%) scale(1); }
+    }
+
+    .modal-header { padding: 28px 32px 0; flex-shrink: 0; }
+    .modal-body   { flex:1; overflow-y:auto; padding: 24px 32px; }
+    .modal-footer { padding: 16px 32px; border-top: 1px solid #E8E5DF; flex-shrink: 0; background: #FAFAF8; border-radius: 0 0 20px 20px; display: flex; align-items: center; gap: 10px; }
+
+    /* Form */
+    .field-wrap { display:flex; flex-direction:column; gap:6px; }
+    .field-label { font-size:12px; font-weight:500; color:#6B635B; text-transform:uppercase; letter-spacing:.07em; }
+    .field-input {
+      width:100%; background:#FFF; border:1.5px solid #E8E5DF; border-radius:10px;
+      padding:11px 14px; font-family:'Ubuntu',sans-serif; font-size:14px; color:#3A3530;
+      outline:none; transition:border-color .15s, box-shadow .15s;
+    }
+    .field-input:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,.16); }
+    .field-input::placeholder { color:#C0BBB4; }
+    .field-input.has-value { border-color:#D3D2CD; }
+    .field-select {
+      width:100%; background:#FFF; border:1.5px solid #E8E5DF; border-radius:10px;
+      padding:11px 36px 11px 14px; font-family:'Ubuntu',sans-serif; font-size:14px; color:#3A3530;
+      outline:none; appearance:none; cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 14px center;
+      transition:border-color .15s, box-shadow .15s;
+    }
+    .field-select:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,.16); }
+    .field-select.has-value { border-color:#D3D2CD; }
+    .field-hint { font-size:12px; color:#9A9189; }
+
+    /* Type tabs */
+    .type-tabs { display:flex; background:#F3F2EE; border-radius:10px; padding:4px; gap:2px; }
+    .type-tab {
+      flex:1; padding:9px 0; border-radius:7px; border:none; cursor:pointer;
+      font-family:'Ubuntu',sans-serif; font-size:13px; font-weight:500;
+      color:#9A9189; background:transparent; display:flex; align-items:center;
+      justify-content:center; gap:7px; transition:all .15s;
+    }
+    .type-tab.active { background:#FFF; color:#F08353; box-shadow:0 1px 4px rgba(58,53,48,.08); }
+    .type-tab:hover:not(.active) { background:#ECEAE5; color:#6B635B; }
+
+    /* Color swatches */
+    .color-grid { display:flex; gap:9px; flex-wrap:wrap; }
+    .swatch {
+      width:36px; height:36px; border-radius:50%; cursor:pointer;
+      border:2.5px solid transparent; transition:all .15s;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .swatch.selected { border-color:#3A3530; transform:scale(1.14); }
+    .swatch:hover:not(.selected) { transform:scale(1.08); }
+
+    /* Toggle */
+    .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; }
+    .toggle { width:42px; height:23px; border-radius:99px; position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
+    .toggle.on  { background:#F08353; }
+    .toggle.off { background:#D3D2CD; }
+    .toggle::after { content:''; position:absolute; width:17px; height:17px; border-radius:50%; background:#FFF; top:3px; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.15); }
+    .toggle.on::after  { left:22px; }
+    .toggle.off::after { left:3px; }
+
+    /* Saldo preview */
+    .saldo-wrap { position:relative; }
+    .saldo-prefix { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-family:'Fraunces',serif; font-size:17px; color:#9A9189; pointer-events:none; }
+    .saldo-input {
+      width:100%; background:#F7F5F2; border:1.5px solid #E8E5DF; border-radius:10px;
+      padding:13px 14px 13px 46px; font-family:'Fraunces',serif; font-size:26px;
+      color:#3A3530; outline:none; transition:border-color .15s, box-shadow .15s;
+      font-variant-numeric:tabular-nums;
+    }
+    .saldo-input:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,.16); background:#FFF; }
+
+    /* Cartão fields (shown/hidden) */
+    .cartao-fields { overflow:hidden; transition:all .3s; }
+
+    /* Danger zone */
+    .danger-zone { background:#FBE9E3; border:1px solid #E8A898; border-radius:10px; padding:14px 18px; }
+
+    /* Buttons */
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:11px 22px; border-radius:9px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background .15s; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-secondary { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:14px; padding:11px 18px; border-radius:9px; border:1.5px solid #E8E5DF; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:all .15s; }
+    .btn-secondary:hover { border-color:#D3D2CD; background:#F7F5F2; }
+    .btn-danger { background:transparent; color:#C85A3E; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:13px; padding:8px 14px; border-radius:7px; border:1px solid #E8A898; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all .15s; }
+    .btn-danger:hover { background:#FBE9E3; }
+
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+
+    /* Divider */
+    .divider { height:1px; background:#E8E5DF; margin:6px 0; }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-thumb { background:#D3D2CD; border-radius:99px; }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR (dimmed) -->
+  <aside class="sidebar" style="opacity:.4;pointer-events:none;">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/><circle cx="17" cy="11" r="3.5" fill="#F08353"/><path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/></svg>
+      <div><div class="font-display" style="font-size:20px;color:#F08353;">corporis</div><div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;margin-top:2px;">FINANCE</div></div>
+    </div>
+    <nav style="flex:1;padding:12px 0;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item active" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div><div style="font-size:13px;font-weight:500;color:#3A3530;">Larissa Ferraz</div><div style="font-size:11px;color:#9A9189;">Corporis — Xanxerê/SC</div></div>
+    </div>
+  </aside>
+
+  <!-- Main (dimmed) -->
+  <div style="flex:1;opacity:.25;pointer-events:none;padding:32px;">
+    <div style="height:48px;background:#FFF;border:1px solid #E8E5DF;border-radius:12px;margin-bottom:20px;"></div>
+    <div style="height:280px;background:#FFF;border:1px solid #E8E5DF;border-radius:12px;"></div>
+  </div>
+
+  <!-- OVERLAY -->
+  <div class="overlay" onclick="closeModal()"></div>
+
+  <!-- MODAL -->
+  <div class="modal" id="modal">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <div class="font-display" style="font-size:22px;color:#3A3530;" id="modal-title">editar conta</div>
+          <div style="font-size:13px;color:#9A9189;margin-top:4px;" id="modal-sub">Itaú PJ — Conta Corrente</div>
+        </div>
+        <button onclick="closeModal()" style="width:32px;height:32px;border-radius:7px;border:none;background:#F3F2EE;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B635B;transition:background .15s;" onmouseover="this.style.background='#E8E5DF'" onmouseout="this.style.background='#F3F2EE'">
+          <i data-lucide="x" style="width:15px;height:15px;stroke-width:2;"></i>
+        </button>
+      </div>
+
+      <!-- Type tabs -->
+      <div class="type-tabs" id="type-tabs">
+        <button class="type-tab active" id="tab-corrente" onclick="setType('corrente')">
+          <i data-lucide="building-2" style="width:15px;height:15px;stroke-width:1.5;"></i>Conta Corrente
+        </button>
+        <button class="type-tab" id="tab-poupanca" onclick="setType('poupanca')">
+          <i data-lucide="piggy-bank" style="width:15px;height:15px;stroke-width:1.5;"></i>Poupança
+        </button>
+        <button class="type-tab" id="tab-caixa" onclick="setType('caixa')">
+          <i data-lucide="banknote" style="width:15px;height:15px;stroke-width:1.5;"></i>Caixa Físico
+        </button>
+        <button class="type-tab" id="tab-cartao" onclick="setType('cartao')">
+          <i data-lucide="credit-card" style="width:15px;height:15px;stroke-width:1.5;"></i>Cartão
+        </button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- Nome + Banco -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="field-wrap">
+            <label class="field-label">Nome da conta</label>
+            <input class="field-input has-value" type="text" value="Itaú PJ" id="field-nome">
+          </div>
+          <div class="field-wrap" id="banco-wrap">
+            <label class="field-label">Banco / Bandeira</label>
+            <select class="field-select has-value" id="field-banco">
+              <option>Itaú</option>
+              <option>Nubank</option>
+              <option>Bradesco</option>
+              <option>Sicoob</option>
+              <option>Sicredi</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Saldo inicial + data -->
+        <div id="saldo-section">
+          <div class="field-wrap" style="margin-bottom:14px;">
+            <label class="field-label">Saldo inicial</label>
+            <div class="saldo-wrap">
+              <span class="saldo-prefix">R$</span>
+              <input class="saldo-input" type="text" value="18.420,50" id="field-saldo" oninput="formatSaldo(this)">
+            </div>
+            <div class="field-hint" style="margin-top:5px;">Saldo no dia de início — serve como ponto de partida para o DFC</div>
+          </div>
+          <div class="field-wrap">
+            <label class="field-label">Data de início</label>
+            <div style="position:relative;">
+              <i data-lucide="calendar" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke-width:1.5;color:#9A9189;pointer-events:none;z-index:1;"></i>
+              <input class="field-input has-value" type="text" value="01/11/2025" style="padding-left:40px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Cor -->
+        <div class="field-wrap">
+          <label class="field-label">Cor de identificação</label>
+          <div class="color-grid">
+            <div class="swatch selected" style="background:#F08353;" onclick="selectColor(this)"></div>
+            <div class="swatch" style="background:#F6A958;" onclick="selectColor(this)"></div>
+            <div class="swatch" style="background:#D2B06E;" onclick="selectColor(this)"></div>
+            <div class="swatch" style="background:#EAD7AC;" onclick="selectColor(this)"></div>
+            <div class="swatch" style="background:#ACC095;" onclick="selectColor(this)"></div>
+            <div class="swatch" style="background:#7A9264;" onclick="selectColor(this)"></div>
+            <div class="swatch" style="background:#6B635B;" onclick="selectColor(this)"></div>
+            <div class="swatch" style="background:#C85A3E;" onclick="selectColor(this)"></div>
+            <div class="swatch" style="background:#3A3530;" onclick="selectColor(this)"></div>
+          </div>
+        </div>
+
+        <!-- Campos específicos de cartão -->
+        <div class="cartao-fields" id="cartao-fields" style="display:none;">
+          <div class="divider"></div>
+          <div style="font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:#9A9189;margin-bottom:14px;margin-top:6px;">Configurações do cartão</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+            <div class="field-wrap">
+              <label class="field-label">Limite total</label>
+              <div style="position:relative;">
+                <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:'Fraunces',serif;font-size:14px;color:#9A9189;pointer-events:none;">R$</span>
+                <input class="field-input" type="text" value="15.000,00" style="padding-left:40px;" class="tnum">
+              </div>
+            </div>
+            <div class="field-wrap">
+              <label class="field-label">Conta de pagamento</label>
+              <select class="field-select has-value">
+                <option>Itaú PJ</option>
+                <option>Nubank PJ</option>
+                <option>Caixinha</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="field-wrap">
+              <label class="field-label">Dia de fechamento</label>
+              <select class="field-select has-value">
+                <option>03</option>
+                <option>05</option>
+                <option>10</option>
+                <option>15</option>
+                <option>20</option>
+                <option>25</option>
+              </select>
+            </div>
+            <div class="field-wrap">
+              <label class="field-label">Dia de vencimento</label>
+              <select class="field-select has-value">
+                <option>10</option>
+                <option>15</option>
+                <option>18</option>
+                <option>20</option>
+                <option>25</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conta ativa -->
+        <div class="divider"></div>
+        <div class="toggle-row">
+          <div>
+            <div style="font-size:14px;font-weight:500;color:#3A3530;">Conta ativa</div>
+            <div style="font-size:12px;color:#9A9189;margin-top:2px;">Contas inativas não aparecem nas seleções de lançamentos</div>
+          </div>
+          <div class="toggle on" id="toggle-ativa" onclick="toggleAtiva()"></div>
+        </div>
+
+        <!-- Danger zone -->
+        <div class="divider"></div>
+        <div class="danger-zone">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:#C85A3E;margin-bottom:4px;">Excluir conta</div>
+              <div style="font-size:12px;color:#9A9189;line-height:1.55;">Esta ação não pode ser desfeita. Os lançamentos vinculados a esta conta serão mantidos, mas sem conta associada.</div>
+            </div>
+            <button class="btn-danger" style="flex-shrink:0;">
+              <i data-lucide="trash-2" style="width:13px;height:13px;stroke-width:1.5;"></i>
+              Excluir
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="saveModal()">
+        <i data-lucide="check" style="width:15px;height:15px;stroke-width:2;"></i>
+        Salvar alterações
+      </button>
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+      <div style="flex:1;"></div>
+      <div style="font-size:11px;color:#C0BBB4;display:flex;align-items:center;gap:4px;">
+        <i data-lucide="clock" style="width:11px;height:11px;stroke-width:1.5;"></i>
+        Editado por você em 20/11/2025
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(100px);background:#3A3530;color:#FFF;border-radius:10px;padding:13px 22px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(58,53,48,.25);font-size:14px;font-weight:500;transition:transform .3s cubic-bezier(.22,.61,.36,1);z-index:200;white-space:nowrap;">
+    <i data-lucide="check-circle" style="width:18px;height:18px;stroke-width:1.5;color:#ACC095;"></i>
+    Conta atualizada com sucesso!
+  </div>
+
+<script>
+  lucide.createIcons();
+  let currentType = 'corrente';
+  let ativaOn = true;
+
+  function setType(t) {
+    currentType = t;
+    ['corrente','poupanca','caixa','cartao'].forEach(x => {
+      document.getElementById('tab-' + x).className = 'type-tab' + (x === t ? ' active' : '');
+    });
+    // Show/hide cartão fields
+    document.getElementById('cartao-fields').style.display = t === 'cartao' ? 'block' : 'none';
+    // Show/hide saldo for caixa (keep visible for all)
+    document.getElementById('saldo-section').style.display = 'block';
+    // Update modal subtitle
+    const labels = { corrente:'Conta Corrente', poupanca:'Poupança', caixa:'Caixa Físico', cartao:'Cartão de Crédito' };
+    document.getElementById('modal-sub').textContent = document.getElementById('field-nome').value + ' — ' + labels[t];
+    lucide.createIcons();
+  }
+
+  function selectColor(el) {
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function toggleAtiva() {
+    ativaOn = !ativaOn;
+    const t = document.getElementById('toggle-ativa');
+    t.className = 'toggle ' + (ativaOn ? 'on' : 'off');
+  }
+
+  function formatSaldo(input) {
+    let raw = input.value.replace(/\D/g,'');
+    let num = parseInt(raw || '0') / 100;
+    input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  }
+
+  function closeModal() {
+    document.getElementById('modal').style.transform = 'translate(-50%,-50%) scale(.95)';
+    document.getElementById('modal').style.opacity = '0';
+    document.querySelector('.overlay').style.opacity = '0';
+  }
+
+  function saveModal() {
+    const t = document.getElementById('toast');
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    lucide.createIcons();
+    setTimeout(() => {
+      t.style.transform = 'translateX(-50%) translateY(100px)';
+      closeModal();
+    }, 2000);
+  }
+</script>
+</body>
+</html>

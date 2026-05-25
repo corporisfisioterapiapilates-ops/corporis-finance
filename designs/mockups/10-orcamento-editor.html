@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orçamento Anual — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            orange:    { DEFAULT: '#F08353', soft: '#FBE9E3', hover: '#F6A958' },
+            beige:     { DEFAULT: '#D2B06E', light: '#EAD7AC', soft: '#F7F0DD' },
+            green:     { DEFAULT: '#ACC095', soft: '#EEF2E8', strong: '#7A9264' },
+            danger:    { DEFAULT: '#C85A3E', soft: '#FBE9E3' },
+            warning:   { DEFAULT: '#D2B06E', soft: '#F7F0DD' },
+            base:      '#FAFAF8',
+            surface:   '#FFFFFF',
+            sunken:    '#F3F2EE',
+            ink: {
+              DEFAULT:   '#3A3530',
+              secondary: '#6B635B',
+              tertiary:  '#9A9189',
+            },
+            line: { DEFAULT: '#E8E5DF', strong: '#D3D2CD' },
+          },
+          fontFamily: {
+            display: ['Fraunces', 'Georgia', 'serif'],
+            sans:    ['Ubuntu', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'sm-warm':      '0 1px 2px rgba(58,53,48,0.04)',
+            'md-warm':      '0 2px 8px rgba(58,53,48,0.06),0 1px 2px rgba(58,53,48,0.04)',
+            'focus-orange': '0 0 0 3px rgba(240,131,83,0.18)',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; margin: 0; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; }
+    .tnum { font-variant-numeric: tabular-nums; }
+    .lowercase { text-transform: lowercase; }
+
+    /* Scrollbar suave */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F3F2EE; }
+    ::-webkit-scrollbar-thumb { background: #D3D2CD; border-radius: 3px; }
+
+    /* Grid da planilha */
+    .budget-grid {
+      display: grid;
+      grid-template-columns: 280px repeat(12, minmax(90px, 1fr)) 110px;
+      min-width: 1600px;
+    }
+
+    /* Célula base */
+    .cell {
+      padding: 0;
+      border-right: 1px solid #E8E5DF;
+      border-bottom: 1px solid #E8E5DF;
+      position: relative;
+    }
+
+    /* Input da célula */
+    .cell-input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      font-family: 'Ubuntu', sans-serif;
+      font-size: 13px;
+      color: #3A3530;
+      font-variant-numeric: tabular-nums;
+      padding: 8px 10px;
+      text-align: right;
+      outline: none;
+      cursor: pointer;
+    }
+    .cell-input:focus {
+      background: #FFFBF8;
+      box-shadow: inset 0 0 0 2px #F08353;
+      cursor: text;
+      z-index: 10;
+      position: relative;
+    }
+    .cell-input::placeholder { color: #D3D2CD; }
+    .cell-input:hover:not(:focus) { background: #F7F6F3; }
+
+    /* Linha de grupo */
+    .row-group .cell { background: #F3F2EE; }
+    .row-group .cell-label {
+      font-family: 'Ubuntu', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6B635B;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Linha de conta */
+    .row-account .cell-label {
+      font-size: 13px;
+      color: #3A3530;
+      padding: 0 16px 0 28px;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      gap: 8px;
+    }
+
+    /* Linha calculada */
+    .row-calculated .cell {
+      background: #FBF9F7;
+    }
+    .row-calculated .cell-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #3A3530;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+    .row-calculated .cell-value {
+      font-size: 13px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      padding: 8px 10px;
+      text-align: right;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    /* Header da tabela */
+    .header-cell {
+      background: #F3F2EE;
+      padding: 10px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9A9189;
+      text-align: right;
+      border-right: 1px solid #E8E5DF;
+      border-bottom: 2px solid #D3D2CD;
+      white-space: nowrap;
+    }
+    .header-cell.col-name {
+      text-align: left;
+      padding-left: 16px;
+      border-bottom: 2px solid #D3D2CD;
+    }
+    .header-cell.col-total {
+      background: #EEF2E8;
+      color: #7A9264;
+    }
+
+    /* Coluna total */
+    .col-total-cell {
+      background: #F7FAF4;
+      font-weight: 500;
+    }
+
+    /* Sidebar */
+    .sidebar-item { transition: all 0.15s ease; }
+    .sidebar-item:hover { background: #F3F2EE; }
+    .sidebar-item.active {
+      background: #FBE9E3;
+      color: #F08353;
+      border-left: 3px solid #F08353;
+    }
+
+    /* Tooltip de ação em lote */
+    .batch-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      background: white;
+      border: 1px solid #E8E5DF;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(58,53,48,0.12);
+      z-index: 100;
+      min-width: 240px;
+      overflow: hidden;
+    }
+
+    /* Animação de highlight na linha selecionada */
+    .row-selected .cell { background: #FFFBF5 !important; }
+    .row-selected .cell { box-shadow: inset 3px 0 0 #F08353; }
+
+    /* Sticky header e coluna nome */
+    .sticky-header { position: sticky; top: 0; z-index: 20; }
+    .sticky-col { position: sticky; left: 0; z-index: 15; background: inherit; }
+    .sticky-col::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #E8E5DF;
+    }
+
+    /* Versão badge */
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* Tooltip */
+    [data-tooltip] { position: relative; }
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3A3530;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* Transitions */
+    .collapse-transition { transition: all 0.2s ease; overflow: hidden; }
+
+    /* Highlight quando hover na coluna do mês */
+    .month-highlight:hover .cell { background: #FDFCF9; }
+  </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+
+  <!-- ═══════════════════════════════════════════════════════ SIDEBAR -->
+  <aside class="w-60 flex-shrink-0 bg-base border-r border-line flex flex-col h-full">
+    <!-- Logo -->
+    <div class="p-6 border-b border-line flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <!-- Ícone do logo -->
+        <div class="relative w-9 h-9 flex-shrink-0">
+          <div class="w-8 h-8 rounded-full bg-beige-light absolute bottom-0 left-0"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-orange absolute top-0 right-1"></div>
+          <svg class="absolute inset-0" viewBox="0 0 36 36" fill="none">
+            <path d="M 8 28 Q 28 10 30 8" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2" fill="none"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-display text-orange text-lg lowercase leading-none">corporis</p>
+          <p class="text-[9px] uppercase tracking-[0.15em] text-beige font-sans font-medium">Finance</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      <p class="text-[10px] uppercase tracking-[0.12em] text-ink-tertiary font-medium px-4 pt-2 pb-2">Geral</p>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="layout-dashboard" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Dashboard
+      </a>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="arrow-left-right" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Lançamentos
+      </a>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="wallet" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Contas e Cartões
+      </a>
+
+      <p class="text-[10px] uppercase tracking-[0.12em] text-ink-tertiary font-medium px-4 pt-5 pb-2">Análise</p>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="trending-up" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> DFC
+      </a>
+      <a href="#" class="sidebar-item active flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm">
+        <i data-lucide="target" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Orçado x Realizado
+      </a>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="line-chart" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Projeção de Caixa
+      </a>
+
+      <p class="text-[10px] uppercase tracking-[0.12em] text-ink-tertiary font-medium px-4 pt-5 pb-2">Assistente</p>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="sparkles" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Consultor IA
+        <span class="ml-auto text-[9px] uppercase tracking-wider bg-orange-soft text-orange px-1.5 py-0.5 rounded font-medium">beta</span>
+      </a>
+
+      <p class="text-[10px] uppercase tracking-[0.12em] text-ink-tertiary font-medium px-4 pt-5 pb-2">Configurações</p>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="list-tree" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Plano de Contas
+      </a>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="upload" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Importações
+      </a>
+      <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm text-ink-secondary">
+        <i data-lucide="settings" class="w-[18px] h-[18px]" style="stroke-width:1.5"></i> Configurações
+      </a>
+    </nav>
+
+    <!-- User footer -->
+    <div class="border-t border-line p-4 flex items-center gap-3 flex-shrink-0">
+      <div class="w-8 h-8 rounded-full bg-orange-soft flex items-center justify-center text-orange font-medium text-sm flex-shrink-0">M</div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-ink truncate">Dra. Mariana</p>
+        <p class="text-[11px] text-ink-tertiary truncate">Corporis Fisioterapia</p>
+      </div>
+      <button class="text-ink-tertiary hover:text-ink transition-colors">
+        <i data-lucide="settings" class="w-4 h-4" style="stroke-width:1.5"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══════════════════════════════════════════════════════ MAIN -->
+  <div class="flex-1 flex flex-col h-full overflow-hidden">
+
+    <!-- Topbar -->
+    <header class="h-16 bg-base border-b border-line flex items-center px-6 gap-4 flex-shrink-0">
+      <div class="flex items-center gap-3 flex-1">
+        <h1 class="font-display text-[22px] text-ink lowercase">orçamento anual</h1>
+        <!-- Seletor de ano -->
+        <div class="flex items-center gap-1 bg-sunken rounded-lg px-3 py-1.5 border border-line">
+          <button class="text-ink-tertiary hover:text-ink transition-colors" onclick="changeYear(-1)">
+            <i data-lucide="chevron-left" class="w-4 h-4" style="stroke-width:1.5"></i>
+          </button>
+          <span id="currentYear" class="text-sm font-medium text-ink px-2">2025</span>
+          <button class="text-ink-tertiary hover:text-ink transition-colors" onclick="changeYear(1)">
+            <i data-lucide="chevron-right" class="w-4 h-4" style="stroke-width:1.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controles direita -->
+      <div class="flex items-center gap-3">
+        <!-- Seletor de versão -->
+        <div class="relative" id="versionDropdownWrapper">
+          <button onclick="toggleVersionDropdown()" class="version-badge bg-beige-soft text-beige border border-beige/40 hover:bg-beige/20 transition-colors">
+            <i data-lucide="git-branch" class="w-3.5 h-3.5" style="stroke-width:1.5"></i>
+            <span id="currentVersion">v1 — Janeiro (ativa)</span>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5" style="stroke-width:1.5"></i>
+          </button>
+          <!-- Dropdown versões -->
+          <div id="versionDropdown" class="hidden absolute right-0 top-full mt-1 bg-surface border border-line rounded-xl shadow-md-warm z-50 w-64 overflow-hidden">
+            <div class="px-3 py-2 border-b border-line">
+              <p class="text-[10px] uppercase tracking-wider text-ink-tertiary font-medium">Versões do orçamento</p>
+            </div>
+            <div class="py-1">
+              <button onclick="selectVersion('v1 — Janeiro (ativa)')" class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-sunken text-sm text-left transition-colors">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-green-strong flex-shrink-0"></span>
+                  <span class="font-medium text-ink">v1 — Janeiro</span>
+                </div>
+                <span class="text-[10px] bg-green-soft text-green-strong px-2 py-0.5 rounded-full font-medium">ativa</span>
+              </button>
+              <button onclick="selectVersion('v2 — Revisão Junho')" class="w-full flex items-center justify-between px-3 py-2.5 hover:bg-sunken text-sm text-left transition-colors">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-line-strong flex-shrink-0"></span>
+                  <span class="text-ink-secondary">v2 — Revisão Junho</span>
+                </div>
+                <span class="text-[10px] text-ink-tertiary">arquivada</span>
+              </button>
+            </div>
+            <div class="px-3 py-2 border-t border-line">
+              <button onclick="newVersion()" class="w-full flex items-center gap-2 text-sm text-orange hover:text-orange-hover font-medium py-1 transition-colors">
+                <i data-lucide="plus" class="w-4 h-4" style="stroke-width:1.5"></i>
+                Salvar nova versão
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-px h-5 bg-line"></div>
+
+        <!-- Ações -->
+        <button class="flex items-center gap-2 text-sm text-ink-secondary hover:text-ink bg-surface border border-line rounded-lg px-3 py-2 transition-colors shadow-sm-warm">
+          <i data-lucide="download" class="w-4 h-4" style="stroke-width:1.5"></i>
+          Exportar
+        </button>
+        <button onclick="saveBudget()" class="flex items-center gap-2 text-sm text-white bg-orange hover:bg-orange-hover rounded-lg px-4 py-2 font-medium transition-colors">
+          <i data-lucide="save" class="w-4 h-4" style="stroke-width:1.5"></i>
+          Salvar
+        </button>
+      </div>
+    </header>
+
+    <!-- Sub-header: ações em lote + totais rápidos -->
+    <div class="bg-surface border-b border-line px-6 py-3 flex items-center gap-4 flex-shrink-0">
+      <!-- Totais rápidos -->
+      <div class="flex items-center gap-6">
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-ink-tertiary font-medium mb-0.5">Receita Orçada (anual)</p>
+          <p class="text-sm font-medium text-green-strong tnum">R$ 432.000,00</p>
+        </div>
+        <div class="w-px h-8 bg-line"></div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-ink-tertiary font-medium mb-0.5">Despesas Orçadas (anual)</p>
+          <p class="text-sm font-medium text-danger tnum">R$ 312.480,00</p>
+        </div>
+        <div class="w-px h-8 bg-line"></div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-ink-tertiary font-medium mb-0.5">Resultado Projetado</p>
+          <p class="text-sm font-medium text-ink tnum">R$ 119.520,00</p>
+        </div>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+        <!-- Ações em lote -->
+        <div class="relative" id="batchMenuWrapper">
+          <button onclick="toggleBatchMenu()" class="flex items-center gap-2 text-sm text-ink-secondary hover:text-ink bg-sunken border border-line rounded-lg px-3 py-1.5 transition-colors">
+            <i data-lucide="layers" class="w-4 h-4" style="stroke-width:1.5"></i>
+            Ações em lote
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5" style="stroke-width:1.5"></i>
+          </button>
+          <div id="batchMenu" class="batch-menu hidden">
+            <div class="px-3 py-2 border-b border-line">
+              <p class="text-[10px] uppercase tracking-wider text-ink-tertiary font-medium">Selecione uma conta primeiro</p>
+            </div>
+            <div class="py-1">
+              <button class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-sunken text-sm text-left transition-colors text-ink">
+                <i data-lucide="copy" class="w-4 h-4 text-ink-secondary" style="stroke-width:1.5"></i>
+                <div>
+                  <p class="font-medium">Replicar para todos os meses</p>
+                  <p class="text-[11px] text-ink-tertiary">Copia o valor de Janeiro para fev–dez</p>
+                </div>
+              </button>
+              <button class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-sunken text-sm text-left transition-colors text-ink">
+                <i data-lucide="divide" class="w-4 h-4 text-ink-secondary" style="stroke-width:1.5"></i>
+                <div>
+                  <p class="font-medium">Distribuir total igualmente</p>
+                  <p class="text-[11px] text-ink-tertiary">Divide o total anual em 12 partes iguais</p>
+                </div>
+              </button>
+              <button class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-sunken text-sm text-left transition-colors text-ink">
+                <i data-lucide="percent" class="w-4 h-4 text-ink-secondary" style="stroke-width:1.5"></i>
+                <div>
+                  <p class="font-medium">Aplicar % de ajuste</p>
+                  <p class="text-[11px] text-ink-tertiary">Ex: +5% sobre todos os valores</p>
+                </div>
+              </button>
+              <button class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-sunken text-sm text-left transition-colors text-ink">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-ink-secondary" style="stroke-width:1.5"></i>
+                <div>
+                  <p class="font-medium">Usar média histórica</p>
+                  <p class="text-[11px] text-ink-tertiary">Preenche com média dos últimos 12 meses</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toggle: mostrar zerados -->
+        <label class="flex items-center gap-2 text-sm text-ink-secondary cursor-pointer select-none">
+          <div class="relative w-9 h-5">
+            <input type="checkbox" class="sr-only peer" id="showZero" />
+            <div class="w-9 h-5 bg-line rounded-full peer-checked:bg-orange transition-colors"></div>
+            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"></div>
+          </div>
+          Mostrar zerados
+        </label>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ GRID PLANILHA -->
+    <div class="flex-1 overflow-auto">
+      <div class="budget-grid">
+
+        <!-- ─── HEADER ROW ─── -->
+        <div class="header-cell col-name sticky-col sticky-header" style="grid-column:1">
+          Conta
+        </div>
+        <div class="header-cell sticky-header">Jan</div>
+        <div class="header-cell sticky-header">Fev</div>
+        <div class="header-cell sticky-header">Mar</div>
+        <div class="header-cell sticky-header">Abr</div>
+        <div class="header-cell sticky-header">Mai</div>
+        <div class="header-cell sticky-header">Jun</div>
+        <div class="header-cell sticky-header">Jul</div>
+        <div class="header-cell sticky-header">Ago</div>
+        <div class="header-cell sticky-header">Set</div>
+        <div class="header-cell sticky-header">Out</div>
+        <div class="header-cell sticky-header">Nov</div>
+        <div class="header-cell sticky-header">Dez</div>
+        <div class="header-cell col-total sticky-header">Total</div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- GRUPO 1 — RECEITA BRUTA -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="row-group" style="display:contents">
+          <div class="cell sticky-col" style="height:38px">
+            <div class="cell-label" onclick="toggleGroup('g1')">
+              <i data-lucide="chevron-down" id="g1-icon" class="w-3.5 h-3.5 transition-transform" style="stroke-width:2"></i>
+              <span class="w-2 h-2 rounded-full bg-green-strong inline-block"></span>
+              1. Receita Bruta
+            </div>
+          </div>
+          <!-- 13 colunas de mês + total para o grupo (fundo cinza) -->
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#EEF2E8"></div>
+        </div>
+
+        <!-- 1.01 Pilates -->
+        <div id="g1" style="display:contents">
+          <div class="row-account cell sticky-col" style="height:36px">
+            <div class="cell-label">
+              <span class="w-1.5 h-1.5 rounded-full bg-green inline-block opacity-60"></span>
+              1.01 Pilates
+            </div>
+          </div>
+          <div class="cell"><input type="text" class="cell-input" value="18.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="18.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="18.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="18.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="20.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="20.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="20.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="20.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="20.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="20.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="20.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="20.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell col-total-cell"><div class="cell-value text-green-strong">232.000,00</div></div>
+
+          <!-- 1.02 Fisioterapia -->
+          <div class="row-account cell sticky-col" style="height:36px">
+            <div class="cell-label">
+              <span class="w-1.5 h-1.5 rounded-full bg-green inline-block opacity-60"></span>
+              1.02 Fisioterapia
+            </div>
+          </div>
+          <div class="cell"><input type="text" class="cell-input" value="8.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.500,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.500,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.500,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.500,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.500,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.500,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.500,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="8.500,00" onclick="selectRow(this)" /></div>
+          <div class="cell col-total-cell"><div class="cell-value text-green-strong">100.000,00</div></div>
+
+          <!-- 1.03 Fisio Pélvica -->
+          <div class="row-account cell sticky-col" style="height:36px">
+            <div class="cell-label">
+              <span class="w-1.5 h-1.5 rounded-full bg-green inline-block opacity-60"></span>
+              1.03 Fisio Pélvica
+            </div>
+          </div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="4.000,00" onclick="selectRow(this)" /></div>
+          <div class="cell col-total-cell"><div class="cell-value text-green-strong">48.000,00</div></div>
+
+          <!-- 1.04 Taping -->
+          <div class="row-account cell sticky-col" style="height:36px">
+            <div class="cell-label">
+              <span class="w-1.5 h-1.5 rounded-full bg-green inline-block opacity-60"></span>
+              1.04 Taping
+            </div>
+          </div>
+          <div class="cell"><input type="text" class="cell-input" placeholder="—" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" placeholder="—" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="800,00" onclick="selectRow(this)" /></div>
+          <div class="cell col-total-cell"><div class="cell-value text-green-strong">8.000,00</div></div>
+        </div>
+
+        <!-- LINHA CALCULADA: RECEITA BRUTA TOTAL -->
+        <div class="row-calculated" style="display:contents">
+          <div class="cell sticky-col" style="height:38px;background:#F7FAF4;border-top:2px solid #D3D2CD">
+            <div class="cell-label" style="font-weight:600;color:#7A9264">= Receita Bruta</div>
+          </div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">30.000,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">30.000,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">30.800,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">30.800,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">33.300,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">33.300,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">33.300,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">33.300,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">33.300,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">33.300,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">33.300,00</div></div>
+          <div class="cell" style="background:#F7FAF4;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:600">33.300,00</div></div>
+          <div class="cell" style="background:#EEF2E8;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:700">388.000,00</div></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- GRUPO 2 — IMPOSTOS -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="row-group" style="display:contents">
+          <div class="cell sticky-col" style="height:38px">
+            <div class="cell-label" onclick="toggleGroup('g2')">
+              <i data-lucide="chevron-down" id="g2-icon" class="w-3.5 h-3.5 transition-transform" style="stroke-width:2"></i>
+              <span class="w-2 h-2 rounded-full bg-warning inline-block"></span>
+              2. Impostos
+            </div>
+          </div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#FBE9E3"></div>
+        </div>
+
+        <div id="g2" style="display:contents">
+          <div class="row-account cell sticky-col" style="height:36px">
+            <div class="cell-label"><span class="w-1.5 h-1.5 rounded-full bg-warning inline-block opacity-70"></span>2.01 Simples Nacional</div>
+          </div>
+          <div class="cell"><input type="text" class="cell-input" value="1.980,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="1.980,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.033,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.033,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.198,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.198,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.198,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.198,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.198,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.198,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.198,00" onclick="selectRow(this)" /></div>
+          <div class="cell"><input type="text" class="cell-input" value="2.198,00" onclick="selectRow(this)" /></div>
+          <div class="cell col-total-cell"><div class="cell-value text-danger">25.610,00</div></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- GRUPO 4 — DESPESAS OPERACIONAIS (resumido) -->
+        <!-- ══════════════════════════════════════════ -->
+        <div class="row-group" style="display:contents">
+          <div class="cell sticky-col" style="height:38px">
+            <div class="cell-label" onclick="toggleGroup('g4')">
+              <i data-lucide="chevron-right" id="g4-icon" class="w-3.5 h-3.5 transition-transform" style="stroke-width:2"></i>
+              <span class="w-2 h-2 rounded-full bg-danger inline-block"></span>
+              4. Despesas Operacionais
+            </div>
+          </div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#F3F2EE"></div>
+          <div class="cell" style="height:38px;background:#FBE9E3"></div>
+        </div>
+
+        <!-- Grupo colapsado — mostra só linha de sub-grupo 4.1 -->
+        <div id="g4" style="display:none;contents">
+          <div class="row-account cell sticky-col" style="height:36px;background:#F8F7F5">
+            <div class="cell-label" style="font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;color:#9A9189;padding-left:20px">
+              4.1 Despesas com RH
+            </div>
+          </div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">28.400,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">14.200,00</div></div>
+          <div class="cell" style="background:#F8F7F5"><div class="cell-value text-ink-secondary" style="font-size:12px">28.400,00</div></div>
+          <div class="cell" style="background:#FBE9E3"><div class="cell-value text-danger" style="font-size:12px">184.600,00</div></div>
+        </div>
+
+        <!-- Linha de sub-total de Despesas Operacionais (sempre visível) -->
+        <div class="row-calculated" style="display:contents">
+          <div class="cell sticky-col" style="height:38px;background:#FDF5F3;border-top:1px solid #E8DDD9">
+            <div class="cell-label" style="color:#C85A3E;font-weight:600">= Despesas Operacionais</div>
+          </div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">20.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">20.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">20.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">20.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">22.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">22.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">22.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">22.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">22.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">22.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">22.480,00</div></div>
+          <div class="cell" style="background:#FDF5F3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:600">22.480,00</div></div>
+          <div class="cell" style="background:#FBE9E3;border-top:1px solid #E8DDD9"><div class="cell-value text-danger" style="font-weight:700">261.280,00</div></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════ -->
+        <!-- LINHAS CALCULADAS FINAIS -->
+        <!-- ══════════════════════════════════════════ -->
+
+        <!-- Lucro Líquido -->
+        <div style="display:contents">
+          <div class="cell sticky-col" style="height:40px;background:#F0EEE9;border-top:2px solid #D3D2CD">
+            <div class="cell-label" style="font-size:14px;font-weight:600;color:#3A3530;padding:0 16px">= Lucro Líquido</div>
+          </div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">7.540,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">7.540,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.287,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.287,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.622,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.622,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.622,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.622,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.622,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.622,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.622,00</div></div>
+          <div class="cell" style="background:#F0EEE9;border-top:2px solid #D3D2CD"><div class="cell-value" style="font-weight:600;font-size:13px;color:#3A3530">8.622,00</div></div>
+          <div class="cell" style="background:#EEF2E8;border-top:2px solid #D3D2CD"><div class="cell-value text-green-strong" style="font-weight:700;font-size:14px">100.430,00</div></div>
+        </div>
+
+        <!-- Fluxo de Caixa Livre -->
+        <div style="display:contents">
+          <div class="cell sticky-col" style="height:40px;background:#FBF9F7;border-top:1px solid #E8E5DF">
+            <div class="cell-label" style="font-size:13px;font-weight:600;color:#6B635B;padding:0 16px">= Fluxo de Caixa Livre</div>
+          </div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">7.540,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">7.540,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.287,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.287,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.622,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.622,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.622,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.622,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.622,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.622,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.622,00</div></div>
+          <div class="cell" style="background:#FBF9F7"><div class="cell-value" style="font-weight:600;font-size:13px;color:#6B635B">8.622,00</div></div>
+          <div class="cell" style="background:#EEF2E8"><div class="cell-value text-green-strong" style="font-weight:700;font-size:14px">100.430,00</div></div>
+        </div>
+
+        <!-- Saldo Final Real -->
+        <div style="display:contents">
+          <div class="cell sticky-col" style="height:44px;background:#3A3530;border-top:2px solid #3A3530">
+            <div class="cell-label" style="font-size:13px;font-weight:600;color:#FAFAF8;padding:0 16px">= Saldo Final Projetado</div>
+          </div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">32.540,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">40.080,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">48.367,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">56.654,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">65.276,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">73.898,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">82.520,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">91.142,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">99.764,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">108.386,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">117.008,00</div></div>
+          <div class="cell" style="background:#3A3530;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:600;font-size:13px;color:#EAD7AC">125.630,00</div></div>
+          <div class="cell" style="background:#2E2B27;border-top:2px solid #3A3530"><div class="cell-value tnum" style="font-weight:700;font-size:14px;color:#F08353">125.630,00</div></div>
+        </div>
+
+        <!-- Espaço no final -->
+        <div style="grid-column: 1 / -1; height: 40px; background: #FAFAF8;"></div>
+
+      </div><!-- /budget-grid -->
+    </div><!-- /overflow -->
+
+  </div><!-- /main -->
+
+  <!-- ═══════════════════════════════════════════════════════ MODAL: Nova Versão -->
+  <div id="newVersionModal" class="hidden fixed inset-0 bg-ink/40 z-50 flex items-center justify-center">
+    <div class="bg-surface rounded-2xl shadow-lg-warm w-full max-w-md p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="font-display text-[20px] text-ink lowercase">nova versão do orçamento</h2>
+        <button onclick="closeVersionModal()" class="text-ink-tertiary hover:text-ink transition-colors">
+          <i data-lucide="x" class="w-5 h-5" style="stroke-width:1.5"></i>
+        </button>
+      </div>
+      <p class="text-sm text-ink-secondary mb-5">A versão atual <strong>v1 — Janeiro</strong> será arquivada. A nova versão herdará todos os valores e poderá ser editada independentemente.</p>
+      <div class="mb-5">
+        <label class="block text-[11px] uppercase tracking-wider text-ink-tertiary font-medium mb-2">Nome da nova versão</label>
+        <input type="text" class="w-full border border-line rounded-lg px-4 py-2.5 text-sm text-ink focus:outline-none focus:border-orange focus:shadow-focus-orange transition-colors" placeholder="ex: v2 — Revisão Junho" value="v2 — Revisão Maio" />
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeVersionModal()" class="flex-1 border border-line rounded-lg py-2.5 text-sm text-ink-secondary hover:bg-sunken transition-colors">Cancelar</button>
+        <button onclick="confirmNewVersion()" class="flex-1 bg-orange text-white rounded-lg py-2.5 text-sm font-medium hover:bg-orange-hover transition-colors">Criar versão</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ TOAST -->
+  <div id="toast" class="hidden fixed bottom-6 right-6 bg-ink text-white text-sm px-4 py-3 rounded-xl shadow-lg-warm flex items-center gap-2 z-50 transition-all">
+    <i data-lucide="check-circle" class="w-4 h-4 text-green" style="stroke-width:1.5"></i>
+    <span id="toastMsg">Orçamento salvo com sucesso.</span>
+  </div>
+
+  <script>
+    // Init icons
+    lucide.createIcons();
+
+    let currentYear = 2025;
+
+    function changeYear(d) {
+      currentYear += d;
+      document.getElementById('currentYear').textContent = currentYear;
+    }
+
+    function toggleGroup(id) {
+      const el = document.getElementById(id);
+      const icon = document.getElementById(id + '-icon');
+      if (!el) return;
+      const isHidden = el.style.display === 'none';
+      el.style.display = isHidden ? 'contents' : 'none';
+      icon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
+      lucide.createIcons();
+    }
+
+    // Iniciar G4 colapsado
+    document.addEventListener('DOMContentLoaded', () => {
+      const g4 = document.getElementById('g4');
+      const g4icon = document.getElementById('g4-icon');
+      if (g4) { g4.style.display = 'none'; }
+      if (g4icon) { g4icon.style.transform = 'rotate(-90deg)'; }
+    });
+
+    function toggleVersionDropdown() {
+      const d = document.getElementById('versionDropdown');
+      d.classList.toggle('hidden');
+    }
+
+    function selectVersion(v) {
+      document.getElementById('currentVersion').textContent = v;
+      document.getElementById('versionDropdown').classList.add('hidden');
+    }
+
+    function newVersion() {
+      document.getElementById('versionDropdown').classList.add('hidden');
+      document.getElementById('newVersionModal').classList.remove('hidden');
+    }
+
+    function closeVersionModal() {
+      document.getElementById('newVersionModal').classList.add('hidden');
+    }
+
+    function confirmNewVersion() {
+      closeVersionModal();
+      showToast('Nova versão criada e ativada.');
+    }
+
+    function toggleBatchMenu() {
+      const m = document.getElementById('batchMenu');
+      m.classList.toggle('hidden');
+    }
+
+    function selectRow(input) {
+      // Simula highlight da linha
+    }
+
+    function saveBudget() {
+      showToast('Orçamento salvo com sucesso.');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.remove('hidden');
+      lucide.createIcons();
+      setTimeout(() => t.classList.add('hidden'), 3000);
+    }
+
+    // Fechar dropdowns ao clicar fora
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('versionDropdownWrapper').contains(e.target)) {
+        document.getElementById('versionDropdown').classList.add('hidden');
+      }
+      if (!document.getElementById('batchMenuWrapper').contains(e.target)) {
+        document.getElementById('batchMenu').classList.add('hidden');
+      }
+    });
+
+    // Tab entre células
+    document.querySelectorAll('.cell-input').forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === 'Tab') {
+          e.preventDefault();
+          const inputs = [...document.querySelectorAll('.cell-input')];
+          const idx = inputs.indexOf(input);
+          const next = inputs[e.shiftKey ? idx - 1 : idx + 1];
+          if (next) next.focus();
+        }
+      });
+      // Selecionar tudo ao focar
+      input.addEventListener('focus', () => input.select());
+    });
+  </script>
+</body>
+</html>

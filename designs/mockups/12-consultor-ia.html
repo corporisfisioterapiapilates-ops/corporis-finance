@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultor IA — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,300;9..144,0,400;9..144,1,300&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; display: flex; overflow: hidden; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .font-display-italic { font-family: 'Fraunces', serif; font-weight: 300; font-style: italic; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: 240px; height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* ── Main wrapper ── */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; overflow: hidden; }
+
+    /* ── Topbar ── */
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 28px; gap: 14px; flex-shrink: 0; }
+
+    /* ── Chat layout ── */
+    .chat-layout { flex: 1; display: flex; overflow: hidden; }
+
+    /* ── Conversation list (left panel) ── */
+    .conv-panel { width: 260px; border-right: 1px solid #E8E5DF; display: flex; flex-direction: column; flex-shrink: 0; background: #FAFAF8; }
+    .conv-header { padding: 16px 16px 12px; border-bottom: 1px solid #E8E5DF; flex-shrink: 0; }
+    .conv-search { width: 100%; background: #FFF; border: 1px solid #E8E5DF; border-radius: 7px; padding: 7px 10px 7px 32px; font-family: 'Ubuntu', sans-serif; font-size: 13px; color: #3A3530; outline: none; transition: border-color .15s; }
+    .conv-search:focus { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,.15); }
+    .conv-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .conv-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 2px; transition: background .12s; }
+    .conv-item:hover { background: #F3F2EE; }
+    .conv-item.active { background: #FBE9E3; }
+    .conv-title { font-size: 13px; font-weight: 500; color: #3A3530; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+    .conv-item.active .conv-title { color: #E07040; }
+    .conv-meta { font-size: 11px; color: #9A9189; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-date { font-size: 10px; color: #C0BBB4; text-align: right; margin-top: 2px; }
+
+    /* ── Chat area ── */
+    .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── Messages scroll ── */
+    .messages { flex: 1; overflow-y: auto; padding: 28px 0; }
+    .messages-inner { max-width: 740px; margin: 0 auto; padding: 0 28px; display: flex; flex-direction: column; gap: 24px; }
+
+    /* ── Message bubbles ── */
+    .msg-user { display: flex; justify-content: flex-end; }
+    .msg-user .bubble {
+      background: #F08353; color: #FFF; border-radius: 16px 16px 4px 16px;
+      padding: 13px 18px; font-size: 14px; line-height: 1.6; max-width: 520px;
+      box-shadow: 0 2px 8px rgba(240,131,83,.25);
+    }
+
+    .msg-ai { display: flex; gap: 12px; align-items: flex-start; }
+    .ai-avatar {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: linear-gradient(135deg, #F08353, #D2B06E);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .msg-ai .bubble {
+      background: #FFF; border: 1px solid #E8E5DF; border-radius: 4px 16px 16px 16px;
+      padding: 16px 20px; font-size: 14px; line-height: 1.7; color: #3A3530;
+      max-width: 680px; box-shadow: 0 1px 4px rgba(58,53,48,.05);
+      flex: 1;
+    }
+
+    /* ── Message internals ── */
+    .msg-ai .bubble h4 { font-size: 14px; font-weight: 600; color: #3A3530; margin: 16px 0 6px; }
+    .msg-ai .bubble h4:first-child { margin-top: 0; }
+    .msg-ai .bubble p { margin-bottom: 10px; }
+    .msg-ai .bubble p:last-child { margin-bottom: 0; }
+    .msg-ai .bubble ul { padding-left: 18px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+    .msg-ai .bubble li { font-size: 14px; line-height: 1.6; }
+    .msg-ai .bubble strong { font-weight: 600; color: #3A3530; }
+    .msg-ai .bubble .highlight { background: #FBE9E3; color: #E07040; padding: 1px 6px; border-radius: 4px; font-weight: 500; font-size: 13px; }
+    .msg-ai .bubble .code-inline { background: #F3F2EE; color: #6B635B; padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+
+    /* ── Inline data card inside bubble ── */
+    .data-card { background: #F7F5F2; border: 1px solid #E8E5DF; border-radius: 10px; padding: 16px; margin: 12px 0; }
+    .data-card-title { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: #9A9189; margin-bottom: 10px; }
+    .data-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #ECEAE5; font-size: 13px; }
+    .data-row:last-child { border-bottom: none; }
+    .data-label { color: #6B635B; }
+    .data-value { font-weight: 500; color: #3A3530; font-variant-numeric: tabular-nums; }
+    .data-value.pos { color: #7A9264; }
+    .data-value.neg { color: #C85A3E; }
+    .data-value.warn { color: #B8914E; }
+
+    /* ── Inline mini chart ── */
+    .chart-bubble { background: #FFF; border: 1px solid #E8E5DF; border-radius: 10px; padding: 16px; margin: 12px 0; }
+    .chart-bubble canvas { display: block; }
+
+    /* ── Source chips ── */
+    .source-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #F0EEE9; }
+    .source-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #9A9189; background: #F3F2EE; border-radius: 5px; padding: 3px 8px; cursor: pointer; transition: background .12s; }
+    .source-chip:hover { background: #ECEAE5; color: #6B635B; }
+
+    /* ── Action buttons below AI bubble ── */
+    .bubble-actions { display: flex; gap: 6px; margin-top: 8px; margin-left: 44px; }
+    .bubble-act-btn { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #C0BBB4; transition: all .12s; }
+    .bubble-act-btn:hover { background: #F3F2EE; color: #6B635B; }
+
+    /* ── Typing indicator ── */
+    .typing-indicator { display: flex; gap: 12px; align-items: center; }
+    .typing-dots { display: flex; gap: 4px; padding: 14px 18px; background: #FFF; border: 1px solid #E8E5DF; border-radius: 4px 16px 16px 16px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #D3D2CD; animation: bounce .9s infinite; }
+    .dot:nth-child(2) { animation-delay: .15s; }
+    .dot:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); background: #F08353; } }
+
+    /* ── Suggestion chips ── */
+    .suggestions { padding: 0 28px 16px; max-width: 740px; margin: 0 auto; width: 100%; }
+    .suggestions-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: #9A9189; margin-bottom: 8px; }
+    .suggestion-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .suggestion-chip {
+      background: #FFF; border: 1.2px solid #E8E5DF; border-radius: 99px;
+      padding: 7px 14px; font-size: 13px; color: #6B635B; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: all .15s; white-space: nowrap;
+    }
+    .suggestion-chip:hover { border-color: #F08353; background: #FBE9E3; color: #E07040; }
+
+    /* ── Input area ── */
+    .input-area { border-top: 1px solid #E8E5DF; padding: 14px 28px 20px; background: #FAFAF8; flex-shrink: 0; }
+    .input-wrap { max-width: 740px; margin: 0 auto; background: #FFF; border: 1.5px solid #E8E5DF; border-radius: 14px; display: flex; align-items: flex-end; gap: 10px; padding: 10px 12px; transition: border-color .15s, box-shadow .15s; }
+    .input-wrap:focus-within { border-color: #F08353; box-shadow: 0 0 0 3px rgba(240,131,83,.16); }
+    .chat-textarea { flex: 1; background: transparent; border: none; outline: none; font-family: 'Ubuntu', sans-serif; font-size: 14px; color: #3A3530; resize: none; line-height: 1.55; max-height: 120px; min-height: 22px; }
+    .chat-textarea::placeholder { color: #C0BBB4; }
+    .send-btn { width: 36px; height: 36px; border-radius: 9px; background: #F08353; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #FFF; flex-shrink: 0; transition: background .15s, transform .1s; }
+    .send-btn:hover { background: #F6A958; transform: scale(1.05); }
+    .send-btn:disabled { background: #E8E5DF; color: #9A9189; cursor: not-allowed; transform: none; }
+    .attach-btn { width: 32px; height: 32px; border-radius: 7px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #9A9189; transition: all .12s; }
+    .attach-btn:hover { background: #F3F2EE; color: #6B635B; }
+    .input-footer { max-width: 740px; margin: 6px auto 0; display: flex; justify-content: center; }
+    .input-footer-text { font-size: 11px; color: #C0BBB4; display: flex; align-items: center; gap: 4px; }
+
+    /* ── Beta badge ── */
+    .beta-badge { font-size: 9px; font-weight: 500; text-transform: uppercase; letter-spacing: .12em; padding: 2px 7px; border-radius: 99px; background: #F7F0DD; color: #B8914E; border: 1px solid #D2B06E; }
+
+    /* ── Context pills in topbar ── */
+    .ctx-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 99px; background: #F3F2EE; color: #6B635B; border: 1px solid #E8E5DF; }
+
+    /* ── Buttons ── */
+    .btn-ghost { background: transparent; color: #6B635B; font-family: 'Ubuntu', sans-serif; font-weight: 400; font-size: 13px; padding: 7px 11px; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .15s; }
+    .btn-ghost:hover { background: #F3F2EE; }
+    .btn-new { background: #F08353; color: #FFF; font-family: 'Ubuntu', sans-serif; font-weight: 500; font-size: 13px; padding: 8px 14px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: background .15s; white-space: nowrap; }
+    .btn-new:hover { background: #F6A958; }
+
+    /* Misc */
+    .avatar { width: 34px; height: 34px; border-radius: 99px; background: #F08353; color: #FFF; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+    .notif-btn { width: 36px; height: 36px; border-radius: 8px; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6B635B; transition: background .15s; position: relative; }
+    .notif-btn:hover { background: #F3F2EE; }
+    .notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 99px; background: #F08353; border: 2px solid #FAFAF8; }
+
+    /* inline progress bar */
+    .mini-prog { height: 5px; background: #F0EEE9; border-radius: 99px; overflow: hidden; margin-top: 4px; }
+    .mini-prog-fill { height: 100%; border-radius: 99px; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: #D3D2CD; border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/><circle cx="17" cy="11" r="3.5" fill="#F08353"/><path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/></svg>
+      <div><div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div><div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div></div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item active" href="#">
+        <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA
+        <span class="beta-badge" style="margin-left:auto;">beta</span>
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar">L</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:500;color:#3A3530;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Larissa Ferraz</div><div style="font-size:11px;color:#9A9189;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Corporis — Xanxerê/SC</div></div>
+    </div>
+  </aside>
+
+  <!-- ══ MAIN ══ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;">
+        <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#F08353,#D2B06E);display:flex;align-items:center;justify-content:center;">
+          <i data-lucide="sparkles" style="width:16px;height:16px;stroke-width:1.5;color:#FFF;"></i>
+        </div>
+        <div>
+          <div class="font-display" style="font-size:18px;color:#3A3530;line-height:1.1;">consultor ia</div>
+          <div style="font-size:11px;color:#9A9189;margin-top:1px;">Faz perguntas sobre seus dados financeiros em linguagem natural</div>
+        </div>
+        <span class="beta-badge" style="margin-left:4px;">beta</span>
+      </div>
+
+      <!-- Context pills -->
+      <div style="display:flex;gap:7px;align-items:center;">
+        <span style="font-size:11px;color:#9A9189;">Contexto ativo:</span>
+        <span class="ctx-pill"><i data-lucide="calendar" style="width:11px;height:11px;stroke-width:1.5;"></i>Nov 2025</span>
+        <span class="ctx-pill"><i data-lucide="wallet" style="width:11px;height:11px;stroke-width:1.5;"></i>Todas as contas</span>
+        <span class="ctx-pill"><i data-lucide="list-tree" style="width:11px;height:11px;stroke-width:1.5;"></i>Plano completo</span>
+      </div>
+
+      <button class="notif-btn"><i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i><span class="notif-dot"></span></button>
+      <div class="avatar">L</div>
+    </header>
+
+    <!-- Chat layout -->
+    <div class="chat-layout">
+
+      <!-- Conversation list -->
+      <div class="conv-panel">
+        <div class="conv-header">
+          <button class="btn-new" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="newConv()">
+            <i data-lucide="plus" style="width:14px;height:14px;stroke-width:2;"></i>
+            Nova conversa
+          </button>
+          <div style="position:relative;">
+            <i data-lucide="search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+            <input class="conv-search" type="text" placeholder="Buscar conversas…">
+          </div>
+        </div>
+
+        <div class="conv-list">
+          <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:#C0BBB4;padding:4px 8px 8px;">Hoje</div>
+
+          <!-- Active conversation -->
+          <div class="conv-item active">
+            <div class="conv-title">Análise de custos de RH</div>
+            <div class="conv-meta">Quanto gastei com salários em…</div>
+            <div class="conv-date">agora</div>
+          </div>
+
+          <div class="conv-item">
+            <div class="conv-title">Projeção dezembro</div>
+            <div class="conv-meta">Se eu aumentar o Pilates em 10%…</div>
+            <div class="conv-date">14h32</div>
+          </div>
+
+          <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:#C0BBB4;padding:12px 8px 8px;">Ontem</div>
+
+          <div class="conv-item">
+            <div class="conv-title">Comparativo de margens</div>
+            <div class="conv-meta">Qual serviço tem maior margem…</div>
+            <div class="conv-date">22/11</div>
+          </div>
+          <div class="conv-item">
+            <div class="conv-title">Simples Nacional nov/25</div>
+            <div class="conv-meta">Quanto vai ser meu DAS esse…</div>
+            <div class="conv-date">22/11</div>
+          </div>
+
+          <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:#C0BBB4;padding:12px 8px 8px;">Esta semana</div>
+
+          <div class="conv-item">
+            <div class="conv-title">Categorias sem meta</div>
+            <div class="conv-meta">Quais categorias ainda não têm…</div>
+            <div class="conv-date">21/11</div>
+          </div>
+          <div class="conv-item">
+            <div class="conv-title">Fatura Itaú Black</div>
+            <div class="conv-meta">Me explica o que foi gasto…</div>
+            <div class="conv-date">20/11</div>
+          </div>
+          <div class="conv-item">
+            <div class="conv-title">Orçamento 2026</div>
+            <div class="conv-meta">Quero planejar o ano que vem…</div>
+            <div class="conv-date">19/11</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat area -->
+      <div class="chat-area">
+
+        <!-- Messages -->
+        <div class="messages" id="messages">
+          <div class="messages-inner" id="messages-inner">
+
+            <!-- ── User message 1 ── -->
+            <div class="msg-user">
+              <div class="bubble">Quanto gastei com RH em novembro? E como isso se compara com outubro?</div>
+            </div>
+
+            <!-- ── AI message 1 ── -->
+            <div>
+              <div class="msg-ai">
+                <div class="ai-avatar">
+                  <i data-lucide="sparkles" style="width:15px;height:15px;stroke-width:1.5;color:#FFF;"></i>
+                </div>
+                <div class="bubble">
+                  <p>Em novembro de 2025 você gastou <strong class="highlight">R$ 13.340</strong> com RH — um aumento de <strong>+4,2%</strong> em relação a outubro (R$ 12.800).</p>
+
+                  <div class="data-card">
+                    <div class="data-card-title">Despesas com RH · 4.01 — Novembro 2025</div>
+                    <div class="data-row"><span class="data-label">4.01.01 Salários</span><span class="data-value">R$ 7.200,00</span></div>
+                    <div class="data-row"><span class="data-label">4.01.02 Transporte</span><span class="data-value">R$ 320,00</span></div>
+                    <div class="data-row"><span class="data-label">4.01.03 Alimentação</span><span class="data-value">R$ 480,00</span></div>
+                    <div class="data-row"><span class="data-label">4.01.06 FGTS</span><span class="data-value">R$ 576,00</span></div>
+                    <div class="data-row"><span class="data-label">4.01.07 INSS Patronal</span><span class="data-value">R$ 864,00</span></div>
+                    <div class="data-row"><span class="data-label">4.01.13 Pró-labore (Larissa)</span><span class="data-value">R$ 3.900,00</span></div>
+                    <div class="data-row" style="border-top:1px solid #E8E5DF;margin-top:4px;padding-top:10px;"><span class="data-label" style="font-weight:600;color:#3A3530;">Total RH nov/25</span><span class="data-value" style="font-size:15px;">R$ 13.340,00</span></div>
+                  </div>
+
+                  <h4>Comparativo out × nov</h4>
+                  <div class="chart-bubble">
+                    <div style="height:160px;"><canvas id="rh-chart"></canvas></div>
+                  </div>
+
+                  <p style="margin-top:8px;">O aumento foi causado principalmente pelo reajuste do pró-labore de R$ 3.600 → R$ 3.900 em novembro. Os demais itens se mantiveram estáveis.</p>
+
+                  <p>O RH representa <strong class="highlight">50,0%</strong> das suas despesas operacionais totais em novembro — dentro do intervalo saudável para clínicas deste porte (45–55%).</p>
+
+                  <div class="source-chips">
+                    <div class="source-chip"><i data-lucide="arrow-left-right" style="width:11px;height:11px;stroke-width:1.5;"></i>Ver 6 lançamentos de RH</div>
+                    <div class="source-chip"><i data-lucide="trending-up" style="width:11px;height:11px;stroke-width:1.5;"></i>DFC — grupo 4.01</div>
+                    <div class="source-chip"><i data-lucide="target" style="width:11px;height:11px;stroke-width:1.5;"></i>Orçado RH nov/25</div>
+                  </div>
+                </div>
+              </div>
+              <div class="bubble-actions">
+                <button class="bubble-act-btn" title="Copiar"><i data-lucide="copy" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Gostei"><i data-lucide="thumbs-up" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Não gostei"><i data-lucide="thumbs-down" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Regenerar"><i data-lucide="refresh-cw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+              </div>
+            </div>
+
+            <!-- ── User message 2 ── -->
+            <div class="msg-user">
+              <div class="bubble">E qual a porcentagem do faturamento que vai para RH? Isso é saudável?</div>
+            </div>
+
+            <!-- ── AI message 2 ── -->
+            <div>
+              <div class="msg-ai">
+                <div class="ai-avatar">
+                  <i data-lucide="sparkles" style="width:15px;height:15px;stroke-width:1.5;color:#FFF;"></i>
+                </div>
+                <div class="bubble">
+                  <p>Em novembro, o RH consumiu <strong class="highlight">38,5% da receita bruta</strong> (R$ 13.340 ÷ R$ 34.650). Esse índice caiu em relação a outubro, quando era 41,4%.</p>
+
+                  <div class="data-card">
+                    <div class="data-card-title">Evolução RH / Receita Bruta — 2025</div>
+                    <div class="data-row">
+                      <span class="data-label">Jun/25</span>
+                      <div style="flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+                        <span class="data-value warn">43,7%</span>
+                        <div class="mini-prog" style="width:80px;"><div class="mini-prog-fill" style="width:87%;background:#D2B06E;"></div></div>
+                      </div>
+                    </div>
+                    <div class="data-row">
+                      <span class="data-label">Jul/25</span>
+                      <div style="flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+                        <span class="data-value warn">41,0%</span>
+                        <div class="mini-prog" style="width:80px;"><div class="mini-prog-fill" style="width:82%;background:#D2B06E;"></div></div>
+                      </div>
+                    </div>
+                    <div class="data-row">
+                      <span class="data-label">Ago/25</span>
+                      <div style="flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+                        <span class="data-value warn">42,3%</span>
+                        <div class="mini-prog" style="width:80px;"><div class="mini-prog-fill" style="width:84%;background:#D2B06E;"></div></div>
+                      </div>
+                    </div>
+                    <div class="data-row">
+                      <span class="data-label">Set/25</span>
+                      <div style="flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+                        <span class="data-value warn">41,1%</span>
+                        <div class="mini-prog" style="width:80px;"><div class="mini-prog-fill" style="width:82%;background:#D2B06E;"></div></div>
+                      </div>
+                    </div>
+                    <div class="data-row">
+                      <span class="data-label">Out/25</span>
+                      <div style="flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+                        <span class="data-value warn">41,4%</span>
+                        <div class="mini-prog" style="width:80px;"><div class="mini-prog-fill" style="width:82%;background:#D2B06E;"></div></div>
+                      </div>
+                    </div>
+                    <div class="data-row" style="background:#EEF2E8;border-radius:6px;padding:7px 8px;">
+                      <span class="data-label" style="font-weight:600;">Nov/25</span>
+                      <div style="flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+                        <span class="data-value pos" style="font-size:15px;font-weight:600;">38,5%</span>
+                        <div class="mini-prog" style="width:80px;"><div class="mini-prog-fill" style="width:77%;background:#ACC095;"></div></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h4>É saudável?</h4>
+                  <p>Sim — e melhorou. O benchmark para clínicas de fisio e pilates de pequeno porte é <strong>35–45% da receita</strong>. Você estava no limite superior até outubro, mas a expansão da receita em novembro puxou esse índice para baixo sem cortar custo.</p>
+
+                  <p>💡 <strong>Atenção:</strong> Se a receita se mantiver em R$ 34–35k nos próximos meses e o pró-labore não aumentar, a tendência é chegar em <strong class="highlight">37–38%</strong> naturalmente — que é um nível muito confortável.</p>
+
+                  <div class="source-chips">
+                    <div class="source-chip"><i data-lucide="trending-up" style="width:11px;height:11px;stroke-width:1.5;"></i>DFC histórico</div>
+                    <div class="source-chip"><i data-lucide="line-chart" style="width:11px;height:11px;stroke-width:1.5;"></i>Projeção de Caixa</div>
+                  </div>
+                </div>
+              </div>
+              <div class="bubble-actions">
+                <button class="bubble-act-btn" title="Copiar"><i data-lucide="copy" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Gostei"><i data-lucide="thumbs-up" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Não gostei"><i data-lucide="thumbs-down" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Regenerar"><i data-lucide="refresh-cw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+              </div>
+            </div>
+
+            <!-- ── User message 3 ── -->
+            <div class="msg-user">
+              <div class="bubble">Se eu contratar mais uma fisioterapeuta em janeiro por R$ 3.200, como isso afeta minha projeção de caixa?</div>
+            </div>
+
+            <!-- ── AI message 3 (typing then shown) ── -->
+            <div id="ai-msg-3" style="display:none;">
+              <div class="msg-ai">
+                <div class="ai-avatar">
+                  <i data-lucide="sparkles" style="width:15px;height:15px;stroke-width:1.5;color:#FFF;"></i>
+                </div>
+                <div class="bubble">
+                  <p>Ótima pergunta — fiz a simulação para você. Com a contratação de uma fisioterapeuta por <strong>R$ 3.200 bruto</strong> em janeiro, os encargos estimados (INSS, FGTS, etc.) elevam o custo real para aproximadamente <strong class="highlight">R$ 4.160/mês</strong>.</p>
+
+                  <h4>Impacto no caixa — cenário simulado</h4>
+                  <div class="data-card">
+                    <div class="data-card-title">Comparativo: Sem × Com contratação (Jan–Mar/26)</div>
+                    <div class="data-row">
+                      <span class="data-label">Saldo projetado jan/26 (sem)</span>
+                      <span class="data-value pos">R$ 37.230</span>
+                    </div>
+                    <div class="data-row">
+                      <span class="data-label">Saldo projetado jan/26 (com)</span>
+                      <span class="data-value warn">R$ 33.070</span>
+                    </div>
+                    <div class="data-row">
+                      <span class="data-label">Diferença no caixa (jan)</span>
+                      <span class="data-value neg">−R$ 4.160</span>
+                    </div>
+                    <div class="data-row">
+                      <span class="data-label">Saldo projetado fev/26 (com)</span>
+                      <span class="data-value warn">R$ 37.082</span>
+                    </div>
+                    <div class="data-row">
+                      <span class="data-label">Saldo projetado mar/26 (com)</span>
+                      <span class="data-value pos">R$ 41.002</span>
+                    </div>
+                  </div>
+
+                  <p>O caixa se mantém positivo em todos os meses — o saldo mínimo seria <strong>R$ 33k</strong> em janeiro, ainda bem acima do colchão mínimo recomendado (R$ 15k).</p>
+
+                  <p>💡 <strong>Ponto de atenção:</strong> Para o custo se pagar, você precisaria de um aumento de receita de Fisioterapia de <strong class="highlight">+R$ 4.160/mês</strong>. Se essa profissional agregar em média R$ 200/sessão e trabalhar 5 dias por semana, seriam necessárias apenas <strong>~21 sessões extras/mês</strong> para cobrir o custo — o que parece factível.</p>
+
+                  <div class="source-chips">
+                    <div class="source-chip"><i data-lucide="line-chart" style="width:11px;height:11px;stroke-width:1.5;"></i>Ver simulação na Projeção</div>
+                    <div class="source-chip"><i data-lucide="target" style="width:11px;height:11px;stroke-width:1.5;"></i>Ajustar orçamento 2026</div>
+                  </div>
+                </div>
+              </div>
+              <div class="bubble-actions">
+                <button class="bubble-act-btn" title="Copiar"><i data-lucide="copy" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Gostei"><i data-lucide="thumbs-up" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Não gostei"><i data-lucide="thumbs-down" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                <button class="bubble-act-btn" title="Regenerar"><i data-lucide="refresh-cw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+              </div>
+            </div>
+
+            <!-- typing indicator (shown then replaced) -->
+            <div class="msg-ai" id="typing">
+              <div class="ai-avatar">
+                <i data-lucide="sparkles" style="width:15px;height:15px;stroke-width:1.5;color:#FFF;"></i>
+              </div>
+              <div class="typing-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="suggestions" id="suggestions">
+          <div class="suggestions-label">Perguntas sugeridas</div>
+          <div class="suggestion-chips">
+            <div class="suggestion-chip" onclick="sendSuggestion(this)">
+              <i data-lucide="trending-up" style="width:13px;height:13px;stroke-width:1.5;color:#9A9189;"></i>
+              Qual serviço tem maior margem de lucro?
+            </div>
+            <div class="suggestion-chip" onclick="sendSuggestion(this)">
+              <i data-lucide="calendar" style="width:13px;height:13px;stroke-width:1.5;color:#9A9189;"></i>
+              Como está meu resultado acumulado no ano?
+            </div>
+            <div class="suggestion-chip" onclick="sendSuggestion(this)">
+              <i data-lucide="alert-circle" style="width:13px;height:13px;stroke-width:1.5;color:#9A9189;"></i>
+              Quais despesas aumentaram mais em novembro?
+            </div>
+            <div class="suggestion-chip" onclick="sendSuggestion(this)">
+              <i data-lucide="credit-card" style="width:13px;height:13px;stroke-width:1.5;color:#9A9189;"></i>
+              Quando devo pagar a fatura do cartão Itaú?
+            </div>
+          </div>
+        </div>
+
+        <!-- Input area -->
+        <div class="input-area">
+          <div class="input-wrap">
+            <button class="attach-btn" title="Anexar arquivo ou contexto">
+              <i data-lucide="paperclip" style="width:16px;height:16px;stroke-width:1.5;"></i>
+            </button>
+            <textarea
+              class="chat-textarea"
+              id="chat-input"
+              placeholder="Pergunte sobre seus lançamentos, fluxo de caixa, margens…"
+              rows="1"
+              onkeydown="handleKey(event)"
+              oninput="autoResize(this)"
+            ></textarea>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()">
+              <i data-lucide="arrow-up" style="width:16px;height:16px;stroke-width:2;"></i>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="input-footer-text">
+              <i data-lucide="shield" style="width:11px;height:11px;stroke-width:1.5;"></i>
+              Seus dados financeiros não saem da Corporis · IA pode cometer erros — revise sempre
+            </span>
+          </div>
+        </div>
+
+      </div><!-- /chat-area -->
+    </div><!-- /chat-layout -->
+  </div><!-- /main -->
+
+<script>
+  lucide.createIcons();
+
+  // ── Render RH chart ─────────────────────────────────────────────────────────
+  const rhCtx = document.getElementById('rh-chart').getContext('2d');
+  new Chart(rhCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Jun/25','Jul/25','Ago/25','Set/25','Out/25','Nov/25'],
+      datasets: [
+        {
+          label: 'RH',
+          data: [12400,12800,12600,13200,12800,13340],
+          backgroundColor: ['rgba(210,176,110,.5)','rgba(210,176,110,.5)','rgba(210,176,110,.5)','rgba(210,176,110,.5)','rgba(210,176,110,.5)','rgba(172,192,149,.8)'],
+          borderRadius: 4, borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor:'#3A3530', titleColor:'#E8E5DF', bodyColor:'#FFF', padding:8,
+          callbacks:{ label: c=>`R$ ${c.parsed.y?.toLocaleString('pt-BR')}` }
+        }
+      },
+      scales: {
+        x: { grid:{display:false}, border:{display:false}, ticks:{color:'#9A9189',font:{family:'Ubuntu',size:10}} },
+        y: { grid:{color:'#F0EEE9'}, border:{display:false}, ticks:{color:'#9A9189',font:{family:'Ubuntu',size:10},callback:v=>`R$ ${(v/1000).toFixed(0)}k`} }
+      }
+    }
+  });
+
+  // ── Typing then reveal message 3 ────────────────────────────────────────────
+  setTimeout(() => {
+    document.getElementById('typing').style.display = 'none';
+    document.getElementById('ai-msg-3').style.display = 'block';
+    lucide.createIcons();
+    scrollBottom();
+  }, 2200);
+
+  // ── Send message ────────────────────────────────────────────────────────────
+  function sendMessage() {
+    const inp = document.getElementById('chat-input');
+    const text = inp.value.trim();
+    if (!text) return;
+
+    // Add user bubble
+    appendUserMsg(text);
+    inp.value = '';
+    autoResize(inp);
+
+    // Hide suggestions
+    document.getElementById('suggestions').style.display = 'none';
+
+    // Show typing
+    appendTyping();
+
+    // Simulate AI response
+    setTimeout(() => {
+      removeTyping();
+      appendAIMsg('Entendi sua pergunta sobre <strong>"' + escHtml(text) + '"</strong>. Vou analisar seus dados financeiros para te responder com precisão. Esta é uma demonstração — a IA real consultaria seus lançamentos, DFC e projeções em tempo real.', text);
+      scrollBottom();
+      lucide.createIcons();
+    }, 1600);
+  }
+
+  function sendSuggestion(el) {
+    document.getElementById('chat-input').value = el.innerText.trim();
+    sendMessage();
+  }
+
+  function appendUserMsg(text) {
+    const div = document.createElement('div');
+    div.className = 'msg-user';
+    div.innerHTML = `<div class="bubble">${escHtml(text)}</div>`;
+    document.getElementById('messages-inner').appendChild(div);
+    scrollBottom();
+  }
+
+  let typingEl = null;
+  function appendTyping() {
+    typingEl = document.createElement('div');
+    typingEl.className = 'msg-ai';
+    typingEl.innerHTML = `
+      <div class="ai-avatar"><i data-lucide="sparkles" style="width:15px;height:15px;stroke-width:1.5;color:#FFF;"></i></div>
+      <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    `;
+    document.getElementById('messages-inner').appendChild(typingEl);
+    lucide.createIcons();
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    if (typingEl) { typingEl.remove(); typingEl = null; }
+  }
+
+  function appendAIMsg(html, question) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="msg-ai">
+        <div class="ai-avatar"><i data-lucide="sparkles" style="width:15px;height:15px;stroke-width:1.5;color:#FFF;"></i></div>
+        <div class="bubble"><p>${html}</p>
+          <div class="source-chips" style="margin-top:12px;">
+            <div class="source-chip"><i data-lucide="arrow-left-right" style="width:11px;height:11px;stroke-width:1.5;"></i>Ver lançamentos relacionados</div>
+            <div class="source-chip"><i data-lucide="trending-up" style="width:11px;height:11px;stroke-width:1.5;"></i>Abrir DFC</div>
+          </div>
+        </div>
+      </div>
+      <div class="bubble-actions">
+        <button class="bubble-act-btn" title="Copiar"><i data-lucide="copy" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+        <button class="bubble-act-btn" title="Gostei"><i data-lucide="thumbs-up" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+        <button class="bubble-act-btn" title="Não gostei"><i data-lucide="thumbs-down" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+        <button class="bubble-act-btn" title="Regenerar"><i data-lucide="refresh-cw" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+      </div>
+    `;
+    document.getElementById('messages-inner').appendChild(wrap);
+  }
+
+  // ── Auto-resize textarea ─────────────────────────────────────────────────────
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function scrollBottom() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  function newConv() {
+    document.getElementById('messages-inner').innerHTML = `
+      <div style="text-align:center;padding:40px 20px;">
+        <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#F08353,#D2B06E);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+          <i data-lucide="sparkles" style="width:28px;height:28px;stroke-width:1.5;color:#FFF;"></i>
+        </div>
+        <div class="font-display-italic" style="font-size:24px;color:#3A3530;margin-bottom:8px;">como posso ajudar?</div>
+        <p style="font-size:14px;color:#9A9189;line-height:1.6;max-width:380px;margin:0 auto;">Faça perguntas em português sobre seus dados financeiros — lançamentos, margens, projeções, alertas e muito mais.</p>
+      </div>
+    `;
+    document.getElementById('suggestions').style.display = 'block';
+    lucide.createIcons();
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Initial scroll
+  scrollBottom();
+</script>
+</body>
+</html>

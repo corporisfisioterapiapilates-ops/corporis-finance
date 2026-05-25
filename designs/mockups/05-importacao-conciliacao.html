@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conciliação — Fatura Itaú Black — Corporis Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Ubuntu', sans-serif; background: #FAFAF8; color: #3A3530; margin: 0; }
+    .font-display { font-family: 'Fraunces', serif; font-weight: 400; text-transform: lowercase; }
+    .tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum","lnum"; }
+
+    /* Sidebar */
+    .sidebar { width: 240px; min-height: 100vh; background: #FAFAF8; border-right: 1px solid #E8E5DF; flex-shrink: 0; display: flex; flex-direction: column; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #6B635B; text-decoration: none; margin: 1px 8px; transition: background .15s; }
+    .nav-item:hover { background: #F3F2EE; }
+    .nav-item.active { background: #FBE9E3; color: #F08353; font-weight: 500; position: relative; }
+    .nav-item.active::before { content:''; position:absolute; left:-8px; top:50%; transform:translateY(-50%); width:3px; height:20px; background:#F08353; border-radius:0 3px 3px 0; }
+    .nav-section { font-size: 11px; font-weight: 500; color: #9A9189; letter-spacing: .1em; text-transform: uppercase; padding: 16px 20px 4px; }
+
+    /* Topbar */
+    .topbar { height: 64px; background: #FAFAF8; border-bottom: 1px solid #E8E5DF; display: flex; align-items: center; padding: 0 32px; gap: 16px; flex-shrink: 0; }
+
+    /* Buttons */
+    .btn-primary { background:#F08353; color:#FFF; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:10px 18px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background .15s; white-space:nowrap; }
+    .btn-primary:hover { background:#F6A958; }
+    .btn-secondary { background:transparent; color:#F08353; font-family:'Ubuntu',sans-serif; font-weight:500; font-size:14px; padding:10px 18px; border-radius:8px; border:1.2px solid #F08353; cursor:pointer; display:inline-flex; align-items:center; gap:7px; transition:background .15s; white-space:nowrap; }
+    .btn-secondary:hover { background:#FBE9E3; }
+    .btn-ghost { background:transparent; color:#6B635B; font-family:'Ubuntu',sans-serif; font-weight:400; font-size:13px; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background .15s; }
+    .btn-ghost:hover { background:#F3F2EE; }
+
+    /* Avatar / notif */
+    .avatar { width:36px; height:36px; border-radius:99px; background:#F08353; color:#FFF; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:500; flex-shrink:0; }
+    .notif-btn { width:36px; height:36px; border-radius:8px; background:transparent; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#6B635B; transition:background .15s; position:relative; }
+    .notif-btn:hover { background:#F3F2EE; }
+    .notif-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:99px; background:#F08353; border:2px solid #FAFAF8; }
+
+    /* Badge */
+    .badge { display:inline-flex; align-items:center; font-size:10px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; padding:3px 8px; border-radius:4px; white-space:nowrap; gap:4px; }
+    .badge-success  { background:#EEF2E8; color:#7A9264; }
+    .badge-danger   { background:#FBE9E3; color:#C85A3E; }
+    .badge-warning  { background:#F7F0DD; color:#B8914E; }
+    .badge-info     { background:#F0EEE9; color:#6B635B; }
+    .badge-orange   { background:#FBE9E3; color:#E07040; }
+    .badge-beige    { background:#F0E8D0; color:#9A7240; }
+
+    /* Confiança badges */
+    .conf-alta  { background:#EEF2E8; color:#7A9264; border:1px solid #C4DDB4; }
+    .conf-media { background:#F7F0DD; color:#B8914E; border:1px solid #D2B06E; }
+    .conf-baixa { background:#FBE9E3; color:#C85A3E; border:1px solid #E8A898; }
+
+    /* Main table */
+    .conc-table { width:100%; border-collapse:separate; border-spacing:0; }
+    .conc-table thead th {
+      font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.08em;
+      color:#9A9189; padding:10px 14px; background:#F3F2EE; border-bottom:1px solid #E8E5DF;
+      text-align:left; white-space:nowrap; position:sticky; top:0; z-index:2;
+    }
+    .conc-table thead th:first-child { border-radius:8px 0 0 0; padding-left:18px; }
+    .conc-table thead th:last-child  { border-radius:0 8px 0 0; }
+    .conc-table tbody tr { border-bottom:1px solid #E8E5DF; transition:background .12s; }
+    .conc-table tbody tr:hover:not(.row-ignored):not(.row-duplicate) { background:#FAFAF8; }
+    .conc-table tbody td { padding:12px 14px; font-size:13px; color:#3A3530; vertical-align:middle; }
+    .conc-table tbody td:first-child { padding-left:18px; }
+    .conc-table tbody tr:last-child td { border-bottom:none; }
+
+    /* Row states */
+    .row-ignored   { background:#F5F4F1; opacity:.55; }
+    .row-duplicate { background:#FFF8E8; }
+    .row-editing   { background:#FBF7F4; outline:2px solid #F08353; outline-offset:-2px; border-radius:4px; }
+
+    /* Checkbox */
+    .cb { width:16px; height:16px; border-radius:4px; border:1.5px solid #D3D2CD; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .12s; }
+    .cb.checked { background:#F08353; border-color:#F08353; }
+    .cb:hover:not(.checked) { border-color:#F08353; }
+
+    /* Category inline select */
+    .cat-select {
+      background:#FFF; border:1px solid #E8E5DF; border-radius:6px;
+      padding:5px 28px 5px 9px; font-family:'Ubuntu',sans-serif; font-size:12px;
+      color:#3A3530; outline:none; appearance:none; cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239A9189' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 8px center;
+      transition:border-color .15s; max-width:210px;
+    }
+    .cat-select:focus { border-color:#F08353; box-shadow:0 0 0 3px rgba(240,131,83,.15); }
+
+    /* Action icon btn */
+    .act-btn { width:28px; height:28px; border-radius:6px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#9A9189; transition:all .12s; flex-shrink:0; }
+    .act-btn:hover { background:#F3F2EE; color:#6B635B; }
+    .act-btn.danger:hover { background:#FBE9E3; color:#C85A3E; }
+
+    /* Sticky confirm bar */
+    .confirm-bar {
+      position:sticky; bottom:0; background:#FFF; border-top:1px solid #E8E5DF;
+      padding:14px 24px; display:flex; align-items:center; gap:16px;
+      box-shadow:0 -4px 16px rgba(58,53,48,.07); z-index:10;
+    }
+
+    /* Fatura header card */
+    .fatura-header {
+      background:linear-gradient(135deg,#3A3530 0%,#5A5048 100%);
+      border-radius:14px; padding:24px 28px; color:#FFF;
+      display:flex; align-items:center; gap:28px;
+      margin-bottom:20px; position:relative; overflow:hidden;
+    }
+    .fatura-header::before {
+      content:''; position:absolute; right:-40px; top:-40px;
+      width:200px; height:200px; border-radius:50%;
+      background:rgba(240,131,83,.12); pointer-events:none;
+    }
+    .fatura-header::after {
+      content:''; position:absolute; right:40px; bottom:-60px;
+      width:140px; height:140px; border-radius:50%;
+      background:rgba(210,176,110,.08); pointer-events:none;
+    }
+
+    /* Progress mini */
+    .prog-wrap { height:6px; background:rgba(255,255,255,.15); border-radius:99px; overflow:hidden; }
+    .prog-fill  { height:100%; border-radius:99px; background:linear-gradient(90deg,#F08353,#F6A958); }
+
+    /* Duplicate alert */
+    .dup-alert { display:flex; align-items:center; gap:8px; background:#FFF8E8; border:1px solid #D2B06E; border-radius:6px; padding:6px 10px; font-size:11px; color:#B8914E; }
+
+    /* Efeito caixa tag */
+    .caixa-tag { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:500; padding:2px 7px; border-radius:99px; background:#F0EEE9; color:#6B635B; border:1px solid #D3D2CD; white-space:nowrap; }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-thumb { background:#D3D2CD; border-radius:99px; }
+  </style>
+</head>
+<body>
+<div style="display:flex;min-height:100vh;">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div style="padding:24px 20px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #E8E5DF;">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <circle cx="17" cy="17" r="15" fill="#EAD7AC" opacity=".9"/>
+        <circle cx="17" cy="11" r="3.5" fill="#F08353"/>
+        <path d="M 8 22 A 12 12 0 0 1 26 22" stroke="#F08353" stroke-width="1.5" stroke-dasharray="3 2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="font-display" style="font-size:20px;color:#F08353;line-height:1;">corporis</div>
+        <div style="font-size:9px;font-weight:500;letter-spacing:.15em;color:#D2B06E;text-transform:uppercase;line-height:1;margin-top:2px;">FINANCE</div>
+      </div>
+    </div>
+    <nav style="flex:1;padding:12px 0;overflow-y:auto;">
+      <div class="nav-section">Geral</div>
+      <a class="nav-item" href="#"><i data-lucide="layout-dashboard" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Dashboard</a>
+      <a class="nav-item" href="#"><i data-lucide="arrow-left-right" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Lançamentos</a>
+      <a class="nav-item" href="#"><i data-lucide="wallet" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Contas e Cartões</a>
+      <div class="nav-section" style="margin-top:8px;">Análise</div>
+      <a class="nav-item" href="#"><i data-lucide="trending-up" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>DFC</a>
+      <a class="nav-item" href="#"><i data-lucide="target" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Orçado x Realizado</a>
+      <a class="nav-item" href="#"><i data-lucide="line-chart" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Projeção de Caixa</a>
+      <div class="nav-section" style="margin-top:8px;">Assistente</div>
+      <a class="nav-item" href="#">
+        <i data-lucide="sparkles" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Consultor IA
+        <span style="margin-left:auto;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;padding:2px 6px;border-radius:4px;background:#F7F0DD;color:#B8914E;">beta</span>
+      </a>
+      <div class="nav-section" style="margin-top:8px;">Configurações</div>
+      <a class="nav-item" href="#"><i data-lucide="list-tree" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Plano de Contas</a>
+      <a class="nav-item active" href="#"><i data-lucide="upload" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Importações</a>
+      <a class="nav-item" href="#"><i data-lucide="settings" style="width:18px;height:18px;stroke-width:1.5;flex-shrink:0;"></i>Configurações</a>
+    </nav>
+    <div style="padding:16px 12px;border-top:1px solid #E8E5DF;display:flex;align-items:center;gap:10px;">
+      <div class="avatar" style="width:34px;height:34px;font-size:13px;">L</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#3A3530;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Larissa Ferraz</div>
+        <div style="font-size:11px;color:#9A9189;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Corporis — Xanxerê/SC</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden;">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <!-- Breadcrumb -->
+      <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        <a href="#" style="font-size:13px;color:#9A9189;text-decoration:none;display:flex;align-items:center;gap:5px;" onclick="history.back()">
+          <i data-lucide="chevron-left" style="width:15px;height:15px;stroke-width:2;"></i>
+          Importações
+        </a>
+        <i data-lucide="chevron-right" style="width:13px;height:13px;stroke-width:1.5;color:#C0BBB4;"></i>
+        <span class="font-display" style="font-size:15px;color:#3A3530;">conciliação</span>
+        <span style="font-size:13px;color:#9A9189;">· Fatura Itaú Black — nov 2025</span>
+      </div>
+      <button class="btn-ghost" style="border:1px solid #E8E5DF;font-size:13px;">
+        <i data-lucide="save" style="width:14px;height:14px;stroke-width:1.5;"></i>
+        Salvar rascunho
+      </button>
+      <button class="notif-btn">
+        <i data-lucide="bell" style="width:18px;height:18px;stroke-width:1.5;"></i>
+        <span class="notif-dot"></span>
+      </button>
+      <div class="avatar">L</div>
+    </header>
+
+    <!-- PAGE CONTENT (scrollable) -->
+    <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
+      <div style="padding:28px 28px 0;">
+
+        <!-- Fatura header card -->
+        <div class="fatura-header">
+          <!-- Cartão icon -->
+          <div style="width:56px;height:56px;border-radius:14px;background:rgba(240,131,83,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i data-lucide="credit-card" style="width:28px;height:28px;stroke-width:1.5;color:#F6A958;"></i>
+          </div>
+
+          <!-- Main info -->
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5);margin-bottom:4px;">Fatura importada</div>
+            <div class="font-display" style="font-size:22px;color:#FFF;line-height:1.1;margin-bottom:8px;">cartão itaú black</div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;">
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);margin-bottom:2px;">Fechamento</div>
+                <div style="font-size:14px;font-weight:500;color:#FFF;">03/11/2025</div>
+              </div>
+              <div style="width:1px;background:rgba(255,255,255,.12);"></div>
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);margin-bottom:2px;">Vencimento</div>
+                <div style="font-size:14px;font-weight:500;color:#F6A958;">10/12/2025</div>
+              </div>
+              <div style="width:1px;background:rgba(255,255,255,.12);"></div>
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);margin-bottom:2px;">Total da fatura</div>
+                <div class="tnum" style="font-size:14px;font-weight:500;color:#FFF;">R$ 3.480,20</div>
+              </div>
+              <div style="width:1px;background:rgba(255,255,255,.12);"></div>
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);margin-bottom:2px;">Efeito caixa</div>
+                <div style="font-size:14px;font-weight:500;color:#ACC095;display:flex;align-items:center;gap:5px;">
+                  10/12/2025
+                  <span style="font-size:10px;background:rgba(172,192,149,.2);border:1px solid rgba(172,192,149,.4);border-radius:4px;padding:1px 6px;color:#ACC095;">Itaú PJ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div style="flex-shrink:0;min-width:180px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:12px;color:rgba(255,255,255,.6);">Categorização</span>
+              <span style="font-size:12px;font-weight:500;color:#F6A958;" id="pct-label">26 / 32</span>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-fill" id="main-prog" style="width:81%;"></div>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px;">
+                <span style="width:7px;height:7px;border-radius:99px;background:#ACC095;display:inline-block;"></span>26 categorizadas
+              </span>
+              <span style="font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px;">
+                <span style="width:7px;height:7px;border-radius:99px;background:#F7F0DD;display:inline-block;"></span>4 pendentes
+              </span>
+              <span style="font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px;">
+                <span style="width:7px;height:7px;border-radius:99px;background:rgba(255,255,255,.25);display:inline-block;"></span>2 ignoradas
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info bar: efeito caixa -->
+        <div style="display:flex;align-items:center;gap:10px;background:#F0EEE9;border:1px solid #D3D2CD;border-radius:8px;padding:10px 16px;margin-bottom:20px;">
+          <i data-lucide="info" style="width:15px;height:15px;stroke-width:1.5;color:#6B635B;flex-shrink:0;"></i>
+          <p style="margin:0;font-size:13px;color:#6B635B;line-height:1.5;">
+            Cada compra será registrada com a <strong>data da compra</strong> para fins contábeis, mas o <strong>efeito no caixa</strong> acontecerá em <strong>10/12/2025</strong>, quando a fatura for paga pela conta Itaú PJ. Um lançamento único de saída será gerado nessa data.
+          </p>
+          <button class="btn-ghost" style="font-size:12px;flex-shrink:0;padding:5px 10px;border:1px solid #D3D2CD;">Entendi</button>
+        </div>
+
+        <!-- Filters + actions bar -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <div style="display:flex;background:#F3F2EE;border-radius:8px;padding:3px;gap:1px;">
+            <button onclick="filterRows('all',this)" style="padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'Ubuntu',sans-serif;font-size:12px;font-weight:500;background:#FFF;color:#3A3530;box-shadow:0 1px 2px rgba(58,53,48,.06);">Todas (32)</button>
+            <button onclick="filterRows('pendente',this)" style="padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'Ubuntu',sans-serif;font-size:12px;color:#9A9189;background:transparent;">Pendentes (4)</button>
+            <button onclick="filterRows('ok',this)" style="padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'Ubuntu',sans-serif;font-size:12px;color:#9A9189;background:transparent;">Categorizadas (26)</button>
+            <button onclick="filterRows('ignore',this)" style="padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'Ubuntu',sans-serif;font-size:12px;color:#9A9189;background:transparent;">Ignoradas (2)</button>
+          </div>
+
+          <!-- Busca -->
+          <div style="position:relative;flex:1;max-width:240px;">
+            <i data-lucide="search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke-width:1.5;color:#9A9189;pointer-events:none;"></i>
+            <input style="width:100%;background:#FFF;border:1px solid #E8E5DF;border-radius:7px;padding:7px 10px 7px 30px;font-family:'Ubuntu',sans-serif;font-size:13px;color:#3A3530;outline:none;" placeholder="Filtrar transações…">
+          </div>
+
+          <div style="margin-left:auto;display:flex;gap:8px;">
+            <!-- Selecionar todos -->
+            <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;" onclick="selectAll()">
+              <i data-lucide="check-square" style="width:13px;height:13px;stroke-width:1.5;"></i>
+              Selecionar todas
+            </button>
+            <!-- Categorizar em lote -->
+            <button class="btn-ghost" style="font-size:12px;border:1px solid #E8E5DF;" id="batch-cat-btn" disabled>
+              <i data-lucide="tag" style="width:13px;height:13px;stroke-width:1.5;"></i>
+              Categorizar em lote
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div style="padding:0 28px;flex:1;">
+        <div style="background:#FFF;border:1px solid #E8E5DF;border-radius:12px;box-shadow:0 1px 2px rgba(58,53,48,.04);overflow:hidden;">
+          <table class="conc-table">
+            <thead>
+              <tr>
+                <th style="width:36px;">
+                  <div class="cb" id="cb-all" onclick="toggleAll(this)" style="margin:0 auto;"></div>
+                </th>
+                <th style="width:100px;">Data compra</th>
+                <th>Descrição original</th>
+                <th style="width:220px;">Categoria sugerida</th>
+                <th style="width:110px;">Confiança IA</th>
+                <th style="width:110px;text-align:right;">Valor</th>
+                <th style="width:90px;text-align:center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="conc-tbody">
+
+              <!-- ── DUPLICATA ── -->
+              <tr class="row-duplicate" id="row-dup">
+                <td><div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div></td>
+                <td style="font-size:12px;color:#9A9189;">03/10/2025</td>
+                <td>
+                  <div>
+                    <div style="font-size:13px;font-weight:500;color:#3A3530;margin-bottom:4px;">POSTO SHELL XANXERE</div>
+                    <div class="dup-alert">
+                      <i data-lucide="alert-triangle" style="width:12px;height:12px;stroke-width:2;flex-shrink:0;"></i>
+                      Possível duplicata — lançamento similar em 03/10 via extrato Itaú (R$ 180,00)
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <select class="cat-select">
+                    <option selected>4.03.06 Combustível</option>
+                    <option>4.02.99 Outras despesas adm.</option>
+                    <option>3.99 Outros custos</option>
+                  </select>
+                </td>
+                <td><span class="badge conf-alta"><i data-lucide="zap" style="width:10px;height:10px;stroke-width:2;"></i>Alta</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 180,00</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="act-btn" title="Manter mesmo assim" onclick="resolveRow('row-dup','keep')"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button>
+                    <button class="act-btn danger" title="Ignorar" onclick="resolveRow('row-dup','ignore')"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── CONFIANÇA BAIXA — editando ── -->
+              <tr class="row-editing" id="row-edit">
+                <td><div class="cb checked" onclick="toggleCb(this)" style="margin:0 auto;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></td>
+                <td style="font-size:12px;color:#9A9189;">28/10/2025</td>
+                <td>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;margin-bottom:2px;">IFOOD*RESTAURANTE</div>
+                  <div style="font-size:11px;color:#9A9189;">Editando categoria</div>
+                </td>
+                <td>
+                  <select class="cat-select" style="border-color:#F08353;box-shadow:0 0 0 2px rgba(240,131,83,.15);" onchange="updateRowConf(this)">
+                    <option>4.02.16 Mercado</option>
+                    <option selected>4.02.99 Outras despesas adm.</option>
+                    <option>4.01.03 Alimentação</option>
+                    <option>4.03.06 Combustível</option>
+                  </select>
+                  <div style="margin-top:5px;font-size:11px;color:#9A9189;display:flex;align-items:center;gap:4px;">
+                    <i data-lucide="sparkles" style="width:11px;height:11px;stroke-width:1.5;color:#F08353;"></i>
+                    IA sugeriu: 4.01.03 Alimentação
+                  </div>
+                </td>
+                <td><span class="badge conf-baixa"><i data-lucide="help-circle" style="width:10px;height:10px;stroke-width:2;"></i>Baixa</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 54,90</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="act-btn" title="Confirmar" onclick="confirmRow('row-edit')"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button>
+                    <button class="act-btn danger" title="Ignorar" onclick="ignoreRow('row-edit')"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── CONFIANÇA ALTA ── -->
+              <tr>
+                <td><div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div></td>
+                <td style="font-size:12px;color:#9A9189;">01/11/2025</td>
+                <td>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">AMAZON PRIME*BR</div>
+                  <div style="margin-top:3px;" ><span class="caixa-tag"><i data-lucide="calendar-clock" style="width:10px;height:10px;stroke-width:1.5;"></i>caixa: 10/12</span></div>
+                </td>
+                <td>
+                  <select class="cat-select">
+                    <option selected>4.02.07 Sistemas</option>
+                    <option>4.02.99 Outras despesas adm.</option>
+                  </select>
+                </td>
+                <td><span class="badge conf-alta"><i data-lucide="zap" style="width:10px;height:10px;stroke-width:2;"></i>Alta</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 21,90</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="act-btn" onclick="confirmRow(this.closest('tr'))"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button>
+                    <button class="act-btn danger" onclick="ignoreRow(this.closest('tr'))"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── CONFIANÇA ALTA ── -->
+              <tr>
+                <td><div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div></td>
+                <td style="font-size:12px;color:#9A9189;">02/11/2025</td>
+                <td>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">CLINICA SORRISO ODONTO</div>
+                  <div style="margin-top:3px;"><span class="caixa-tag"><i data-lucide="calendar-clock" style="width:10px;height:10px;stroke-width:1.5;"></i>caixa: 10/12</span></div>
+                </td>
+                <td>
+                  <select class="cat-select">
+                    <option selected>6.02 Despesas Não Operacionais</option>
+                    <option>4.02.99 Outras despesas adm.</option>
+                  </select>
+                </td>
+                <td><span class="badge conf-media"><i data-lucide="minus" style="width:10px;height:10px;stroke-width:2;"></i>Média</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 320,00</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="act-btn" onclick="confirmRow(this.closest('tr'))"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button>
+                    <button class="act-btn danger" onclick="ignoreRow(this.closest('tr'))"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── JÁ CONFIRMADA ── -->
+              <tr style="background:#FAFEFA;">
+                <td><div class="cb checked" onclick="toggleCb(this)" style="margin:0 auto;background:#ACC095;border-color:#ACC095;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></td>
+                <td style="font-size:12px;color:#9A9189;">04/11/2025</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="font-size:13px;font-weight:500;color:#3A3530;">LAVANDERIASTATUS LTDA</div>
+                    <span style="font-size:10px;font-weight:500;color:#7A9264;background:#EEF2E8;border-radius:4px;padding:2px 6px;display:flex;align-items:center;gap:3px;"><i data-lucide="check" style="width:10px;height:10px;stroke-width:2.5;"></i>Confirmada</span>
+                  </div>
+                  <div style="margin-top:3px;"><span class="caixa-tag"><i data-lucide="calendar-clock" style="width:10px;height:10px;stroke-width:1.5;"></i>caixa: 10/12</span></div>
+                </td>
+                <td>
+                  <select class="cat-select" style="background:#F7FAF5;border-color:#C4DDB4;">
+                    <option selected>3.02 Lavanderia</option>
+                  </select>
+                </td>
+                <td><span class="badge conf-alta"><i data-lucide="zap" style="width:10px;height:10px;stroke-width:2;"></i>Alta</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 280,00</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;">
+                    <button class="act-btn" title="Desfazer confirmação" onclick="unconfirmRow(this.closest('tr'))"><i data-lucide="rotate-ccw" style="width:14px;height:14px;stroke-width:1.5;color:#9A9189;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── CONFIANÇA ALTA ── -->
+              <tr>
+                <td><div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div></td>
+                <td style="font-size:12px;color:#9A9189;">05/11/2025</td>
+                <td>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">SPOTIFY BRAZIL</div>
+                  <div style="margin-top:3px;"><span class="caixa-tag"><i data-lucide="calendar-clock" style="width:10px;height:10px;stroke-width:1.5;"></i>caixa: 10/12</span></div>
+                </td>
+                <td>
+                  <select class="cat-select">
+                    <option selected>4.02.07 Sistemas</option>
+                    <option>6.02 Despesas Não Operacionais</option>
+                  </select>
+                </td>
+                <td><span class="badge conf-media"><i data-lucide="minus" style="width:10px;height:10px;stroke-width:2;"></i>Média</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 21,90</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="act-btn" onclick="confirmRow(this.closest('tr'))"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button>
+                    <button class="act-btn danger" onclick="ignoreRow(this.closest('tr'))"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── JÁ CONFIRMADA ── -->
+              <tr style="background:#FAFEFA;">
+                <td><div class="cb checked" onclick="toggleCb(this)" style="margin:0 auto;background:#ACC095;border-color:#ACC095;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></td>
+                <td style="font-size:12px;color:#9A9189;">06/11/2025</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="font-size:13px;font-weight:500;color:#3A3530;">MERCADO EXTRA XANXERE</div>
+                    <span style="font-size:10px;font-weight:500;color:#7A9264;background:#EEF2E8;border-radius:4px;padding:2px 6px;display:flex;align-items:center;gap:3px;"><i data-lucide="check" style="width:10px;height:10px;stroke-width:2.5;"></i>Confirmada</span>
+                  </div>
+                  <div style="margin-top:3px;"><span class="caixa-tag"><i data-lucide="calendar-clock" style="width:10px;height:10px;stroke-width:1.5;"></i>caixa: 10/12</span></div>
+                </td>
+                <td>
+                  <select class="cat-select" style="background:#F7FAF5;border-color:#C4DDB4;">
+                    <option selected>4.02.16 Mercado</option>
+                  </select>
+                </td>
+                <td><span class="badge conf-alta"><i data-lucide="zap" style="width:10px;height:10px;stroke-width:2;"></i>Alta</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 312,40</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;">
+                    <button class="act-btn" title="Desfazer" onclick="unconfirmRow(this.closest('tr'))"><i data-lucide="rotate-ccw" style="width:14px;height:14px;stroke-width:1.5;color:#9A9189;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── CONFIANÇA BAIXA ── -->
+              <tr>
+                <td><div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div></td>
+                <td style="font-size:12px;color:#9A9189;">08/11/2025</td>
+                <td>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">PAGUE MENOS FARM</div>
+                  <div style="margin-top:3px;"><span class="caixa-tag"><i data-lucide="calendar-clock" style="width:10px;height:10px;stroke-width:1.5;"></i>caixa: 10/12</span></div>
+                </td>
+                <td>
+                  <select class="cat-select" style="border-color:#E8A898;">
+                    <option selected>— Selecione uma categoria —</option>
+                    <option>3.03 Materiais Fisio</option>
+                    <option>4.02.09 Material Limpeza</option>
+                    <option>4.02.10 Material Escritório</option>
+                    <option>4.02.17 Utensílios</option>
+                    <option>6.02 Despesas Não Operacionais</option>
+                  </select>
+                  <div style="margin-top:5px;font-size:11px;color:#C85A3E;display:flex;align-items:center;gap:4px;">
+                    <i data-lucide="alert-circle" style="width:11px;height:11px;stroke-width:1.5;"></i>
+                    IA não conseguiu categorizar — selecione
+                  </div>
+                </td>
+                <td><span class="badge conf-baixa"><i data-lucide="help-circle" style="width:10px;height:10px;stroke-width:2;"></i>Baixa</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 98,50</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="act-btn" onclick="confirmRow(this.closest('tr'))"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button>
+                    <button class="act-btn danger" onclick="ignoreRow(this.closest('tr'))"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── IGNORADA ── -->
+              <tr class="row-ignored" id="row-ignored-1">
+                <td><div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div></td>
+                <td style="font-size:12px;color:#9A9189;">09/11/2025</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="font-size:13px;font-weight:500;color:#3A3530;text-decoration:line-through;">ESTORNO AMAZON PRIME</div>
+                    <span style="font-size:10px;font-weight:500;color:#9A9189;background:#F0EEE9;border-radius:4px;padding:2px 6px;">Ignorada</span>
+                  </div>
+                </td>
+                <td><span style="font-size:12px;color:#9A9189;">—</span></td>
+                <td><span class="badge badge-info">—</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;color:#9A9189;">R$ 21,90</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;">
+                    <button class="act-btn" title="Restaurar" onclick="restoreRow('row-ignored-1')"><i data-lucide="undo-2" style="width:14px;height:14px;stroke-width:1.5;color:#9A9189;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── CONFIANÇA ALTA ── -->
+              <tr>
+                <td><div class="cb" onclick="toggleCb(this)" style="margin:0 auto;"></div></td>
+                <td style="font-size:12px;color:#9A9189;">10/11/2025</td>
+                <td>
+                  <div style="font-size:13px;font-weight:500;color:#3A3530;">CONSULTORIA CONTAX</div>
+                  <div style="margin-top:3px;"><span class="caixa-tag"><i data-lucide="calendar-clock" style="width:10px;height:10px;stroke-width:1.5;"></i>caixa: 10/12</span></div>
+                </td>
+                <td>
+                  <select class="cat-select">
+                    <option selected>4.02.15 Consultoria</option>
+                    <option>4.02.04 Contador</option>
+                    <option>4.02.99 Outras despesas adm.</option>
+                  </select>
+                </td>
+                <td><span class="badge conf-alta"><i data-lucide="zap" style="width:10px;height:10px;stroke-width:2;"></i>Alta</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 850,00</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                    <button class="act-btn" onclick="confirmRow(this.closest('tr'))"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button>
+                    <button class="act-btn danger" onclick="ignoreRow(this.closest('tr'))"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- ── CONFIANÇA ALTA — confirmada ── -->
+              <tr style="background:#FAFEFA;">
+                <td><div class="cb checked" onclick="toggleCb(this)" style="margin:0 auto;background:#ACC095;border-color:#ACC095;"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div></td>
+                <td style="font-size:12px;color:#9A9189;">11/11/2025</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="font-size:13px;font-weight:500;color:#3A3530;">ASSESSA MARKETING LTDA</div>
+                    <span style="font-size:10px;font-weight:500;color:#7A9264;background:#EEF2E8;border-radius:4px;padding:2px 6px;display:flex;align-items:center;gap:3px;"><i data-lucide="check" style="width:10px;height:10px;stroke-width:2.5;"></i>Confirmada</span>
+                  </div>
+                  <div style="margin-top:3px;"><span class="caixa-tag"><i data-lucide="calendar-clock" style="width:10px;height:10px;stroke-width:1.5;"></i>caixa: 10/12</span></div>
+                </td>
+                <td>
+                  <select class="cat-select" style="background:#F7FAF5;border-color:#C4DDB4;">
+                    <option selected>4.03.07 Assessoria de Marketing</option>
+                  </select>
+                </td>
+                <td><span class="badge conf-alta"><i data-lucide="zap" style="width:10px;height:10px;stroke-width:2;"></i>Alta</span></td>
+                <td class="tnum" style="text-align:right;font-size:13px;font-weight:500;color:#C85A3E;">R$ 1.200,00</td>
+                <td>
+                  <div style="display:flex;align-items:center;justify-content:center;">
+                    <button class="act-btn" onclick="unconfirmRow(this.closest('tr'))"><i data-lucide="rotate-ccw" style="width:14px;height:14px;stroke-width:1.5;color:#9A9189;"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Reticências -->
+              <tr>
+                <td colspan="7">
+                  <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 0;">
+                    <div style="height:1px;flex:1;background:#E8E5DF;"></div>
+                    <span style="font-size:12px;color:#9A9189;white-space:nowrap;">+ 21 transações não exibidas</span>
+                    <div style="height:1px;flex:1;background:#E8E5DF;"></div>
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CONFIRM BAR (sticky footer) -->
+      <div class="confirm-bar" style="margin-top:auto;">
+
+        <!-- Stats -->
+        <div style="display:flex;align-items:center;gap:20px;flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:8px;height:8px;border-radius:99px;background:#ACC095;"></div>
+            <span style="font-size:13px;color:#6B635B;">26 confirmadas</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:8px;height:8px;border-radius:99px;background:#D2B06E;"></div>
+            <span style="font-size:13px;color:#6B635B;">4 pendentes</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:8px;height:8px;border-radius:99px;background:#D3D2CD;"></div>
+            <span style="font-size:13px;color:#6B635B;">2 ignoradas</span>
+          </div>
+          <div style="width:1px;height:18px;background:#E8E5DF;"></div>
+          <div class="tnum" style="font-size:13px;font-weight:500;color:#3A3530;">
+            Total confirmado: <span style="color:#C85A3E;">R$ 3.364,20</span>
+          </div>
+        </div>
+
+        <!-- Confirm pending -->
+        <button class="btn-ghost" style="border:1px solid #E8E5DF;font-size:13px;" onclick="confirmAllHigh()">
+          <i data-lucide="zap" style="width:14px;height:14px;stroke-width:1.5;color:#F08353;"></i>
+          Aceitar todas de alta confiança
+        </button>
+
+        <!-- CTA principal -->
+        <button class="btn-primary" style="font-size:15px;padding:12px 28px;" onclick="confirmAll()">
+          <i data-lucide="check-circle" style="width:17px;height:17px;stroke-width:1.5;"></i>
+          Confirmar 26 lançamentos
+        </button>
+      </div>
+
+    </div><!-- /page content -->
+  </div><!-- /main -->
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(100px);background:#3A3530;color:#FFF;border-radius:10px;padding:13px 22px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(58,53,48,.25);font-size:14px;font-weight:500;transition:transform .3s cubic-bezier(.22,.61,.36,1);z-index:200;white-space:nowrap;">
+  <i data-lucide="check-circle" style="width:18px;height:18px;stroke-width:1.5;color:#ACC095;"></i>
+  <span id="toast-msg">Lançamentos confirmados com sucesso!</span>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  // ── Checkbox helpers ──────────────────────────────────────────────────────────
+  function toggleCb(cb) {
+    const checked = cb.classList.toggle('checked');
+    if (checked) {
+      cb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      cb.style.background = '#F08353'; cb.style.borderColor = '#F08353';
+    } else {
+      cb.innerHTML = ''; cb.style.background = ''; cb.style.borderColor = '';
+    }
+  }
+  function toggleAll(cbAll) {
+    const on = cbAll.classList.toggle('checked');
+    if (on) { cbAll.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'; cbAll.style.background='#F08353'; cbAll.style.borderColor='#F08353'; }
+    else { cbAll.innerHTML=''; cbAll.style.background=''; cbAll.style.borderColor=''; }
+  }
+  function selectAll() {
+    document.querySelectorAll('#conc-tbody .cb:not(.checked)').forEach(cb => {
+      if (!cb.closest('tr').classList.contains('row-ignored')) toggleCb(cb);
+    });
+    lucide.createIcons();
+  }
+
+  // ── Row actions ───────────────────────────────────────────────────────────────
+  function confirmRow(tr) {
+    if (typeof tr === 'string') tr = document.getElementById(tr);
+    tr.style.background = '#FAFEFA';
+    const actCell = tr.querySelector('td:last-child');
+    actCell.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;"><button class="act-btn" onclick="unconfirmRow(this.closest(\'tr\'))"><i data-lucide="rotate-ccw" style="width:14px;height:14px;stroke-width:1.5;color:#9A9189;"></i></button></div>';
+    // add confirmed badge
+    const desc = tr.querySelector('td:nth-child(3) > div:first-child, td:nth-child(3) > div');
+    if (desc && !tr.querySelector('.conf-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'conf-badge';
+      badge.style.cssText = 'font-size:10px;font-weight:500;color:#7A9264;background:#EEF2E8;border-radius:4px;padding:2px 6px;display:inline-flex;align-items:center;gap:3px;margin-left:8px;';
+      badge.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Confirmada';
+      desc.appendChild(badge);
+    }
+    lucide.createIcons(); showToast('Lançamento confirmado!');
+  }
+
+  function ignoreRow(tr) {
+    if (typeof tr === 'string') tr = document.getElementById(tr);
+    tr.classList.add('row-ignored');
+    const actCell = tr.querySelector('td:last-child');
+    actCell.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;"><button class="act-btn" onclick="restoreRow(this.closest(\'tr\'))"><i data-lucide="undo-2" style="width:14px;height:14px;stroke-width:1.5;color:#9A9189;"></i></button></div>';
+    lucide.createIcons(); showToast('Transação ignorada.');
+  }
+
+  function unconfirmRow(tr) {
+    tr.style.background = '';
+    const badge = tr.querySelector('.conf-badge');
+    if (badge) badge.remove();
+    const actCell = tr.querySelector('td:last-child');
+    actCell.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:2px;"><button class="act-btn" onclick="confirmRow(this.closest(\'tr\'))"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button><button class="act-btn danger" onclick="ignoreRow(this.closest(\'tr\'))"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button></div>';
+    lucide.createIcons();
+  }
+
+  function restoreRow(tr) {
+    if (typeof tr === 'string') tr = document.getElementById(tr);
+    tr.classList.remove('row-ignored');
+    const actCell = tr.querySelector('td:last-child');
+    actCell.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:2px;"><button class="act-btn" onclick="confirmRow(this.closest(\'tr\'))"><i data-lucide="check" style="width:14px;height:14px;stroke-width:2;color:#7A9264;"></i></button><button class="act-btn danger" onclick="ignoreRow(this.closest(\'tr\'))"><i data-lucide="eye-off" style="width:14px;height:14px;stroke-width:1.5;"></i></button></div>';
+    lucide.createIcons(); showToast('Transação restaurada.');
+  }
+
+  function resolveRow(id, action) {
+    const tr = document.getElementById(id);
+    if (action === 'keep') confirmRow(tr);
+    else ignoreRow(tr);
+  }
+
+  function confirmAllHigh() {
+    showToast('Todas de alta confiança aceitas — 18 lançamentos!');
+  }
+
+  function confirmAll() {
+    showToast('26 lançamentos confirmados e adicionados!');
+  }
+
+  // ── Filter tabs ───────────────────────────────────────────────────────────────
+  function filterRows(type, btn) {
+    document.querySelectorAll('.topbar ~ * button[onclick*="filterRows"]').forEach(b => {
+      b.style.background = 'transparent'; b.style.color = '#9A9189'; b.style.boxShadow = 'none';
+    });
+    btn.style.background = '#FFF'; btn.style.color = '#3A3530';
+    btn.style.boxShadow = '0 1px 2px rgba(58,53,48,.06)';
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.transform = 'translateX(-50%) translateY(0)';
+    lucide.createIcons();
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => { t.style.transform = 'translateX(-50%) translateY(100px)'; }, 2500);
+  }
+</script>
+</body>
+</html>
