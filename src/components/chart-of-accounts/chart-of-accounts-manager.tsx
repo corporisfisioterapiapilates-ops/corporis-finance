@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AlertTriangle,
   Check,
   ChevronDown,
   ChevronRight,
@@ -86,6 +87,7 @@ export function ChartOfAccountsManager({ accounts }: ChartOfAccountsManagerProps
   const [newChildParentId, setNewChildParentId] = useState<string | null>(null);
   const [newChildName, setNewChildName] = useState("");
   const [notice, setNotice] = useState<ChartAccountActionResult | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<ChartAccount | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const tree = useMemo(() => buildChartAccountTree(accounts), [accounts]);
@@ -174,15 +176,22 @@ export function ChartOfAccountsManager({ accounts }: ChartOfAccountsManagerProps
     });
   }
 
-  function removeAccount(account: ChartAccount) {
-    const confirmed = window.confirm(`Excluir "${account.name}" do plano de contas?`);
-    if (!confirmed) {
+  function requestDeleteAccount(account: ChartAccount) {
+    setDeleteCandidate(account);
+  }
+
+  function confirmDeleteAccount() {
+    if (!deleteCandidate) {
       return;
     }
 
+    const account = deleteCandidate;
     startTransition(async () => {
       const result = await deleteChartAccount({ id: account.id });
       setNotice(result);
+      if (result.ok) {
+        setDeleteCandidate(null);
+      }
     });
   }
 
@@ -292,7 +301,7 @@ export function ChartOfAccountsManager({ accounts }: ChartOfAccountsManagerProps
                 }}
                 onNewChildName={setNewChildName}
                 onAddChild={addChild}
-                onDelete={removeAccount}
+                onDelete={requestDeleteAccount}
                 onCancelChild={() => {
                   setNewChildParentId(null);
                   setNewChildName("");
@@ -300,6 +309,72 @@ export function ChartOfAccountsManager({ accounts }: ChartOfAccountsManagerProps
               />
             ))}
           </div>
+        </div>
+      </div>
+
+      {deleteCandidate ? (
+        <DeleteAccountModal
+          account={deleteCandidate}
+          isPending={isPending}
+          onCancel={() => setDeleteCandidate(null)}
+          onConfirm={confirmDeleteAccount}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function DeleteAccountModal({
+  account,
+  isPending,
+  onCancel,
+  onConfirm,
+}: {
+  account: ChartAccount;
+  isPending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/45 px-md pt-[12vh] backdrop-blur-[1px]">
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-account-title"
+        aria-describedby="delete-account-description"
+        className="w-full max-w-[460px] overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
+      >
+        <div className="flex items-start gap-md border-b border-line bg-sunken px-lg py-lg">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-danger-soft text-danger">
+            <AlertTriangle size={18} strokeWidth={1.8} />
+          </div>
+          <div className="min-w-0">
+            <h2 id="delete-account-title" className="font-display text-title-3 text-ink">
+              Excluir conta
+            </h2>
+            <p id="delete-account-description" className="mt-xs text-body-sm text-ink-secondary">
+              Confirme a exclusão de{" "}
+              <strong className="font-medium text-ink">"{account.name}"</strong> do plano de contas.
+            </p>
+          </div>
+        </div>
+        <div className="px-lg py-md text-body-sm text-ink-secondary">
+          Se houver lançamentos vinculados, a exclusão será bloqueada automaticamente.
+        </div>
+        <div className="flex justify-end gap-sm border-t border-line bg-base px-lg py-md">
+          <Button
+            type="button"
+            variant="ghost"
+            className="border border-line"
+            onClick={onCancel}
+            disabled={isPending}
+          >
+            Cancelar
+          </Button>
+          <Button type="button" variant="destructive" onClick={onConfirm} disabled={isPending}>
+            <Trash2 size={14} strokeWidth={1.7} />
+            {isPending ? "Excluindo..." : "Excluir"}
+          </Button>
         </div>
       </div>
     </div>
