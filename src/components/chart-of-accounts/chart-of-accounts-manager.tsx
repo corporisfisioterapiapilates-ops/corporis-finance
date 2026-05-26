@@ -4,12 +4,11 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  Eye,
-  EyeOff,
   FolderPlus,
   GripVertical,
   Plus,
   Search,
+  Trash2,
   UnfoldVertical,
   X,
 } from "lucide-react";
@@ -18,6 +17,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   type ChartAccountActionResult,
   createChartAccountChild,
+  deleteChartAccount,
   updateChartAccount,
 } from "@/actions/chart-of-accounts";
 import { Button } from "@/components/ui/button";
@@ -174,6 +174,18 @@ export function ChartOfAccountsManager({ accounts }: ChartOfAccountsManagerProps
     });
   }
 
+  function removeAccount(account: ChartAccount) {
+    const confirmed = window.confirm(`Excluir "${account.name}" do plano de contas?`);
+    if (!confirmed) {
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await deleteChartAccount({ id: account.id });
+      setNotice(result);
+    });
+  }
+
   return (
     <div className="flex flex-col gap-lg">
       <div className="flex flex-wrap items-center gap-md">
@@ -244,7 +256,7 @@ export function ChartOfAccountsManager({ accounts }: ChartOfAccountsManagerProps
       ) : null}
 
       <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm-warm">
-        <div className="sticky top-0 z-10 grid min-w-[920px] grid-cols-[38px_40px_76px_minmax(260px,1fr)_104px_132px_76px_132px] items-center border-b-2 border-line bg-sunken">
+        <div className="sticky top-0 z-10 grid min-w-[960px] grid-cols-[38px_40px_76px_minmax(260px,1fr)_104px_132px_76px_160px] items-center border-b-2 border-line bg-sunken">
           <HeaderCell />
           <HeaderCell />
           <HeaderCell>Código</HeaderCell>
@@ -256,7 +268,7 @@ export function ChartOfAccountsManager({ accounts }: ChartOfAccountsManagerProps
         </div>
 
         <div className="max-h-[calc(100vh-300px)] min-h-[420px] overflow-auto">
-          <div className="min-w-[920px]">
+          <div className="min-w-[960px]">
             {visibleTree.map((node) => (
               <TreeRows
                 key={node.id}
@@ -280,6 +292,7 @@ export function ChartOfAccountsManager({ accounts }: ChartOfAccountsManagerProps
                 }}
                 onNewChildName={setNewChildName}
                 onAddChild={addChild}
+                onDelete={removeAccount}
                 onCancelChild={() => {
                   setNewChildParentId(null);
                   setNewChildName("");
@@ -310,6 +323,7 @@ function TreeRows({
   onPrepareChild,
   onNewChildName,
   onAddChild,
+  onDelete,
   onCancelChild,
 }: {
   node: ChartAccountNode;
@@ -328,6 +342,7 @@ function TreeRows({
   onPrepareChild: (parentId: string) => void;
   onNewChildName: (value: string) => void;
   onAddChild: (parentId: string) => void;
+  onDelete: (account: ChartAccount) => void;
   onCancelChild: () => void;
 }) {
   const hasChildren = node.children.length > 0;
@@ -341,7 +356,7 @@ function TreeRows({
     <>
       <div
         className={cn(
-          "grid grid-cols-[38px_40px_76px_minmax(260px,1fr)_104px_132px_76px_132px] items-center border-b text-body-sm transition-colors",
+          "grid grid-cols-[38px_40px_76px_minmax(260px,1fr)_104px_132px_76px_160px] items-center border-b text-body-sm transition-colors",
           isRoot
             ? "border-line bg-sunken hover:bg-[#ECEAE5]"
             : "border-[#F0EEE9] bg-surface hover:bg-base",
@@ -475,6 +490,9 @@ function TreeRows({
               <IconButton label="Cancelar" onClick={onCancelEdit}>
                 <X size={13} strokeWidth={2} />
               </IconButton>
+              <IconButton label="Excluir" disabled={isPending} onClick={() => onDelete(node)}>
+                <Trash2 size={13} strokeWidth={1.5} />
+              </IconButton>
             </>
           ) : (
             <>
@@ -484,15 +502,8 @@ function TreeRows({
               <IconButton label="Adicionar subconta" onClick={() => onPrepareChild(node.id)}>
                 <Plus size={13} strokeWidth={1.5} />
               </IconButton>
-              <IconButton
-                label={draft.is_active ? "Desativar" : "Ativar"}
-                onClick={() => onToggleActive(node)}
-              >
-                {draft.is_active ? (
-                  <EyeOff size={13} strokeWidth={1.5} />
-                ) : (
-                  <Eye size={13} strokeWidth={1.5} />
-                )}
+              <IconButton label="Excluir" disabled={isPending} onClick={() => onDelete(node)}>
+                <Trash2 size={13} strokeWidth={1.5} className="text-danger" />
               </IconButton>
             </>
           )}
@@ -559,6 +570,7 @@ function TreeRows({
               onPrepareChild={onPrepareChild}
               onNewChildName={onNewChildName}
               onAddChild={onAddChild}
+              onDelete={onDelete}
               onCancelChild={onCancelChild}
             />
           ))
