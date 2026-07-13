@@ -65,6 +65,8 @@ export function TransactionsManager({
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
   const [accountFilter, setAccountFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(initialOpen);
   const [draft, setDraft] = useState<TransactionInput>(() =>
@@ -99,14 +101,26 @@ export function TransactionsManager({
       const matchesAccount = accountFilter === "all" || transaction.account_id === accountFilter;
       const matchesCategory =
         categoryFilter === "all" || transaction.category_id === categoryFilter;
+      const matchesDateFrom = !dateFrom || transaction.cash_date >= dateFrom;
+      const matchesDateTo = !dateTo || transaction.cash_date <= dateTo;
 
-      return matchesQuery && matchesType && matchesStatus && matchesAccount && matchesCategory;
+      return (
+        matchesQuery &&
+        matchesType &&
+        matchesStatus &&
+        matchesAccount &&
+        matchesCategory &&
+        matchesDateFrom &&
+        matchesDateTo
+      );
     });
   }, [
     accountById,
     accountFilter,
     categoryById,
     categoryFilter,
+    dateFrom,
+    dateTo,
     query,
     statusFilter,
     transactions,
@@ -203,7 +217,10 @@ export function TransactionsManager({
           <SelectFilter
             aria-label="Filtrar por tipo"
             value={typeFilter}
-            onChange={(value) => setTypeFilter(value as FilterType)}
+            onChange={(value) => {
+              setTypeFilter(value as FilterType);
+              setPage(1);
+            }}
           >
             <option value="all">Todos os tipos</option>
             <option value="income">Entradas</option>
@@ -213,7 +230,10 @@ export function TransactionsManager({
           <SelectFilter
             aria-label="Filtrar por conta"
             value={accountFilter}
-            onChange={setAccountFilter}
+            onChange={(value) => {
+              setAccountFilter(value);
+              setPage(1);
+            }}
           >
             <option value="all">Todas as contas</option>
             {accounts.map((account) => (
@@ -225,7 +245,10 @@ export function TransactionsManager({
           <SelectFilter
             aria-label="Filtrar por categoria"
             value={categoryFilter}
-            onChange={setCategoryFilter}
+            onChange={(value) => {
+              setCategoryFilter(value);
+              setPage(1);
+            }}
           >
             <option value="all">Todas as categorias</option>
             {transactionCategories.map((category) => (
@@ -237,12 +260,53 @@ export function TransactionsManager({
           <SelectFilter
             aria-label="Filtrar por status"
             value={statusFilter}
-            onChange={(value) => setStatusFilter(value as FilterStatus)}
+            onChange={(value) => {
+              setStatusFilter(value as FilterStatus);
+              setPage(1);
+            }}
           >
             <option value="all">Todos os status</option>
             <option value="cleared">Realizado</option>
             <option value="pending">Pendente</option>
           </SelectFilter>
+          <div className="grid grid-cols-2 gap-sm">
+            <label
+              htmlFor="transactions-date-from"
+              className="grid gap-[3px] text-label font-medium uppercase tracking-[0.06em] text-ink-tertiary"
+            >
+              De
+              <Input
+                type="date"
+                id="transactions-date-from"
+                aria-label="Data inicial"
+                value={dateFrom}
+                max={dateTo || undefined}
+                onChange={(event) => {
+                  setDateFrom(event.target.value);
+                  setPage(1);
+                }}
+                className="min-w-[150px] py-[8px] text-body-sm normal-case tracking-normal"
+              />
+            </label>
+            <label
+              htmlFor="transactions-date-to"
+              className="grid gap-[3px] text-label font-medium uppercase tracking-[0.06em] text-ink-tertiary"
+            >
+              Até
+              <Input
+                type="date"
+                id="transactions-date-to"
+                aria-label="Data final"
+                value={dateTo}
+                min={dateFrom || undefined}
+                onChange={(event) => {
+                  setDateTo(event.target.value);
+                  setPage(1);
+                }}
+                className="min-w-[150px] py-[8px] text-body-sm normal-case tracking-normal"
+              />
+            </label>
+          </div>
           <Button
             type="button"
             variant="ghost"
@@ -253,6 +317,8 @@ export function TransactionsManager({
               setStatusFilter("all");
               setAccountFilter("all");
               setCategoryFilter("all");
+              setDateFrom("");
+              setDateTo("");
               setPage(1);
             }}
           >
