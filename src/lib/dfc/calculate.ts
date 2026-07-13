@@ -24,6 +24,7 @@ export type DFCPeriod = {
   start: string;
   months: number;
   openingBalance?: number | string;
+  closingBalance?: number | string;
 };
 
 export type DFCMonth = {
@@ -176,15 +177,10 @@ export function calculateDFC(
   rows.push(makeCalculatedRow("saldo-final", "SALDO FINAL REAL", months, endingBalance, "balance"));
 
   const grossRevenue = getRootValue(valuesByAccount, rootAccounts, "1", months);
-  const totalExpenses = rootAccounts.reduce((sum, root) => {
-    const values = valuesByAccount.get(root.id) ?? emptyMonthValues(months);
-    return sum.plus(
-      months.reduce((monthSum, month) => {
-        const value = values[month.key] ?? new Decimal(0);
-        return value.isNegative() ? monthSum.plus(value.abs()) : monthSum;
-      }, new Decimal(0)),
-    );
-  }, new Decimal(0));
+  const totalExpenses = months.reduce(
+    (sum, month) => sum.plus(monthlyCashFlow[month.key]?.expense ?? 0),
+    new Decimal(0),
+  );
   const netResult = sumMonthRecord(freeCashFlow, months);
   const grossRevenueTotal = sumMonthRecord(grossRevenue, months);
   const lastMonth = months[months.length - 1];
@@ -215,9 +211,12 @@ export function calculateDFC(
       netMargin: grossRevenueTotal.isZero()
         ? "0.00"
         : netResult.div(grossRevenueTotal).mul(100).toFixed(2),
-      endingBalance: lastMonth
-        ? (endingBalance[lastMonth.key] ?? new Decimal(0)).toFixed(2)
-        : "0.00",
+      endingBalance:
+        period.closingBalance !== undefined
+          ? new Decimal(period.closingBalance).toFixed(2)
+          : lastMonth
+            ? (endingBalance[lastMonth.key] ?? new Decimal(0)).toFixed(2)
+            : "0.00",
     },
   };
 }

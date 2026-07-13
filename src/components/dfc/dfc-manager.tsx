@@ -157,17 +157,17 @@ export function DFCManager({
 
       <section className="grid gap-md lg:grid-cols-2 xl:grid-cols-5">
         <DfcKpi
-          label="Receita Bruta (Ano)"
+          label="Receita Bruta (Período)"
           value={formatBRL(result.metrics.grossRevenue)}
           tone="success"
         />
         <DfcKpi
-          label="Desp. Totais (Ano)"
+          label="Desp. Totais (Período)"
           value={formatBRL(result.metrics.totalExpenses)}
           tone="danger"
         />
         <DfcKpi
-          label="Resultado Líq. (Ano)"
+          label="Resultado Líq. (Período)"
           value={formatBRL(result.metrics.netResult)}
           tone="neutral"
         />

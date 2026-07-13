@@ -39,7 +39,12 @@ export default async function DFCPage({ searchParams }: DFCPageProps) {
     {
       start: period.start,
       months: period.months,
-      openingBalance: calculateOpeningBalance(safeAccounts, safeTransactions, period.start),
+      openingBalance: calculateBankBalance(safeAccounts, safeTransactions, period.start),
+      closingBalance: calculateBankBalance(
+        safeAccounts,
+        safeTransactions,
+        getPeriodEnd(period.start, period.months),
+      ),
     },
     chartOfAccounts ?? [],
   );
@@ -90,10 +95,10 @@ function getPeriod(year: number, mode: DFCPeriodMode): { start: string; months: 
   return { start: `${year}-01-01`, months: 12 };
 }
 
-function calculateOpeningBalance(
+function calculateBankBalance(
   accounts: Account[],
   transactions: Transaction[],
-  periodStart: string,
+  endExclusive: string,
 ): string {
   const bankAccountIds = new Set(
     accounts
@@ -107,7 +112,7 @@ function calculateOpeningBalance(
   for (const transaction of transactions) {
     if (
       transaction.status !== "cleared" ||
-      transaction.cash_date >= periodStart ||
+      transaction.cash_date >= endExclusive ||
       !bankAccountIds.has(transaction.account_id)
     ) {
       continue;
@@ -126,6 +131,12 @@ function calculateOpeningBalance(
   }
 
   return balance.toFixed(2);
+}
+
+function getPeriodEnd(start: string, months: number): string {
+  const date = new Date(`${start.slice(0, 7)}-01T12:00:00`);
+  date.setMonth(date.getMonth() + months);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
 function getAvailableYears(

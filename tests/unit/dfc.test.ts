@@ -89,6 +89,20 @@ describe("calculateDFC", () => {
     });
   });
 
+  it("não deixa entradas do mesmo grupo reduzirem o card de despesas totais", () => {
+    const result = calculateDFC(
+      [
+        tx("financing-income", "income", "g8", 1000, "2026-01-05"),
+        tx("financing-expense", "expense", "g8", 1500, "2026-01-10"),
+      ],
+      { start: "2026-01-01", months: 1, closingBalance: 4321.5 },
+      chart,
+    );
+
+    expect(result.metrics.totalExpenses).toBe("1500.00");
+    expect(result.metrics.endingBalance).toBe("4321.50");
+  });
+
   it("mantém AV% da receita bruta em 100% e trata mês sem receita", () => {
     const result = calculateDFC(
       [
