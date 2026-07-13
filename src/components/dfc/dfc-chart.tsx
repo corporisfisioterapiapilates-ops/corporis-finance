@@ -17,15 +17,13 @@ import { cn } from "@/lib/utils";
 
 export function DfcChart({ result, expanded = false }: { result: DFCResult; expanded?: boolean }) {
   const chartData = result.months.map((month) => {
-    const revenue = Number(result.rows.find((row) => row.code === "1")?.values[month.key] ?? 0);
-    const expenses = ["2", "3", "4", "5", "6", "7", "8"].reduce((sum, code) => {
-      const value = Number(result.rows.find((row) => row.code === code)?.values[month.key] ?? 0);
-      return value < 0 ? sum + Math.abs(value) : sum;
-    }, 0);
-    const resultValue = Number(
-      result.rows.find((row) => row.id === "fluxo-livre")?.values[month.key] ?? 0,
-    );
-    return { month: month.label, revenue, expenses, result: resultValue };
+    const flow = result.monthlyCashFlow[month.key];
+    return {
+      month: month.label,
+      income: Number(flow?.income ?? 0),
+      expense: Number(flow?.expense ?? 0),
+      result: Number(flow?.result ?? 0),
+    };
   });
 
   return (
@@ -39,12 +37,12 @@ export function DfcChart({ result, expanded = false }: { result: DFCResult; expa
         <div>
           <h2 className="font-display text-h3 lowercase text-ink">evolução mensal</h2>
           <p className="mt-xs text-meta text-ink-tertiary">
-            Receita bruta x despesas totais x resultado
+            Entradas realizadas x saídas realizadas x resultado
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-md text-meta text-ink-tertiary">
-          <ChartLegend color="#ACC095" label="Receita" />
-          <ChartLegend color="rgba(200,90,62,.55)" label="Despesas" />
+          <ChartLegend color="#ACC095" label="Entradas" />
+          <ChartLegend color="rgba(200,90,62,.55)" label="Saídas" />
           <ChartLegend color="#F08353" label="Resultado" line />
         </div>
       </div>
@@ -68,10 +66,10 @@ export function DfcChart({ result, expanded = false }: { result: DFCResult; expa
             />
             <YAxis yAxisId="right" orientation="right" hide />
             <Tooltip content={<DfcTooltip />} />
-            <Bar yAxisId="left" dataKey="revenue" fill="#ACC095" radius={[4, 4, 4, 4]} />
+            <Bar yAxisId="left" dataKey="income" fill="#ACC095" radius={[4, 4, 4, 4]} />
             <Bar
               yAxisId="left"
-              dataKey="expenses"
+              dataKey="expense"
               fill="rgba(200,90,62,.55)"
               radius={[4, 4, 4, 4]}
             />
@@ -125,8 +123,8 @@ function DfcTooltip({ active, payload }: TooltipProps) {
 
 function labelForDataKey(dataKey: string): string {
   const labels: Record<string, string> = {
-    revenue: "Receita",
-    expenses: "Despesas",
+    income: "Entradas",
+    expense: "Saídas",
     result: "Resultado",
   };
   return labels[dataKey] ?? dataKey;

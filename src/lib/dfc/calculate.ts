@@ -50,6 +50,7 @@ export type DFCRow = {
 export type DFCResult = {
   months: DFCMonth[];
   rows: DFCRow[];
+  monthlyCashFlow: Record<string, { income: string; expense: string; result: string }>;
   metrics: {
     grossRevenue: string;
     totalExpenses: string;
@@ -88,22 +89,32 @@ export function calculateDFC(
   const byId = new Map(chartOfAccounts.map((account) => [account.id, account]));
   const childrenByParent = buildChildrenMap(chartOfAccounts);
   const valuesByAccount = new Map<string, Record<string, Decimal>>();
+  const monthlyCashFlow = Object.fromEntries(
+    months.map((month) => [month.key, { income: new Decimal(0), expense: new Decimal(0) }]),
+  ) as Record<string, { income: Decimal; expense: Decimal }>;
 
   for (const account of chartOfAccounts) {
     valuesByAccount.set(account.id, emptyMonthValues(months));
   }
 
   for (const transaction of transactions) {
-    if (
-      transaction.status !== "cleared" ||
-      transaction.type === "transfer" ||
-      !transaction.category_id
-    ) {
+    if (transaction.status !== "cleared" || transaction.type === "transfer") {
       continue;
     }
 
     const monthKey = transaction.cash_date.slice(0, 7);
     if (!months.some((month) => month.key === monthKey)) {
+      continue;
+    }
+
+    const cashFlow = monthlyCashFlow[monthKey];
+    if (cashFlow && transaction.type === "income") {
+      cashFlow.income = cashFlow.income.plus(transaction.amount);
+    } else if (cashFlow && transaction.type === "expense") {
+      cashFlow.expense = cashFlow.expense.plus(transaction.amount);
+    }
+
+    if (!transaction.category_id) {
       continue;
     }
 
@@ -181,6 +192,22 @@ export function calculateDFC(
   return {
     months,
     rows,
+    monthlyCashFlow: Object.fromEntries(
+      months.map((month) => {
+        const flow = monthlyCashFlow[month.key] ?? {
+          income: new Decimal(0),
+          expense: new Decimal(0),
+        };
+        return [
+          month.key,
+          {
+            income: flow.income.toFixed(2),
+            expense: flow.expense.toFixed(2),
+            result: flow.income.minus(flow.expense).toFixed(2),
+          },
+        ];
+      }),
+    ),
     metrics: {
       grossRevenue: grossRevenueTotal.toFixed(2),
       totalExpenses: totalExpenses.toFixed(2),

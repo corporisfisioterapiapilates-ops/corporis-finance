@@ -63,6 +63,32 @@ describe("calculateDFC", () => {
     expect(row(result, "fluxo-livre").values["2026-01"]).toBe("1000.00");
   });
 
+  it("mostra no fluxo mensal todas as entradas realizadas, inclusive fora da receita bruta", () => {
+    const result = calculateDFC(
+      [
+        tx("jan-revenue", "income", "r1", 7500, "2026-01-05"),
+        tx("jan-financing", "income", "g8", 19000, "2026-01-20"),
+        tx("feb-revenue", "income", "r1", 1500, "2026-02-05"),
+        tx("feb-financing", "income", "g8", 16000, "2026-02-20"),
+        tx("feb-expense", "expense", "d1", 500, "2026-02-21"),
+      ],
+      { start: "2026-01-01", months: 2 },
+      chart,
+    );
+
+    expect(row(result, "1").values["2026-01"]).toBe("7500.00");
+    expect(result.monthlyCashFlow["2026-01"]).toEqual({
+      income: "26500.00",
+      expense: "0.00",
+      result: "26500.00",
+    });
+    expect(result.monthlyCashFlow["2026-02"]).toEqual({
+      income: "17500.00",
+      expense: "500.00",
+      result: "17000.00",
+    });
+  });
+
   it("mantém AV% da receita bruta em 100% e trata mês sem receita", () => {
     const result = calculateDFC(
       [
