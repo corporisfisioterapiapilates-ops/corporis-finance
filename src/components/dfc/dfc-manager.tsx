@@ -155,19 +155,19 @@ export function DFCManager({
         </Button>
       </header>
 
-      <section className="grid gap-md lg:grid-cols-2 xl:grid-cols-5">
+      <section aria-label="Resumo do período" className="grid gap-md lg:grid-cols-2 xl:grid-cols-5">
         <DfcKpi
-          label="Receita Bruta (Período)"
+          label="Receita Bruta"
           value={formatBRL(result.metrics.grossRevenue)}
           tone="success"
         />
         <DfcKpi
-          label="Desp. Totais (Período)"
+          label="Despesas Totais"
           value={formatBRL(result.metrics.totalExpenses)}
           tone="danger"
         />
         <DfcKpi
-          label="Resultado Líq. (Período)"
+          label="Resultado Líquido"
           value={formatBRL(result.metrics.netResult)}
           tone="neutral"
         />
@@ -274,12 +274,16 @@ function DfcKpi({
   return (
     <article
       className={cn(
-        "rounded-xl border border-line border-t-[3px] bg-surface px-lg py-md shadow-sm-warm",
+        "flex min-h-[132px] flex-col justify-between rounded-xl border border-line border-t-[3px] bg-surface px-lg py-md shadow-sm-warm",
         border,
       )}
     >
-      <div className="mb-xs text-label font-medium uppercase text-ink-tertiary">{label}</div>
-      <div className="tnum font-display text-h2 leading-tight">{value}</div>
+      <div className="whitespace-nowrap text-label font-medium uppercase tracking-[0.08em] text-ink-tertiary">
+        {label}
+      </div>
+      <div className="tnum whitespace-nowrap font-display text-[clamp(1.5rem,1.8vw,2rem)] leading-none">
+        {value}
+      </div>
     </article>
   );
 }
