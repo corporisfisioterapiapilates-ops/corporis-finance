@@ -99,7 +99,7 @@ export async function createBudgetVersion(
   const { data: versionId, error: versionError } = await supabase.rpc("create_budget_version", {
     p_year: parsed.data.year,
     p_name: parsed.data.name,
-    p_source_version_id: parsed.data.sourceVersionId ?? null,
+    p_source_version_id: parsed.data.sourceVersionId ?? undefined,
   });
 
   if (versionError || !versionId) {

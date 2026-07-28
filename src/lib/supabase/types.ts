@@ -97,54 +97,6 @@ export type Database = {
           },
         ];
       };
-      attachments: {
-        Row: {
-          created_at: string;
-          filename: string | null;
-          id: string;
-          mime_type: string | null;
-          organization_id: string;
-          size_bytes: number | null;
-          storage_path: string;
-          transaction_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          filename?: string | null;
-          id?: string;
-          mime_type?: string | null;
-          organization_id: string;
-          size_bytes?: number | null;
-          storage_path: string;
-          transaction_id: string;
-        };
-        Update: {
-          created_at?: string;
-          filename?: string | null;
-          id?: string;
-          mime_type?: string | null;
-          organization_id?: string;
-          size_bytes?: number | null;
-          storage_path?: string;
-          transaction_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "attachments_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "attachments_transaction_id_fkey";
-            columns: ["transaction_id"];
-            isOneToOne: false;
-            referencedRelation: "transactions";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       ai_conversations: {
         Row: {
           created_at: string;
@@ -218,6 +170,147 @@ export type Database = {
           },
           {
             foreignKeyName: "ai_messages_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      attachments: {
+        Row: {
+          created_at: string;
+          filename: string | null;
+          id: string;
+          mime_type: string | null;
+          organization_id: string;
+          size_bytes: number | null;
+          storage_path: string;
+          transaction_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          filename?: string | null;
+          id?: string;
+          mime_type?: string | null;
+          organization_id: string;
+          size_bytes?: number | null;
+          storage_path: string;
+          transaction_id: string;
+        };
+        Update: {
+          created_at?: string;
+          filename?: string | null;
+          id?: string;
+          mime_type?: string | null;
+          organization_id?: string;
+          size_bytes?: number | null;
+          storage_path?: string;
+          transaction_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "attachments_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "attachments_transaction_id_fkey";
+            columns: ["transaction_id"];
+            isOneToOne: false;
+            referencedRelation: "transactions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      budget_values: {
+        Row: {
+          amount: number;
+          budget_version_id: string;
+          chart_account_id: string;
+          created_at: string;
+          id: string;
+          month: number;
+          organization_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          amount?: number;
+          budget_version_id: string;
+          chart_account_id: string;
+          created_at?: string;
+          id?: string;
+          month: number;
+          organization_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          budget_version_id?: string;
+          chart_account_id?: string;
+          created_at?: string;
+          id?: string;
+          month?: number;
+          organization_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "budget_values_budget_version_id_fkey";
+            columns: ["budget_version_id"];
+            isOneToOne: false;
+            referencedRelation: "budget_versions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "budget_values_chart_account_id_fkey";
+            columns: ["chart_account_id"];
+            isOneToOne: false;
+            referencedRelation: "chart_of_accounts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "budget_values_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      budget_versions: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          organization_id: string;
+          status: string;
+          updated_at: string;
+          year: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          organization_id: string;
+          status?: string;
+          updated_at?: string;
+          year: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          status?: string;
+          updated_at?: string;
+          year?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "budget_versions_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
@@ -534,99 +627,6 @@ export type Database = {
           },
         ];
       };
-      budget_values: {
-        Row: {
-          amount: number;
-          budget_version_id: string;
-          chart_account_id: string;
-          created_at: string;
-          id: string;
-          month: number;
-          organization_id: string;
-          updated_at: string;
-        };
-        Insert: {
-          amount?: number;
-          budget_version_id: string;
-          chart_account_id: string;
-          created_at?: string;
-          id?: string;
-          month: number;
-          organization_id: string;
-          updated_at?: string;
-        };
-        Update: {
-          amount?: number;
-          budget_version_id?: string;
-          chart_account_id?: string;
-          created_at?: string;
-          id?: string;
-          month?: number;
-          organization_id?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "budget_values_budget_version_id_fkey";
-            columns: ["budget_version_id"];
-            isOneToOne: false;
-            referencedRelation: "budget_versions";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "budget_values_chart_account_id_fkey";
-            columns: ["chart_account_id"];
-            isOneToOne: false;
-            referencedRelation: "chart_of_accounts";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "budget_values_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      budget_versions: {
-        Row: {
-          created_at: string;
-          id: string;
-          name: string;
-          organization_id: string;
-          status: string;
-          updated_at: string;
-          year: number;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          name: string;
-          organization_id: string;
-          status?: string;
-          updated_at?: string;
-          year: number;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          name?: string;
-          organization_id?: string;
-          status?: string;
-          updated_at?: string;
-          year?: number;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "budget_versions_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       organizations: {
         Row: {
           created_at: string;
@@ -823,6 +823,10 @@ export type Database = {
         Args: { p_account: Json; p_full_name: string; p_org_name: string };
         Returns: string;
       };
+      create_budget_version: {
+        Args: { p_name: string; p_source_version_id?: string; p_year: number };
+        Returns: string;
+      };
       create_manual_transfer: {
         Args: {
           p_amount: number;
@@ -834,10 +838,6 @@ export type Database = {
           p_status?: string;
           p_to_account_id: string;
         };
-        Returns: string;
-      };
-      create_budget_version: {
-        Args: { p_name: string; p_source_version_id?: string | null; p_year: number };
         Returns: string;
       };
       seed_corporis_chart: { Args: { p_org: string }; Returns: undefined };
