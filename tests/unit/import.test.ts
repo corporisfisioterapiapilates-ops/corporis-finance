@@ -94,6 +94,33 @@ describe("import parsers", () => {
     expect(result[0]?.isDuplicate).toBe(true);
   });
 
+  it("marca FITID repetido dentro do mesmo arquivo como duplicata", () => {
+    const baseTransaction = {
+      externalId: "fitid-repetido",
+      eventDate: "2026-05-01",
+      cashDate: "2026-05-01",
+      description: "Primeiro lançamento",
+      amount: "100.00",
+      type: "income" as const,
+      source: "ofx" as const,
+      duplicateKey: "chave-1",
+    };
+    const result = markDuplicates(
+      [
+        baseTransaction,
+        {
+          ...baseTransaction,
+          description: "Mesmo FITID com outra descrição",
+          duplicateKey: "chave-2",
+        },
+      ],
+      new Set(),
+      new Set(),
+    );
+
+    expect(result.map((transaction) => transaction.isDuplicate)).toEqual([false, true]);
+  });
+
   it("extrai JSON de fatura retornado pela IA", () => {
     const result = parseInvoiceJsonFromText(`\`\`\`json
 {

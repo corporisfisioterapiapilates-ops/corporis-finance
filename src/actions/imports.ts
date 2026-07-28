@@ -120,7 +120,21 @@ export async function confirmImport(input: unknown): Promise<ConfirmImportResult
   if (toInsert.length > 0) {
     const { error } = await supabase.from("transactions").insert(toInsert);
     if (error) {
-      return { ok: false, error: "Não foi possível confirmar a importação." };
+      console.error("transactions import insert failed", {
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        message: error.message,
+      });
+      return {
+        ok: false,
+        error:
+          error.code === "23505"
+            ? "Um ou mais lançamentos já foram importados nesta conta. Importe o arquivo novamente para recalcular as duplicidades."
+            : process.env.NODE_ENV === "development"
+              ? `Não foi possível confirmar a importação: ${error.message}`
+              : "Não foi possível confirmar a importação.",
+      };
     }
 
     const memoryRows = buildCategoryMemoryRows({

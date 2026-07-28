@@ -36,15 +36,21 @@ export function markDuplicates(
   existingExternalIds: Set<string>,
   existingDuplicateKeys: Set<string>,
 ): DuplicateCheck[] {
-  const seen = new Set<string>();
+  const seenExternalIds = new Set<string>();
+  const seenDuplicateKeys = new Set<string>();
 
   return transactions.map((transaction) => {
     const externalDuplicate = transaction.externalId
-      ? existingExternalIds.has(transaction.externalId)
+      ? existingExternalIds.has(transaction.externalId) ||
+        seenExternalIds.has(transaction.externalId)
       : false;
     const semanticDuplicate =
-      existingDuplicateKeys.has(transaction.duplicateKey) || seen.has(transaction.duplicateKey);
-    seen.add(transaction.duplicateKey);
+      existingDuplicateKeys.has(transaction.duplicateKey) ||
+      seenDuplicateKeys.has(transaction.duplicateKey);
+    if (transaction.externalId) {
+      seenExternalIds.add(transaction.externalId);
+    }
+    seenDuplicateKeys.add(transaction.duplicateKey);
 
     return {
       ...transaction,
