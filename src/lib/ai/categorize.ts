@@ -39,7 +39,7 @@ const RULES: Array<{ code: string; keywords: string[] }> = [
   { code: "7.06", keywords: ["implantacao", "implantação", "melhoria"] },
 ];
 
-const DEFAULT_MODEL = "claude-sonnet-4-6";
+const DEFAULT_MODEL = "claude-haiku-4-5";
 
 const aiCategorizationSchema = z.object({
   items: z.array(
@@ -129,7 +129,7 @@ async function categorizeRawTransactionsWithClaude(
 ): Promise<CategorizedRawTransaction[]> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const message = await anthropic.messages.create({
-    model: process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL,
+    model: process.env.ANTHROPIC_MODEL_CATEGORIZE ?? DEFAULT_MODEL,
     max_tokens: 4096,
     temperature: 0,
     messages: [

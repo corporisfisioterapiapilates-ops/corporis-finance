@@ -121,7 +121,7 @@ Antes de implementar qualquer tela, verifique o status em `design/SCREENS.md`. S
 | Datas | **date-fns** + **date-fns-tz** | latest | Timezone-aware, locale pt-BR |
 | Backend/DB | **Supabase** (Postgres + Auth + Storage + Edge Functions) | latest | DB + autenticação + storage com RLS pronto |
 | ORM/Acesso | **Supabase JS client** (server e browser) + SQL puro quando necessário | — | Mantém leve, sem ORM pesado |
-| IA | **Anthropic SDK** (Claude Sonnet) | latest | Categorização e parsing — pt-BR forte |
+| IA | **Anthropic SDK** (Claude Sonnet 5.5 + Haiku 4.5) | latest | Categorização e parsing — pt-BR forte |
 | Parsing OFX | **node-ofx-parser** ou parser próprio | — | OFX brasileiro tem peculiaridades |
 | Parsing PDF | Claude Vision direto (PDF → texto estruturado) | — | Faturas variam muito entre bancos |
 | Parsing CSV | **papaparse** | latest | Padrão da indústria |
@@ -535,7 +535,7 @@ Documentação completa em `docs/AI_FEATURES.md`. Resumo:
 
 ### Feature A — Categorização automática (importação)
 **Quando:** após parse de OFX/CSV/PDF, antes do usuário revisar
-**Modelo:** Claude Sonnet 4.5 (mais novo) via Anthropic SDK
+**Modelo:** Claude Haiku 4.5 (`claude-haiku-4-5`, env `ANTHROPIC_MODEL_CATEGORIZE`) via Anthropic SDK — tarefa de classificação em JSON, a mais frequente. Consultor IA e parser de PDF usam Claude Sonnet 5.5 (`claude-sonnet-5-5`, env `ANTHROPIC_MODEL`). Sonnet 5.5 rejeita `temperature` não-default, então não passar; controlar profundidade via `output_config.effort`
 **Input:** lista de transações sem categoria + plano de contas completo + últimos 200 lançamentos do usuário (como exemplos few-shot)
 **Output:** JSON estruturado com `category_id` e `confidence` (0-1) por transação
 **UI:** badge "IA sugeriu" com nível de confiança, usuário confirma/edita
@@ -972,7 +972,7 @@ Para schema novo:
 3. `[x]` `src/lib/import/csv-parser.ts` — parseia CSV com detecção de colunas
 4. `[x]` `src/lib/import/pdf-parser.ts` — contrato zod + chamada Claude Vision/Anthropic para extrair fatura em JSON; requer `ANTHROPIC_API_KEY`
 5. `[x]` `src/lib/import/dedup.ts` — detecta duplicatas por hash de `(conta, data, valor, descrição)`
-6. `[x]` `src/lib/ai/categorize.ts` — memória de categorização por descrição confirmada, Claude Sonnet para novos padrões e fallback local por regras/keywords se a IA não estiver disponível
+6. `[x]` `src/lib/ai/categorize.ts` — memória de categorização por descrição confirmada, Claude Haiku 4.5 para novos padrões e fallback local por regras/keywords se a IA não estiver disponível
 7. `[x]` API Route `POST /api/import/parse-[ofx|csv|pdf]` — CSV/OFX/PDF recebem arquivo, parseiam, deduplicam, sugerem categoria e registram importação
 8. `[x]` Tela 04 — Upload: 3 zonas de upload, seleção de conta, resumo de parse e lista de importações recentes
 9. `[x]` Tela 05 — Conciliação:

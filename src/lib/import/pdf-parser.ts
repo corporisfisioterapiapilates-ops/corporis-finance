@@ -17,7 +17,7 @@ export const parsedInvoiceSchema = z.object({
 
 export type ParsedInvoice = z.infer<typeof parsedInvoiceSchema>;
 
-const DEFAULT_MODEL = "claude-sonnet-4-6";
+const DEFAULT_MODEL = "claude-sonnet-5-5";
 
 const prompt = `Você é um parser financeiro para faturas de cartão brasileiras.
 Extraia a data de fechamento, a data de vencimento, o valor total e todas as compras/lançamentos da fatura.
@@ -64,8 +64,9 @@ export async function parsePdfInvoice(base64Pdf: string): Promise<ParsedInvoice>
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const message = await anthropic.messages.create({
     model: process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL,
-    max_tokens: 4096,
-    temperature: 0,
+    // Sonnet 5.5 rejects non-default temperature; thinking tokens count toward max_tokens.
+    max_tokens: 16000,
+    output_config: { effort: "medium" },
     messages: [
       {
         role: "user",
