@@ -144,7 +144,7 @@ export async function answerConsultantQuestion({
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const message = await anthropic.messages.create({
-    model: process.env.ANTHROPIC_MODEL ?? DEFAULT_MODEL,
+    model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
     // Sonnet 5.5 rejects non-default temperature; thinking tokens count toward max_tokens.
     max_tokens: 4096,
     output_config: { effort: "low" },
