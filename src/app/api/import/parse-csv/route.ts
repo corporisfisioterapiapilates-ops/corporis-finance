@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       supabase.from("accounts").select("id,organization_id").eq("id", accountId).single(),
       supabase
         .from("transactions")
-        .select("external_id,cash_date,amount,description")
+        .select("external_id,cash_date,amount,description,type,transfer_direction")
         .eq("account_id", accountId),
       supabase.from("chart_of_accounts").select("*").eq("is_active", true),
       supabase.from("category_memory").select("*"),

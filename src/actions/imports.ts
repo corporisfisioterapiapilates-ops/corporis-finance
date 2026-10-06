@@ -7,6 +7,7 @@ import { buildCategoryMemoryRows, mergeCategoryMemoryUsage } from "@/lib/ai/cate
 import { normalizeInvoiceClosingDate } from "@/lib/import/pdf-parser";
 import { syncOrganizationNotifications } from "@/lib/notifications/server";
 import { createClient } from "@/lib/supabase/server";
+import type { TablesInsert } from "@/lib/supabase/types";
 
 const confirmImportSchema = z.object({
   accountId: z.string().uuid(),
@@ -23,7 +24,8 @@ const confirmImportSchema = z.object({
     z.object({
       amount: z.string(),
       cashDate: z.string(),
-      categoryId: z.string().uuid(),
+      categoryId: z.string().uuid().nullable(),
+      counterAccountId: z.string().uuid().nullable().optional(),
       description: z.string(),
       eventDate: z.string(),
       externalId: z.string().nullable(),
@@ -57,6 +59,16 @@ export async function confirmImport(input: unknown): Promise<ConfirmImportResult
   }
   if (importType === "pdf_invoice" && account.type !== "credit_card") {
     return { ok: false, error: "Selecione um cartão de crédito para confirmar esta fatura." };
+  }
+  if (importType === "pdf_invoice" && transactions.some((row) => row.counterAccountId)) {
+    return { ok: false, error: "Faturas de cartão não aceitam transferências." };
+  }
+  const active = transactions.filter((row) => !row.ignored && !row.isDuplicate);
+  if (active.some((row) => !row.categoryId && !row.counterAccountId)) {
+    return { ok: false, error: "Há lançamentos sem categoria ou transferência." };
+  }
+  if (active.some((row) => row.counterAccountId === accountId)) {
+    return { ok: false, error: "A conta de destino da transferência precisa ser outra conta." };
   }
   if (importType === "pdf_invoice" && !invoice) {
     return { ok: false, error: "Dados da fatura não encontrados." };
@@ -92,30 +104,77 @@ export async function confirmImport(input: unknown): Promise<ConfirmImportResult
     invoiceId = invoiceRow.id;
   }
 
-  const toInsert = transactions
-    .filter((transaction) => !transaction.ignored && !transaction.isDuplicate)
-    .map((transaction) => ({
+  const source =
+    importType === "ofx"
+      ? ("import_ofx" as const)
+      : importType === "pdf_invoice"
+        ? ("import_pdf" as const)
+        : ("import_csv" as const);
+
+  // Transferência vira duas linhas ligadas por transfer_group_id (uma por conta),
+  // como no lançamento manual. Só a perna da conta importada carrega external_id (dedup).
+  const toInsert = active.flatMap((transaction): TablesInsert<"transactions">[] => {
+    const base = {
       organization_id: account.organization_id,
-      account_id: accountId,
-      category_id: transaction.categoryId,
-      type: transaction.type,
       amount: Number(transaction.amount),
       description: transaction.description,
       event_date: transaction.eventDate,
       cash_date: transaction.cashDate,
-      status: "cleared",
-      source:
-        importType === "ofx"
-          ? ("import_ofx" as const)
-          : importType === "pdf_invoice"
-            ? ("import_pdf" as const)
-            : ("import_csv" as const),
+      status: "cleared" as const,
+      source,
       import_id: importId,
-      credit_card_invoice_id: invoiceId,
-      external_id: transaction.externalId,
-      ai_categorized: true,
-      ai_confidence: null,
-    }));
+    };
+
+    if (transaction.counterAccountId) {
+      const groupId = crypto.randomUUID();
+      const leavesAccount = transaction.type === "expense";
+      return [
+        {
+          ...base,
+          account_id: accountId,
+          counter_account_id: transaction.counterAccountId,
+          category_id: null,
+          type: "transfer" as const,
+          transfer_direction: leavesAccount ? ("out" as const) : ("in" as const),
+          transfer_group_id: groupId,
+          external_id: transaction.externalId,
+          credit_card_invoice_id: null,
+          ai_categorized: false,
+          ai_confidence: null,
+        },
+        {
+          ...base,
+          account_id: transaction.counterAccountId,
+          counter_account_id: accountId,
+          category_id: null,
+          type: "transfer" as const,
+          transfer_direction: leavesAccount ? ("in" as const) : ("out" as const),
+          transfer_group_id: groupId,
+          external_id: null,
+          credit_card_invoice_id: null,
+          ai_categorized: false,
+          ai_confidence: null,
+        },
+      ];
+    }
+
+    return [
+      {
+        ...base,
+        account_id: accountId,
+        counter_account_id: null,
+        category_id: transaction.categoryId,
+        type: transaction.type,
+        transfer_direction: null,
+        transfer_group_id: null,
+        external_id: transaction.externalId,
+        credit_card_invoice_id: invoiceId,
+        ai_categorized: true,
+        ai_confidence: null,
+      },
+    ];
+  });
+  const importedCount = active.length;
 
   if (toInsert.length > 0) {
     const { error } = await supabase.from("transactions").insert(toInsert);
@@ -139,8 +198,10 @@ export async function confirmImport(input: unknown): Promise<ConfirmImportResult
 
     const memoryRows = buildCategoryMemoryRows({
       organizationId: account.organization_id,
-      transactions: transactions.filter(
-        (transaction) => !transaction.ignored && !transaction.isDuplicate,
+      transactions: active.flatMap((transaction) =>
+        !transaction.counterAccountId && transaction.categoryId
+          ? [{ ...transaction, categoryId: transaction.categoryId }]
+          : [],
       ),
     });
 
@@ -169,7 +230,7 @@ export async function confirmImport(input: unknown): Promise<ConfirmImportResult
     .from("imports")
     .update({
       status: "completed",
-      imported_rows: toInsert.length,
+      imported_rows: importedCount,
       completed_at: new Date().toISOString(),
       review_payload: null,
     })
@@ -189,7 +250,7 @@ export async function confirmImport(input: unknown): Promise<ConfirmImportResult
 
   return {
     ok: true,
-    message: `${toInsert.length} lançamentos importados.`,
-    imported: toInsert.length,
+    message: `${importedCount} lançamentos importados.`,
+    imported: importedCount,
   };
 }

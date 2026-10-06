@@ -22,10 +22,10 @@ import {
 } from "lucide-react";
 import type * as React from "react";
 import { useMemo, useRef, useState, useTransition } from "react";
-
 import { type ConfirmImportResult, confirmImport } from "@/actions/imports";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { suggestInvoicePaymentCard } from "@/lib/import/invoice-payment";
 import type { Tables } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +54,7 @@ type ParseResponse = {
     duplicateKey: string;
     externalId: string | null;
     isDuplicate: boolean;
+    transferMatch?: boolean;
     suggestedCategoryCode: string | null;
     suggestedCategoryId: string | null;
     suggestedCategoryName: string | null;
@@ -64,6 +65,7 @@ type ParseResponse = {
 
 type ReviewRow = ParseResponse["transactions"][number] & {
   categoryId: string;
+  counterAccountId: string;
   ignored: boolean;
 };
 
@@ -106,13 +108,7 @@ export function ImportsUploadManager({
       }
 
       setResult(payload);
-      setReviewRows(
-        payload.transactions.map((transaction) => ({
-          ...transaction,
-          categoryId: transaction.suggestedCategoryId ?? "",
-          ignored: transaction.isDuplicate,
-        })),
-      );
+      setReviewRows(buildReviewRows(payload, accountId, accounts));
     });
   }
 
@@ -128,7 +124,8 @@ export function ImportsUploadManager({
         transactions: reviewRows.map((row) => ({
           amount: row.amount,
           cashDate: row.cashDate,
-          categoryId: row.categoryId,
+          categoryId: row.categoryId || null,
+          counterAccountId: row.counterAccountId || null,
           description: row.description,
           eventDate: row.eventDate,
           externalId: row.externalId,
@@ -159,13 +156,7 @@ export function ImportsUploadManager({
     setNotice(null);
     setAccountId(importRow.account_id ?? accountId);
     setResult({ ...payload, importId: importRow.id });
-    setReviewRows(
-      payload.transactions.map((transaction) => ({
-        ...transaction,
-        categoryId: transaction.suggestedCategoryId ?? "",
-        ignored: transaction.isDuplicate,
-      })),
-    );
+    setReviewRows(buildReviewRows(payload, importRow.account_id ?? accountId, accounts));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -262,6 +253,7 @@ export function ImportsUploadManager({
       {result ? (
         <ParseSummary
           account={accounts.find((account) => account.id === accountId) ?? null}
+          accounts={accounts}
           categories={categories}
           result={result}
           rows={reviewRows}
@@ -751,6 +743,7 @@ function MiniMetric({ label, value, danger }: { label: string; value: number; da
 
 function ParseSummary({
   account,
+  accounts,
   categories,
   result,
   rows,
@@ -759,6 +752,7 @@ function ParseSummary({
   onRowsChange,
 }: {
   account: Account | null;
+  accounts: Account[];
   categories: Category[];
   result: ParseResponse;
   rows: ReviewRow[];
@@ -775,10 +769,16 @@ function ParseSummary({
     (transaction) => transaction.ignored || transaction.isDuplicate,
   ).length;
   const categorized = rows.filter(
-    (transaction) => !transaction.ignored && !transaction.isDuplicate && transaction.categoryId,
+    (transaction) =>
+      !transaction.ignored &&
+      !transaction.isDuplicate &&
+      (transaction.categoryId || transaction.counterAccountId),
   ).length;
   const pending = rows.filter(
-    (transaction) => !transaction.ignored && !transaction.isDuplicate && !transaction.categoryId,
+    (transaction) =>
+      !transaction.ignored &&
+      !transaction.isDuplicate &&
+      !(transaction.categoryId || transaction.counterAccountId),
   ).length;
   const progress = rows.length > 0 ? Math.round((categorized / rows.length) * 100) : 0;
   const confirmDisabled = imported === 0 || pending > 0 || isPending;
@@ -793,7 +793,7 @@ function ParseSummary({
         const status =
           transaction.ignored || transaction.isDuplicate
             ? "ignored"
-            : transaction.categoryId
+            : transaction.categoryId || transaction.counterAccountId
               ? "categorized"
               : "pending";
 
@@ -970,7 +970,7 @@ function ParseSummary({
                   "transition",
                   transaction.ignored || transaction.isDuplicate
                     ? "bg-sunken/70 opacity-60"
-                    : transaction.categoryId
+                    : transaction.categoryId || transaction.counterAccountId
                       ? "bg-success-soft/35"
                       : "bg-danger-soft/20",
                 )}
@@ -998,6 +998,9 @@ function ParseSummary({
                 <td className="max-w-[380px] border-b border-line px-sm py-sm text-body-sm text-ink">
                   <span className="block font-medium uppercase">{transaction.description}</span>
                   {transaction.isDuplicate ? <Badge variant="warning">duplicata</Badge> : null}
+                  {transaction.transferMatch ? (
+                    <Badge variant="warning">transferência já lançada</Badge>
+                  ) : null}
                   {result.invoice ? (
                     <span className="mt-xs inline-flex rounded-full border border-line bg-sunken px-sm py-xs text-meta text-ink-tertiary">
                       caixa: {formatDate(transaction.cashDate)}
@@ -1006,22 +1009,49 @@ function ParseSummary({
                 </td>
                 <td className="border-b border-line px-sm py-sm text-body-sm text-ink-secondary">
                   <select
-                    value={transaction.categoryId}
-                    onChange={(event) =>
+                    value={
+                      transaction.counterAccountId
+                        ? `transfer:${transaction.counterAccountId}`
+                        : transaction.categoryId
+                    }
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      const counterAccountId = value.startsWith("transfer:")
+                        ? value.slice("transfer:".length)
+                        : "";
                       onRowsChange(
                         rows.map((row) =>
                           row.duplicateKey === transaction.duplicateKey
-                            ? { ...row, categoryId: event.target.value }
+                            ? {
+                                ...row,
+                                categoryId: counterAccountId ? "" : value,
+                                counterAccountId,
+                              }
                             : row,
                         ),
-                      )
-                    }
+                      );
+                    }}
                     className={cn(
                       "min-w-[260px] max-w-[360px] rounded-md border bg-surface px-sm py-xs text-body-sm text-ink outline-none focus:border-orange focus:shadow-focus-orange",
-                      transaction.categoryId ? "border-line" : "border-danger/60",
+                      transaction.categoryId || transaction.counterAccountId
+                        ? "border-line"
+                        : "border-danger/60",
                     )}
                   >
                     <option value="">Selecione uma categoria</option>
+                    {result.invoice || accounts.length < 2 ? null : (
+                      <optgroup label="Transferência entre contas">
+                        {accounts
+                          .filter(
+                            (candidate) => candidate.is_active && candidate.id !== account?.id,
+                          )
+                          .map((candidate) => (
+                            <option key={candidate.id} value={`transfer:${candidate.id}`}>
+                              {transaction.type === "expense" ? "Para" : "De"} {candidate.name}
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
                     {categories
                       .filter(
                         (category) =>
@@ -1035,7 +1065,9 @@ function ParseSummary({
                         </option>
                       ))}
                   </select>
-                  {!transaction.categoryId ? (
+                  {transaction.counterAccountId ? (
+                    <p className="mt-xs text-meta text-ink-tertiary">Transferência — fora do DFC</p>
+                  ) : !(transaction.categoryId || transaction.counterAccountId) ? (
                     <p className="mt-xs text-meta text-danger">IA não conseguiu categorizar</p>
                   ) : transaction.suggestedCategoryCode ? (
                     <p className="mt-xs text-meta text-ink-tertiary">
@@ -1163,6 +1195,32 @@ function formatMoney(value: number): string {
   return value.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
+  });
+}
+
+function buildReviewRows(
+  payload: Pick<ParseResponse, "importType" | "transactions">,
+  accountId: string,
+  accounts: Account[],
+): ReviewRow[] {
+  return payload.transactions.map((transaction) => {
+    // Pagamento de fatura vira transferência para o cartão, não despesa (evita contar 2x).
+    const cardId =
+      payload.importType === "pdf_invoice"
+        ? null
+        : suggestInvoicePaymentCard({
+            description: transaction.description,
+            type: transaction.type,
+            accountId,
+            accounts,
+          });
+
+    return {
+      ...transaction,
+      categoryId: cardId ? "" : (transaction.suggestedCategoryId ?? ""),
+      counterAccountId: cardId ?? "",
+      ignored: transaction.isDuplicate || !!transaction.transferMatch,
+    };
   });
 }
 

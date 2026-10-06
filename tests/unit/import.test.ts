@@ -243,3 +243,50 @@ describe("import parsers", () => {
     expect(merged[0]?.usage_count).toBe(6);
   });
 });
+
+describe("invoice payment detection", () => {
+  const card = (id: string, linked: string | null) => ({
+    id,
+    type: "credit_card",
+    is_active: true,
+    default_payment_account_id: linked,
+  });
+
+  it("suggests the linked card for a fatura payment expense", async () => {
+    const { suggestInvoicePaymentCard } = await import("@/lib/import/invoice-payment");
+    expect(
+      suggestInvoicePaymentCard({
+        description: "PAGAMENTO FATURA CARTAO SICREDI",
+        type: "expense",
+        accountId: "bank",
+        accounts: [card("c1", "bank"), card("c2", "other")],
+      }),
+    ).toBe("c1");
+  });
+
+  it("matches Sicredi DEB.CTA.FATURA descriptions", async () => {
+    const { looksLikeInvoicePayment } = await import("@/lib/import/invoice-payment");
+    expect(looksLikeInvoicePayment("DEB.CTA.FATURA-007892389")).toBe(true);
+  });
+
+  it("stays quiet when ambiguous or not a payment", async () => {
+    const { suggestInvoicePaymentCard } = await import("@/lib/import/invoice-payment");
+    const accounts = [card("c1", null), card("c2", null)];
+    expect(
+      suggestInvoicePaymentCard({
+        description: "PAG FATURA",
+        type: "expense",
+        accountId: "bank",
+        accounts,
+      }),
+    ).toBeNull();
+    expect(
+      suggestInvoicePaymentCard({
+        description: "PIX MERCADO",
+        type: "expense",
+        accountId: "bank",
+        accounts: [card("c1", "bank")],
+      }),
+    ).toBeNull();
+  });
+});

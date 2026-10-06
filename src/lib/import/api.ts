@@ -5,7 +5,7 @@ import type { Tables } from "@/lib/supabase/types";
 
 type ExistingTransaction = Pick<
   Tables<"transactions">,
-  "amount" | "cash_date" | "description" | "external_id"
+  "amount" | "cash_date" | "description" | "external_id" | "type" | "transfer_direction"
 >;
 
 export async function parseImportRequest(
@@ -55,10 +55,36 @@ export function enrichImportResult({
     existingDuplicateKeys,
   );
 
+  // Perna de transferência já lançada (manual ou importada da outra conta): a descrição
+  // difere, então a chave semântica não pega. Sinaliza por data + valor + direção.
+  const existingTransferKeys = new Set(
+    existingTransactions
+      .filter((transaction) => transaction.type === "transfer")
+      .map((transaction) =>
+        transferMatchKey(
+          transaction.cash_date,
+          transaction.amount,
+          transaction.transfer_direction === "in" ? "income" : "expense",
+        ),
+      ),
+  );
+  const flagged = transactions.map((transaction) => ({
+    ...transaction,
+    transferMatch:
+      !transaction.isDuplicate &&
+      existingTransferKeys.has(
+        transferMatchKey(transaction.cashDate, transaction.amount, transaction.type),
+      ),
+  }));
+
   return {
-    transactions,
+    transactions: flagged,
     totalRows: transactions.length,
     duplicatesFound: transactions.filter((transaction) => transaction.isDuplicate).length,
     warnings: result.warnings,
   };
+}
+
+function transferMatchKey(date: string, amount: string | number, type: string): string {
+  return `${date}|${Number(amount).toFixed(2)}|${type}`;
 }
