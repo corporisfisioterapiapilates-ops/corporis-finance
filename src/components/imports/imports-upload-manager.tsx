@@ -17,12 +17,14 @@ import {
   Search,
   SquareCheck,
   Tag,
+  Trash2,
   UploadCloud,
   XCircle,
 } from "lucide-react";
+import Link from "next/link";
 import type * as React from "react";
 import { useMemo, useRef, useState, useTransition } from "react";
-import { type ConfirmImportResult, confirmImport } from "@/actions/imports";
+import { type ConfirmImportResult, confirmImport, deleteImport } from "@/actions/imports";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { suggestInvoicePaymentCard } from "@/lib/import/invoice-payment";
@@ -263,7 +265,17 @@ export function ImportsUploadManager({
         />
       ) : null}
 
-      <ImportsHistory imports={imports} accounts={accounts} onRestoreReview={restoreReview} />
+      <ImportsHistory
+        imports={imports}
+        accounts={accounts}
+        onRestoreReview={restoreReview}
+        onDeleted={(importId) => {
+          if (result?.importId === importId) {
+            setResult(null);
+            setReviewRows([]);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -272,10 +284,12 @@ function ImportsHistory({
   imports,
   accounts,
   onRestoreReview,
+  onDeleted,
 }: {
   imports: ImportRow[];
   accounts: Account[];
   onRestoreReview: (importRow: ImportRow) => void;
+  onDeleted: (importId: string) => void;
 }) {
   const [statusFilter, setStatusFilter] = useState<"all" | "reviewing" | "completed" | "failed">(
     "all",
@@ -425,6 +439,7 @@ function ImportsHistory({
                   item={item}
                   account={item.account_id ? (accountById.get(item.account_id) ?? null) : null}
                   onRestoreReview={onRestoreReview}
+                  onDeleted={onDeleted}
                 />
               ))}
             </div>
@@ -623,11 +638,16 @@ function ImportHistoryItem({
   item,
   account,
   onRestoreReview,
+  onDeleted,
 }: {
   item: ImportRow;
   account: Account | null;
   onRestoreReview: (importRow: ImportRow) => void;
+  onDeleted: (importId: string) => void;
 }) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, startDelete] = useTransition();
   const statusTone = importStatusTone(item.status);
   const progress =
     item.total_rows > 0
@@ -677,6 +697,7 @@ function ImportHistoryItem({
         {item.error_message ? (
           <p className="mt-xs text-body-sm text-danger">{item.error_message}</p>
         ) : null}
+        {deleteError ? <p className="mt-xs text-body-sm text-danger">{deleteError}</p> : null}
       </div>
 
       <div className="grid min-w-[300px] grid-cols-3 gap-md">
@@ -709,7 +730,7 @@ function ImportHistoryItem({
         </div>
       </div>
 
-      <div className="ml-auto flex min-w-[130px] justify-end">
+      <div className="ml-auto flex min-w-[130px] flex-col items-end gap-sm">
         {item.status === "reviewing" ? (
           <Button type="button" variant="outline" size="sm" onClick={() => onRestoreReview(item)}>
             Revisar
@@ -725,6 +746,67 @@ function ImportHistoryItem({
             Ver erro
           </span>
         ) : null}
+        {item.status === "completed" ? (
+          <Link
+            href={`/lancamentos?importacao=${item.id}`}
+            className="text-body-sm text-orange underline"
+          >
+            Ver lançamentos
+          </Link>
+        ) : null}
+        {confirmingDelete ? (
+          <div className="flex flex-col items-end gap-xs">
+            <p className="max-w-[240px] text-right text-meta text-ink-secondary">
+              Isso apaga o arquivo e todos os lançamentos gerados por ele
+              {item.import_type === "pdf_invoice" ? ", incluindo a fatura do cartão" : ""}. Não dá
+              para desfazer.
+            </p>
+            <div className="flex gap-xs">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={isDeleting}
+                onClick={() => setConfirmingDelete(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isDeleting}
+                className="border-danger text-danger"
+                onClick={() =>
+                  startDelete(async () => {
+                    setDeleteError(null);
+                    const response = await deleteImport({ importId: item.id });
+                    if (!response.ok) {
+                      setDeleteError(response.error);
+                      setConfirmingDelete(false);
+                      return;
+                    }
+                    onDeleted(item.id);
+                  })
+                }
+              >
+                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : null}
+                Excluir tudo
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label={`Excluir importação ${item.filename}`}
+            onClick={() => setConfirmingDelete(true)}
+          >
+            <Trash2 size={14} strokeWidth={1.5} />
+            Excluir
+          </Button>
+        )}
       </div>
     </div>
   );

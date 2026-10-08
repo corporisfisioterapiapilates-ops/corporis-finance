@@ -254,3 +254,83 @@ export async function confirmImport(input: unknown): Promise<ConfirmImportResult
     imported: importedCount,
   };
 }
+
+export type DeleteImportResult =
+  | { ok: true; message: string; deleted: number }
+  | { ok: false; error: string };
+
+// Remove o arquivo inteiro: lançamentos gerados (inclusive as duas pernas de transferência,
+// ambas carregam import_id), faturas de cartão criadas por ele e o registro do histórico.
+export async function deleteImport(input: unknown): Promise<DeleteImportResult> {
+  const parsed = z.object({ importId: z.string().uuid() }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Importação inválida." };
+
+  const supabase = await createClient();
+  const { importId } = parsed.data;
+
+  const { data: importRow, error: importError } = await supabase
+    .from("imports")
+    .select("id")
+    .eq("id", importId)
+    .maybeSingle();
+  if (importError || !importRow) return { ok: false, error: "Importação não encontrada." };
+
+  const { data: linked, error: linkedError } = await supabase
+    .from("transactions")
+    .select("credit_card_invoice_id")
+    .eq("import_id", importId);
+  if (linkedError) {
+    console.error("deleteImport lookup failed", linkedError);
+    return { ok: false, error: "Não foi possível excluir a importação." };
+  }
+  const invoiceIds = [
+    ...new Set(
+      linked.flatMap((row) => (row.credit_card_invoice_id ? [row.credit_card_invoice_id] : [])),
+    ),
+  ];
+
+  const { data: removed, error: transactionsError } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("import_id", importId)
+    .select("id");
+  if (transactionsError) {
+    console.error("deleteImport transactions failed", transactionsError);
+    return { ok: false, error: "Não foi possível excluir os lançamentos da importação." };
+  }
+
+  if (invoiceIds.length > 0) {
+    const { data: stillUsed } = await supabase
+      .from("transactions")
+      .select("credit_card_invoice_id")
+      .in("credit_card_invoice_id", invoiceIds);
+    const used = new Set(stillUsed?.map((row) => row.credit_card_invoice_id));
+    const orphaned = invoiceIds.filter((id) => !used.has(id));
+    if (orphaned.length > 0) {
+      const { error: invoiceError } = await supabase
+        .from("credit_card_invoices")
+        .delete()
+        .in("id", orphaned);
+      if (invoiceError) console.warn("deleteImport invoice cleanup failed", invoiceError);
+    }
+  }
+
+  const { error: deleteError } = await supabase.from("imports").delete().eq("id", importId);
+  if (deleteError) {
+    console.error("deleteImport record failed", deleteError);
+    return { ok: false, error: "Lançamentos excluídos, mas o histórico não foi atualizado." };
+  }
+
+  await syncOrganizationNotifications();
+  revalidatePath("/importacoes");
+  revalidatePath("/lancamentos");
+  revalidatePath("/contas");
+  revalidatePath("/dashboard");
+  revalidatePath("/dfc");
+  revalidatePath("/projecao");
+  revalidatePath("/orcamento");
+  revalidatePath("/");
+
+  const deleted = removed?.length ?? 0;
+  return { ok: true, message: `Importação excluída (${deleted} lançamentos removidos).`, deleted };
+}
