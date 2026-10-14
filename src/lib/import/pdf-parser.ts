@@ -22,7 +22,7 @@ const DEFAULT_MODEL = "claude-sonnet-5-5";
 const prompt = `Você é um parser financeiro para faturas de cartão brasileiras.
 Extraia a data de fechamento, a data de vencimento, o valor total e todas as compras/lançamentos da fatura.
 
-Responda somente com JSON válido, sem markdown, neste formato exato:
+Responda somente com JSON válido, sem markdown e sem nenhum texto antes ou depois (nada de "Observação"), neste formato exato:
 {
   "closingDate": "YYYY-MM-DD",
   "dueDate": "YYYY-MM-DD",
@@ -46,12 +46,29 @@ Regras:
 - Em faturas brasileiras, se o dia de fechamento for maior que o dia de vencimento, o fechamento pertence ao mês anterior ao vencimento. Exemplo: vencimento 2026-03-13 e fechamento dia 27 => closingDate 2026-02-27.`;
 
 export function parseInvoiceJsonFromText(text: string): ParsedInvoice {
+  return normalizeParsedInvoice(parsedInvoiceSchema.parse(extractJson(text)));
+}
+
+// The model sometimes wraps the JSON in prose ("Observação: ...") or fences.
+function extractJson(text: string): unknown {
   const cleanText = text.trim();
   const fenced = cleanText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  const jsonText = fenced?.[1] ?? cleanText;
-  const parsed = JSON.parse(jsonText) as unknown;
+  const candidates = [fenced?.[1], cleanText];
 
-  return normalizeParsedInvoice(parsedInvoiceSchema.parse(parsed));
+  const start = cleanText.indexOf("{");
+  const end = cleanText.lastIndexOf("}");
+  if (start !== -1 && end > start) candidates.push(cleanText.slice(start, end + 1));
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try {
+      return JSON.parse(candidate) as unknown;
+    } catch {
+      // try next candidate
+    }
+  }
+
+  throw new Error("Não consegui ler os dados desta fatura. Tente enviar o PDF novamente.");
 }
 
 export async function parsePdfInvoice(base64Pdf: string): Promise<ParsedInvoice> {
